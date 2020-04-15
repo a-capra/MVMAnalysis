@@ -9,11 +9,15 @@ import matplotlib.patches as patches
 from scipy.signal import find_peaks
 import json
 
-
-# py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
-
 from db import *
 from mvmio import *
+from combine_plot_service_canvases import *
+from combine_plot_arXiv_canvases import *
+from combine_plot_summary_canvases import *
+
+# usage
+# py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
+
 
 def add_timestamp(df, timecol='dt'):
   ''' add timestamp column assuming constant sampling in time '''
@@ -278,7 +282,7 @@ def measure_clinical_values(df, start_times):
   df['tidal_volume']   *= deltaT/60.*100
 
   # set inspiration-only variables to zero outside the inspiratory phase
-  #df['tidal_volume'] *= df['is_inspiration']
+  df['tidal_volume'] *= df['is_inspiration']
 
   # calculate compliance and residence
   df['compliance'] = 0
@@ -377,15 +381,18 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   #thispeep  = [ dfhd[dfhd.ncycle==i]['cycle_PEEP'].iloc[0] for
   measured_peeps      = []
   measured_volumes    = []
-  measured_peak       = []
+  measured_peaks      = []
   measured_plateaus   = []
   real_tidal_volumes  = []
   real_plateaus       = []
 
   for i,nc in enumerate(dfhd['ncycle'].unique()) :
 
-    this_cycle        = dfhd[ dfhd.ncycle==nc ]
-    this_cycle_insp   = this_cycle[this_cycle.is_inspiration==1]
+    this_cycle              = dfhd[ dfhd.ncycle==nc ]
+    this_cycle_insp         = this_cycle[this_cycle.is_inspiration==1]
+
+    if len(this_cycle_insp)<1 : continue
+    cycle_inspiration_end   = this_cycle_insp['dt'].iloc[-1]
 
     if i > len(dfhd['ncycle'].unique()) -2 : continue
     #compute tidal volume in simulator df
@@ -394,19 +401,22 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     subdf['total_vol_subtracted'] = subdf['total_vol'] - subdf['total_vol'].min()
     real_tidal_volume = subdf['total_vol_subtracted' ] .max()
     #compute plateau in simulator
-    real_plateau = this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
+    subdf             = df[ (df.dt>start_times[i]) & (df.dt<cycle_inspiration_end) ]
+    real_plateau      = subdf[ (subdf.dt > cycle_inspiration_end - 20e-3) ]['airway_pressure'].mean()
+    #this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
     real_tidal_volumes.append(  real_tidal_volume   )
     real_plateaus.append (real_plateau)
 
+
     measured_peeps.append(  this_cycle['cycle_PEEP'].iloc[0])
     measured_volumes.append(this_cycle['cycle_tidal_volume'].iloc[0])
-    measured_peak.append(   this_cycle['cycle_peak_pressure'].iloc[0])
+    measured_peaks.append(   this_cycle['cycle_peak_pressure'].iloc[0])
     measured_plateaus.append(this_cycle['cycle_plateau_pressure'].iloc[0])
 
   """
   print ("measured_peeps", measured_peeps)
   print ("measured_volumes",measured_volumes)
-  print ("measured_peak",measured_peak)
+  print ("measured_peaks",measured_peaks)
   print ("measured_plateau",measured_plateau)
 
   #plt.plot(dfhd['dt'], dfhd['out'], label='control out')
@@ -459,352 +469,48 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       "flux" : "#3399ff" #light blue
     }
 
-    ####################################################
-    '''general service canavas number 1'''
-    ####################################################
-    ax = df.plot(x='dt', y='airway_pressure', label='airway_pressure [cmH2O]', c=colors['sim_airway_pressure'])
-    df.plot(ax=ax, x='dt', y='total_flow',    label='total_flow      [l/min]', c=colors['total_flow'])
-    #df.plot(ax=ax, x='dt', y='run', label='run index')
-    plt.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
-    #df.plot(ax=ax , x='dt', y='muscle_pressure', label='muscle_pressure [cmH2O]', c=colors['muscle_pressure'])
-    df.plot(ax=ax, x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
-    dfhd.plot(ax=ax,  x='dt', y='tidal_volume',    label='MVM tidal volume       [cl]', c=colors['tidal_volume'])
-
-    #df.plot(ax=ax, x='dt', y='breath_no', label='breath_no', marker='.')
-    #df.plot(ax=ax, x='dt', y='tracheal_pressure', label='tracheal_pressure')
-    #df.plot(ax=ax, x='dt', y='total_vol', label='total_vol')
-    #plt.plot(df['dt'], df['total_vol']/10., label='total_vol [cl]')
-    #dfhd.plot(ax=ax, x='dt', y='pressure', label='ventilator pressure [cmH2O]', c=colors['pressure'], linewidth = linw)
-    dfhd.plot(ax=ax, x='dt', y='airway_pressure', label='ventilator airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
-    dfhd.plot(ax=ax, x='dt', y='flux',            label='ventilator flux            [l/min]', c=colors['flux'] )
-    #dfhd.plot(ax=ax, x='dt', y='volume',          label='volume            [l/min]', c=colors['flux'] )
-    dfhd.plot(ax=ax, x='dt', y='out', label='out')
-    #dfhd.plot(ax=ax, x='dt', y='in', label='in')
-    #dfhd.plot(ax=ax, x='dt', y='service_1', label='service 2', c='black', linestyle="--")
-    #dfhd.plot(ax=ax, x='dt', y='service_2', label='service 1', c='black')
-    #dfhd.plot(ax=ax, x='dt', y='flux_2', label='service 2', c='r', linestyle="--")
-    #dfhd.plot(ax=ax, x='dt', y='flux_3',  label='service 1', c='r')
-    #dfhd.plot(ax=ax, x='dt', y='derivative',  label='derivative', c='gray')
-    #df.plot(ax=ax, x='dt', y='deriv_total_vol', label='deriv_total_vol [l/min]')
-
-    #plt.gcf().suptitle(objname)
-    #plt.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
-    #df.plot(ax=ax, x='dt', y='reaction_time', label='reaction time [10 ms]', c=colors['reaction_time'])
-    #plt.plot(   ,  100 *reaction_times,      label='reaction time ', marker='o', markersize=1, linewidth=0, c='red')
-    #ax.
-    for i,t in enumerate(start_times) :
-      ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='red', fontsize=14)
-
-    ax.set_xlabel("Time [sec]")
-    ax.legend(loc='upper center', ncol=2)
-
-
-    figbis = plt.figure()
-    figbis.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-    gs = gridspec.GridSpec(nrows=2, ncols=2, height_ratios=[.7,1.3], width_ratios = [1,1])
-
-    axbis0 = figbis.add_subplot(gs[0, 0])
-    axbis1 = figbis.add_subplot(gs[0, 1])
-    axbis2 = figbis.add_subplot(gs[1:, :])
-    ####################################################
-    '''general service canavas number 2, measured simulation parameters'''
-    ####################################################
-
-    df.plot(ax=axbis2, x='dt', y='airway_pressure', label='airway_pressure [cmH2O]', c=colors['sim_airway_pressure'])
-    df.plot(ax=axbis2, x='dt', y='total_flow',    label='total_flow      [l/min]', c=colors['total_flow'])
-    plt.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
-    df.plot(ax=axbis2, x='dt', y='compliance',   label='SIM compliance', c='black')
-    df.plot(ax=axbis2, x='dt', y='airway_resistance',   label='SIM resistance', c='black', linestyle="--")
-
-    #dfhd.plot(axbis=axbis, x='dt', y='pressure', label='ventilator pressure [cmH2O]', c=colors['pressure'], linewidth = linw)
-    dfhd.plot(ax=axbis2, x='dt', y='airway_pressure', label='ventilator airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
-    dfhd.plot(ax=axbis2, x='dt', y='pressure_pv1',    label='ventilator PV1 pressure    [cmH2O]', c=colors['vent_airway_pressure'], linestyle="--")
-    dfhd.plot(ax=axbis2, x='dt', y='flux',            label='ventilator flux            [l/min]', c=colors['flux'] )
-    dfhd.plot(ax=axbis2, x='dt', y='resistance',      label='ventilator resistance  [cmH2O/l/s]', c='pink' )
-    dfhd.plot(ax=axbis2, x='dt', y='compliance',      label='ventilator compliance   [ml/cmH2O]', c='purple' )
-
-    xmin, xmax = axbis2.get_xlim()
-    ymin, ymax = axbis2.get_ylim()
-    mytext = "Measured respiration rate: %1.1f br/min, inspiration duration: %1.1f s"%(respiration_rate, inspiration_duration)
-    axbis2.text((xmax-xmin)/2.+xmin, 0.08*(ymax-ymin) + ymin,   mytext, verticalalignment='bottom', horizontalalignment='center', color='black')
-
-    axbis2.set_xlabel("Time [sec]")
-    axbis2.legend(loc='upper center', ncol=2)
-
-    axbis0.hist ( dfhd[( dfhd['compliance']>0) ]['compliance'].unique()  , bins=50)
-    axbis0.set_xlabel("Measured compliance [ml/cmH2O]")
-    axbis1.hist ( dfhd[( dfhd['resistance']>0)]['resistance'].unique() , bins=50 )
-    axbis1.set_xlabel("Measured resistance [cmH2O/l/s]")
-
-    figpath = "%s/%s_service_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    figbis.savefig(figpath)
-
-
 
     ####################################################
-    '''formatted plots for ISO std'''
+    '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
     ####################################################
+    dfhd['display_flux'] = dfhd['flux_3']
+
+    ####################################################
+    '''general service canavas'''
+    ####################################################
+    plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration)
+
+    ####################################################
+    '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
+    ####################################################
+    plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors)
+
     for i in range (len(meta)) :
-
-      local_objname = "%s_%i"% ( objname[:-2] , i )
-
-      PE = meta[local_objname]["Peep"]
-      PI = meta[local_objname]["Pinspiratia"]
-      RR = meta[local_objname]["Rate respiratio"]
-      RT = meta[local_objname]["Resistance"]
-      CM = meta[local_objname]["Compliance"]
-
-      print ("Looking for R=%s, C=%s, RR=%s, PEEP=%s, PINSP=%s"%(RT,CM,RR,PE,PI) )
-
-      my_selected_cycle = meta[local_objname]["cycle_index"]
-
-      print ("\nFor test [ %s ]  I am selecting cycle %i, starting at %f \n"%(meta[local_objname]["test_name"], my_selected_cycle , start_times[ my_selected_cycle ]))
-
-      fig11,ax11 = plt.subplots()
-
-      print (start_times)
-      #make a subset dataframe for simulator
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + 6])  ]
-      #the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
-
-      #make a subset dataframe for ventilator
-      first_time_bin  = dftmp['dt'].iloc[0]
-      last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
-      dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
-
-      dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
-
-      dftmp.plot(ax=ax11, x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
-      dftmp.plot(ax=ax11, x='dt', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'])
-      dftmp.plot(ax=ax11, x='dt', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'])
-      #dftmp.plot(ax=ax11 , x='dt', y='muscle_pressure',  label='SIM muscle_pressure [cmH2O]', c=colors['muscle_pressure'])
-
-      dfvent.plot(ax=ax11,  x='dt', y='tidal_volume',    label='MVM tidal volume       [cl]', c=colors['tidal_volume'])
-      #dfvent.plot(ax=ax11,  x='dt', y='tidal_volume_2',  label='MVM tidal volume 2     [cl]', c=colors['tidal_volume'], linestyle='--')
-      dfvent.plot(ax=ax11,  x='dt', y='flux',            label='MVM flux            [l/min]', c=colors['flux'])
-#      dfvent.plot(ax=ax11,  x='dt', y='flux_2',          label='MVM flux 2          [l/min]', c='b')
-#      dfvent.plot(ax=ax11,  x='dt', y='flux_3',          label='MVM flux 3          [l/min]', c=colors['flux'], linestyle='-.')
-      dfvent.plot(ax=ax11,  x='dt', y='airway_pressure', label='MVM airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
-
-      ymin, ymax = ax11.get_ylim()
-      ax11.set_ylim(ymin*1.45, ymax*1.55)
-      ax11.legend(loc='upper center', ncol=2)
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]         PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
-
-      ax11.set_xlabel("Time [s]")
-
-      xmin, xmax = ax11.get_xlim()
-      ymin, ymax = ax11.get_ylim()
-      ax11.text((xmax-xmin)/2.+xmin, 0.08*(ymax-ymin) + ymin,   title2, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      ax11.text((xmax-xmin)/2.+xmin, 0.026*(ymax-ymin) + ymin,  title1, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      nom_pressure = float(meta[local_objname]["Pinspiratia"])
-      rect = patches.Rectangle((xmin,nom_pressure-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
-      #add / remove nominal pressure band
-      #ax11.add_patch(rect)
-
-      nom_peep = float(meta[local_objname]["Peep"])
-      rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
-      #add / remove PEEP line
-      #ax11.add_patch(rect)
-
-      ax11.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-      figpath = "%s/%s_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      print(f'Saving figure to {figpath}')
-      fig11.savefig(figpath)
-
-      '''
-      #dfvent.plot(ax=ax11,  x='dt', y='pressure_pv1', label='MVM PV1 pressure [cmH2O]', c='black')
-      dftmp.plot(ax=ax11, x='dt', y='compliance',   label='SIM compliance', c='black')
-      dftmp.plot(ax=ax11, x='dt', y='airway_resistance',   label='SIM resistance', c='black', linestyle="--")
-
-      figpath = "%s/%s_service2_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      ax11.legend(loc='upper center', ncol=2)
-      fig11.savefig(figpath)
-      '''
-
-      ####################################################
-      '''try 30 cycles'''
-      ####################################################
-      """
-      fig30c,ax30cycles = plt.subplots(3,1)
-      ax30cycles = ax30cycles.flatten()
-
-      my_selected_cycle = 10
-
-      print (len(start_times) )
-      for ii in range (3) :
-        if len (start_times) < (ii+1) *10 : continue
-        print ( my_selected_cycle + ii*10)
-        #make a subset dataframe for simulator
-        print (    start_times[ my_selected_cycle + ii*10 ] , start_times[ my_selected_cycle + ii*10 +11 ] )
-        dftmp = df[ (df['start'] >= start_times[ my_selected_cycle + ii*10 ] ) & ( df['start'] < start_times[ my_selected_cycle + 11 + ii*10 ])  ]
-        #the (redundant) line below avoids the annoying warning
-        dftmp = dftmp[ ( dftmp['start'] >= start_times[ my_selected_cycle + ii*10  ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 11 + ii*10 ])  ]
-        print (len (dftmp) , dftmp, dftmp['dt'].iloc[len(dftmp)-1] )
-        #make a subset dataframe for ventilator
-        first_time_bin  = dftmp['dt'].iloc[0]
-        last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
-        dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
-
-        dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
-        dftmp.plot(ax=ax30cycles[ii], x='dt', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'] ,  legend=False)
-        dftmp.plot(ax=ax30cycles[ii], x='dt', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'] ,  legend=False)
-        dfvent.plot(ax=ax30cycles[ii],  x='dt', y='flux',            label='MVM flux            [l/min]', c=colors['flux']  ,  legend=False)
-        dfvent.plot(ax=ax30cycles[ii],  x='dt', y='airway_pressure', label='MVM airway pressure [cmH2O]', c=colors['vent_airway_pressure']   ,  legend=False )
-        ax30cycles[ii].set_xlabel("Time [s]")
-
-
-      #ymin, ymax = ax30cycles.get_ylim()
-      #ax30cycles.set_ylim(ymin*1.4, ymax*1.5)
-      #ax30cycles.legend(loc='upper center', ncol=2)
-      #title1="R = %i [cmH2O/l/s]         C = %i [ml/cmH20]         PEEP = %s [cmH20]"%(RT,CM,PE )
-      #title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
-
-      '''
-      xmin, xmax = ax30cycles.get_xlim()
-      ymin, ymax = ax30cycles.get_ylim()
-      ax30cycles.text((xmax-xmin)/2.+xmin, 0.08*(ymax-ymin) + ymin,   title2, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      ax30cycles.text((xmax-xmin)/2.+xmin, 0.026*(ymax-ymin) + ymin,  title1, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      nom_pressure = float(meta[local_objname]["Pinspiratia"])
-      rect = patches.Rectangle((xmin,nom_pressure-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
-      ax30cycles.add_patch(rect)
-
-      nom_peep = float(meta[local_objname]["Peep"])
-      rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
-      ax30cycles.add_patch(rect)
-      '''
-      #ax30cycles.set_title ("Test n %s"%meta[objname]['test_name'])
-      figpath = "%s/%s_30cycles_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      print(f'Saving figure to {figpath}')
-      fig30c.savefig(figpath)
-      """
-
-      ####################################################
-      '''plot the avg wfs'''
-      ####################################################
-
-      fig2, ax2 = plt.subplots()
-      #make a subset dataframe for simulator
-      dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])]
-      dftmp['dtc'] = df['dt'] - df['start']
-
-      #make a subset dataframe for ventilator
-      first_time_bin  = dftmp['dt'].iloc[0]
-      last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
-      dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
-      dfvent['dtc'] = dfvent['dt'] - dfvent['start']
-      dfvent = dfvent.sort_values('dtc')
-
-      dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
-
-      dftmp.plot(ax=ax2, x='dtc', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] ,          marker='o', markersize=0.3, linewidth=0)
-      dftmp.plot(ax=ax2, x='dtc', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'],          marker='o', markersize=0.3, linewidth=0)
-      dftmp.plot(ax=ax2, x='dtc', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'], marker='o', markersize=0.3, linewidth=0)
-
-      dfvent.plot(ax=ax2,  x='dtc', y='tidal_volume',    label='MVM tidal volume       [cl]', c=colors['tidal_volume'],         marker='o', markersize=0.3, linewidth=0.2)
-      dfvent.plot(ax=ax2,  x='dtc', y='flux',            label='MVM flux            [l/min]', c=colors['flux'],                 marker='o', markersize=0.3, linewidth=0.2)
-      dfvent.plot(ax=ax2,  x='dtc', y='airway_pressure', label='MVM airway pressure [cmH2O]', c=colors['vent_airway_pressure'], marker='o', markersize=0.3, linewidth=0.2)
-
-      ymin, ymax = ax2.get_ylim()
-      ax2.set_ylim(ymin*1.4, ymax*1.5)
-      ax2.legend(loc='upper center', ncol=2)
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]        PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
-
-      ax2.set_xlabel("Time [s]")
-
-      xmin, xmax = ax2.get_xlim()
-      ymin, ymax = ax2.get_ylim()
-      ax2.text((xmax-xmin)/2.+xmin, 0.08*(ymax-ymin) + ymin,   title2, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      ax2.text((xmax-xmin)/2.+xmin, 0.026*(ymax-ymin) + ymin,  title1, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-      nom_pressure = float(meta[local_objname]["Pinspiratia"])
-      rect = patches.Rectangle((xmin,nom_pressure-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
-      ax2.add_patch(rect)
-
-      nom_peep = float(meta[local_objname]["Peep"])
-      rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
-      ax2.add_patch(rect)
-
-      ax2.set_title ("Test n %s"%meta[objname]['test_name'])
-      figpath = "%s/%s_avg_%s.png" % (output_directory, meta[objname]['Campaign'] , objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      print(f'Saving figure to {figpath}')
-      fig2.savefig(figpath)
-
-      ####################################################
-      '''summary plots'''
-      ####################################################
+      #for the moment only one test per file is supported here
 
       #correct for outliers ?
       measured_peeps      = measured_peeps[3:-3]
       measured_plateaus   = measured_plateaus[3:-3]
-      measured_peak       = measured_peak[3:-3]
+      measured_peaks       = measured_peaks[3:-3]
       measured_volumes    = measured_volumes[3:-3]
 
       mean_peep    = np.mean(measured_peeps)
       mean_plateau = np.mean(measured_plateaus)
-      mean_peak    = np.mean(measured_peak)
+      mean_peak    = np.mean(measured_peaks)
       mean_volume  = np.mean(measured_volumes)
       rms_peep    = np.std(measured_peeps)
       rms_plateau = np.std(measured_plateaus)
-      rms_peak    = np.std(measured_peak)
+      rms_peak    = np.std(measured_peaks)
       rms_volume  = np.std(measured_volumes)
 
-      figs,axes = plt.subplots(2,2)
-      figs.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
+      #simulator values
+      simulator_plateau   = np.array(real_plateaus)
+      simulator_plateau   = simulator_plateau[~np.isnan(simulator_plateau)]
+      simulator_plateau   = np.mean(  simulator_plateau  )
 
-      axs = axes.flatten()
-      #axs.set_title("PEEP", "", "a", "")
-      nom_peep_low = nom_peep - 2 - 0.04 * nom_peep
-      nom_peep_wid = 4 + 0.08 * nom_peep
-      axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
-      aa = patches.Rectangle( (nom_peep_low, axs[0].get_ylim()[0]  ) , nom_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-      axs[0].add_patch(aa)
-      axs[0].set_title("PEEP [cmH20], nominal: %i [cmH20]"%nom_peep,weight='heavy', fontsize=10)
-
-      nominal_plateau = meta[objname]["Pinspiratia"]
-      nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
-      nominal_plateau_wid = 4 + 0.08 * nominal_plateau
-      _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
-      axs[1].hist ( measured_plateaus, bins=100, range=_range   )
-      aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-      axs[1].add_patch(aa)
-      axs[1].set_title("plateau [cmH20], nominal: %s [cmH20]"%nominal_plateau, weight='heavy', fontsize=10)
-
-      #peak - put plateau instead
-      #axs[2].hist ( measured_peak   , bins=100, range=(mean_peak*0.8 , mean_peak*1.3)  )
-      #axs[2].set_title("peak pressure [cmH20]")
-
-      real_plateaus = np.array([real_plateaus])
-      real_plateaus = real_plateaus[~np.isnan(real_plateaus)]
-      nominal_plateau     =   np.mean( real_plateaus)   # float ( meta[objname]["Tidal plateau"] ) / 10.
-      nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
-      nominal_plateau_wid = 4 + 0.08 * nominal_plateau
-      #print (measured_plateaus, mean_plateau, nominal_plateau )
-      _range = ( min([ mean_plateau,nominal_plateau] )*0.7 , max( [mean_plateau,nominal_plateau] ) *1.4    )
-      axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
-      axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
-      aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-      axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(nominal_plateau), weight='heavy', fontsize=10 )
-      axs[2].legend(loc='upper left')
-      axs[2].add_patch(aa)
-
-      nominal_volume     =   np.nanmean( real_tidal_volumes)   # float ( meta[objname]["Tidal Volume"] ) / 10.
-      #print (nominal_volume)
-      nominal_volume_low = nominal_volume - 4 - 0.15 * nominal_volume
-      nominal_volume_wid = 8 + 0.3 * nominal_volume
-      _range = ( min([ mean_volume,nominal_volume] )*0.7 , max( [mean_volume,nominal_volume] ) *1.4    )
-      axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
-      axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
-      aa = patches.Rectangle( (nominal_volume_low, axs[0].get_ylim()[0]  ) , nominal_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-      axs[3].set_title("TV [cl], <SIM>: %2.1f [cl], nominal %i [cl]"%(nominal_volume,int ( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
-      axs[3].legend(loc='upper left')
-      axs[3].add_patch(aa)
-
-      figpath = "%s/%s_summary_%s.pdf" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      figs.savefig(figpath)
+      simulator_volume    = np.array(real_tidal_volumes)
+      simulator_volume    = simulator_volume[~np.isnan(simulator_volume)]
+      simulator_volume    = np.mean(  simulator_volume )
 
       meta[objname]["mean_peep"]         =  mean_peep
       meta[objname]["rms_peep"]          =  rms_peep
@@ -814,8 +520,13 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       meta[objname]["rms_peak"]          =  rms_peak
       meta[objname]["mean_volume"]       =  mean_volume
       meta[objname]["rms_volume"]        =  rms_volume
-      meta[objname]["simulator_volume"]  =  nominal_volume
-      meta[objname]["simulator_plateau"] =  nominal_plateau
+      meta[objname]["simulator_volume"]  =  simulator_volume
+      meta[objname]["simulator_plateau"] =  simulator_plateau
+
+      ####################################################
+      '''summary plots of measured quantities and avg wfs'''
+      ####################################################
+      plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
 
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )

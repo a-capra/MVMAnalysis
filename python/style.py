@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 
-
 figwidth = 18
 plt.rcParams["figure.figsize"]           =   [figwidth, figwidth*1105/1920]    # figure size in inches
 plt.rcParams["lines.linewidth"]          =   3     # line width in points
@@ -24,3 +23,4 @@ plt.rcParams["legend.fontsize"]          =   20
 plt.rcParams["legend.labelspacing"]      =   0.7    # the vertical space between the legend entries in fraction of fontsize
 plt.rcParams["legend.shadow"]            =   False
 plt.rcParams["legend.frameon"]           =   False   # whether or not to draw a frame around legend
+plt.rcParams['axes.unicode_minus']       =   False   # fix glyph error by using normal hyphens
