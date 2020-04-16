@@ -38,5 +38,10 @@ python get_tables.py plots_iso/*json --output-dir=plots_iso
 
 Folders:
   * `python`: python code
-  * `cpp`: C++ code
-  * `scripts`: scripts (plotting, etc)
+  
+  
+## Data location
+CERN
+```
+/eos/experiment/re37/mvm
+```
