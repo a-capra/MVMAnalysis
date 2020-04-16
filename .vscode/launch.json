@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": " dumb down analysis ",
+            "type": "python",
+            "request": "launch",
+            "program": "python/simple.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
