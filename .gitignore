@@ -1,4 +1,5 @@
 data/
 plots/
+simple_plots/
 *.pyc
 *.pickle
