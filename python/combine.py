@@ -629,7 +629,7 @@ if __name__ == '__main__':
         continue
 
     # determine RWA and DTA data locations
-    fullpath_rwa = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
+    fullpath_rwa = f'{args.input}\{meta[objname]["Campaign"]}\{meta[objname]["SimulatorFileName"]}'
 
     if fullpath_rwa.endswith('.dta'):
       fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
