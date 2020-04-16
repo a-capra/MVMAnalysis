@@ -25,7 +25,7 @@
                 "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
                 "-p",
                 "--mvm-col=mvm_col_arduino",
-                "-d C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/plots",
+                "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/plots",
                 "--db-range-name=20200408 ISO!A2:AZ"
             ],
             "console": "integratedTerminal"
