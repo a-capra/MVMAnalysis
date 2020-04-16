@@ -164,19 +164,33 @@ if __name__ == '__main__':
   dfhd['display_flux'] = dfhd['flux_3'] # why???
   plot_arXiv_style(df, dfhd, fname, output_directory, start_times, colors, sett)
 
-  '''
+
+  fig=plt.figure(figsize=(13,8))
+  
   ax1 = plt.subplot(311)
-  plt.plot(df['dt'], df['airway_pressure'], label='true airway_pressure')
-  plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='pressure')
+  plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway_pressure')
+  plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
+  plt.setp(ax1.get_xticklabels(), visible=False)
+  plt.ylabel('[cmH2O]')
+  plt.legend()
+
 
   ax2 = plt.subplot(312, sharex=ax1)
-  plt.plot(df['dt'], df['total_vol'], label='true total_vol')
-  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='tidal volume')
+  plt.plot(df['dt'], df['total_vol'], label='ASL5000 total vol')
+  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal volume')
+  plt.setp(ax2.get_xticklabels(), visible=False)
+  plt.ylabel('[L]')
+  plt.legend()
 
   ax3 = plt.subplot(313, sharex=ax1)
-  plt.plot(df['dt'], df['total_flow'], label='true total_flow')
-  plt.plot(dfh['dt'], df['display_flux'], label='flow')
+  plt.plot(df['dt'], df['total_flow'], label='ASL5000 total_flow')
+  plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
+  plt.xlabel('[sec]')
+  plt.ylabel('[L/s]')
+  plt.legend()
 
-  #plt.legend()
+  plt.xlim(10, 60)
+
+  fig.tight_layout()
   plt.show()
-  '''
+  fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(output_directory,sett['C'],sett['R'],sett['RR'],sett['PIP'],sett['PEEP']))
