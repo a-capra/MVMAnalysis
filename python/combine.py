@@ -91,7 +91,7 @@ def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   sim_peak_hgts = sim_peaks['flux'].to_list()
   print ("I have identified: ", len(mvm_peak_times), len(sim_peak_times))
 
-  central_idx    = 20
+  central_idx    = 10
   min_difference = 1e7
   tdiff          = 0
   for i in range (9) :
