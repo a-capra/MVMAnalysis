@@ -154,7 +154,7 @@ def get_json(fname, conf):
     for key, val in map_arduino_bs[conf].items():
       rec[val]=rec.pop(key)
     rec['date']-=offset
-    rec['flux']=rec['flux_2']
+    rec['flux']=rec['flux_2'] # <-- patch! fix me
     if rec['out'] == 'OPEN':
       rec['out'] = 1
     else:
