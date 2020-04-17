@@ -97,7 +97,7 @@ def get_mvm_df(fname, sep=' -> ', configuration='default'):
       if not line: continue
       l = line.split(sep)
       try:
-        par = sep.join(l[1:]).split(',')
+        par = ''.join(l[1:]).split(',')
       except :
         print (line)
         continue
