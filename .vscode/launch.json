@@ -2,6 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "MVM-TR single analysis",
+            "type": "python",
+            "request": "launch",
+            "program": "python/combine.py",
+            "args": [
+                "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
+                "-p",
+                "--mvm-col=mvm_triumf_1",
+                "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/triumf_plots",
+                "-f C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/20200415/log_20200415-controlled-fr20-peep05-pin15-c50-r05-ratioxx-run08.json",
+                "--db-range-name=TRIUMF!A2:AZ"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "MVM single analysis",
             "type": "python",
             "request": "launch",
@@ -23,7 +38,6 @@
             "program": "python/combine.py",
             "args": [
                 "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
-                "-p",
                 "--mvm-col=mvm_col_arduino",
                 "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/plots",
                 "--db-range-name=20200408 ISO!A2:AZ"
