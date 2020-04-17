@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from statsmodels.graphics.tsaplots import plot_acf
-import seaborn as sns
+#from statsmodels.graphics.tsaplots import plot_acf
+#import seaborn as sns
 
 import json
 import argparse
@@ -160,16 +160,16 @@ plot_tidal.set_xlabel("Cycle number")
 plot_tidal.set_ylabel("Tidal Volume (cl)")
 
 plot_prange = plt.subplot2grid(layout,(0,2))
-sns.boxplot(x=ps1_p)
+#sns.boxplot(x=ps1_p)
 plot_prange.set_xlabel("Pressure (cmH2O)")
 plot_prange.set_title("Ranges/Outliers")
 
 plot_frange = plt.subplot2grid(layout,(1,2))
-sns.boxplot(x=fs1_r)
+#sns.boxplot(x=fs1_r)
 plot_frange.set_xlabel("Flow (slpm)")
 
 plot_trange = plt.subplot2grid(layout,(2,2))
-sns.boxplot(x=ps1_t)
+#sns.boxplot(x=ps1_t)
 plot_trange.set_xlabel("Temperature (°C)")
 
 
