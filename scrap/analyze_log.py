@@ -19,16 +19,14 @@ layout = (3,3)
 
 tv_correction = 310./273.15*1013. # correct tidal volume from STP to BTP
 
-'''
 parser = argparse.ArgumentParser(prog='analyze_log')
-parser.add_argument('log', help="Log file to write to")
+parser.add_argument('log', help="Log file to read from")
 parser.add_argument('-b', '--btp', help="Convert tidal volume to BTP", action="store_true", default=False)
+parser.add_argument('-i', '--interactive', help="Open interactive plot window", action="store_true", default=False)
 args = parser.parse_args()
-'''
 
-fname0='./log_20200410_pin15_peep5_bpm20_with_lung_c10_r50.json'
 # Load in JSON file
-with open(fname0) as log_file:
+with open(args.log) as log_file:
     log_data = json.load(log_file)["data"]
 
 offset = log_data[0]["ts"]
@@ -84,7 +82,7 @@ inlet = np.delete(inlet,dupes)
 outlet = np.delete(outlet,dupes)
 
 dts = np.diff(ts)
-fig = plt.figure(figsize=layout)
+fig = plt.figure(figsize=(12,8))
 
 plotdt = plt.subplot2grid(layout, (2, 0))
 plotdt.plot(ts[1:], dts)
@@ -112,30 +110,26 @@ maxf = 0.
 tv = 0.
 
 for i in range(1, len(ts)):
-    if(phase[i] == "INHALE" and phase[i-1] != "INHALE"):
+    if(inlet[i] == "OPEN" and inlet[i-1] == "CLOSED"):
         if(t_last >= 0):
             period = np.append(period, ts[i]-t_last)
-            tidalV = np.append(tidalV, tv)
+            tidalV = np.append(tidalV, 100.*tv)
             tv = 0.
+            p_max = np.append(p_max, maxp)
+            maxp = 0.
+            f_max = np.append(f_max, maxf)
+            maxf = 0.
         t_last = ts[i]
     elif(phase[i] == "HOLD" and phase[i-1] == "INHALE"):
         t_inh = np.append(t_inh, ts[i] - t_last)
-    if(phase[i] == "WAIT" and phase[i-1] == "EXHALE"):
-        p_max = np.append(p_max, maxp)
-        maxp = 0.
-        f_max = np.append(f_max, maxf)
-        maxf = 0.
-    elif(phase[i] == "OFF"):
-        maxp = 0.
-        maxf = 0.
     else:
         if(ps1_p[i] > maxp):
             maxp = ps1_p[i]
         if(fs1_r[i] > maxf):
             maxf = fs1_r[i]
-        #tv_fac = tv_correction/(1013.+ps1_p[i]) if args.btp else 1.
-        tv_fac=1.
-        tv = tv + fs1_r[i]*(ts[i]-ts[i-1])/60. * tv_fac
+        if(inlet[i]=="OPEN"):
+            tv_fac = tv_correction/(1013.+ps1_p[i]) if args.btp else 1.
+            tv = tv + fs1_r[i]*(ts[i]-ts[i-1])/60. * tv_fac
 
 plot_period = plt.subplot2grid(layout,(0,0))
 plot_period.plot(range(len(period)),period)
@@ -153,30 +147,34 @@ plot_p_max = plt.subplot2grid(layout,(0,1))
 plot_p_max.plot(range(len(p_max)),p_max)
 plot_p_max.set_title("Values")
 plot_p_max.set_xlabel("Cycle number")
-plot_p_max.set_ylabel("Max. pressure")
+plot_p_max.set_ylabel("Max. pressure (cmH2O)")
 
 plot_f_max = plt.subplot2grid(layout,(1,1))
 plot_f_max.plot(range(len(f_max)),f_max)
 plot_f_max.set_xlabel("Cycle number")
-plot_f_max.set_ylabel("Max. flow")
+plot_f_max.set_ylabel("Max. flow (slpm)")
 
 plot_tidal = plt.subplot2grid(layout,(2,1))
 plot_tidal.plot(range(len(tidalV)),tidalV)
 plot_tidal.set_xlabel("Cycle number")
-plot_tidal.set_ylabel("Tidal Volume")
+plot_tidal.set_ylabel("Tidal Volume (cl)")
 
 plot_prange = plt.subplot2grid(layout,(0,2))
 sns.boxplot(x=ps1_p)
-plot_prange.set_xlabel("Pressure")
+plot_prange.set_xlabel("Pressure (cmH2O)")
 plot_prange.set_title("Ranges/Outliers")
 
 plot_frange = plt.subplot2grid(layout,(1,2))
 sns.boxplot(x=fs1_r)
-plot_frange.set_xlabel("Flow")
+plot_frange.set_xlabel("Flow (slpm)")
 
 plot_trange = plt.subplot2grid(layout,(2,2))
 sns.boxplot(x=ps1_t)
-plot_trange.set_xlabel("Temperature")
+plot_trange.set_xlabel("Temperature (°C)")
 
 
-plt.show()
+plt.tight_layout()
+if(args.interactive):
+    plt.show()
+else:
+    plt.savefig("plots/summary/" + args.log + "_summary.png", bbox_inches='tight')
