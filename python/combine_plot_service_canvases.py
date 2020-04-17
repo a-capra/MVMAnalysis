@@ -33,8 +33,10 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   #dfhd.plot(ax=ax, x='dt', y='in', label='in')
   #dfhd.plot(ax=ax, x='dt', y='service_1', label='service 2', c='black', linestyle="--")
   #dfhd.plot(ax=ax, x='dt', y='service_2', label='service 1', c='black')
-  dfhd.plot(ax=ax, x='dt', y='flux_2', label='flux_2', c='r', linestyle="--")
-  dfhd.plot(ax=ax, x='dt', y='flux_3',  label='flux_3', c='r')
+  if 'flux_2' in dfhd:
+    dfhd.plot(ax=ax, x='dt', y='flux_2', label='flux_2', c='r', linestyle="--")
+  if 'flux_3' in dfhd:
+    dfhd.plot(ax=ax, x='dt', y='flux_3',  label='flux_3', c='r')
   #dfhd.plot(ax=ax, x='dt', y='derivative',  label='derivative', c='gray')
   #df.plot(ax=ax, x='dt', y='deriv_total_vol', label='deriv_total_vol [l/min]')
 
@@ -75,7 +77,8 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
 
   #dfhd.plot(axbis=axbis, x='dt', y='pressure', label='ventilator pressure [cmH2O]', c=colors['pressure'], linewidth = linw)
   dfhd.plot(ax=axbis2, x='dt', y='airway_pressure', label='ventilator airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
-  dfhd.plot(ax=axbis2, x='dt', y='pressure_pv1',    label='ventilator PV1 pressure    [cmH2O]', c=colors['vent_airway_pressure'], linestyle="--")
+  if 'pressure_pv1' in dfhd:
+    dfhd.plot(ax=axbis2, x='dt', y='pressure_pv1',    label='ventilator PV1 pressure    [cmH2O]', c=colors['vent_airway_pressure'], linestyle="--")
   dfhd.plot(ax=axbis2, x='dt', y='flux',            label='ventilator flux            [l/min]', c=colors['flux'] )
   dfhd.plot(ax=axbis2, x='dt', y='resistance',      label='ventilator resistance  [cmH2O/l/s]', c='pink' )
   dfhd.plot(ax=axbis2, x='dt', y='compliance',      label='ventilator compliance   [ml/cmH2O]', c='purple' )

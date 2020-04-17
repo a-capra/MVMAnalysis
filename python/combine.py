@@ -35,7 +35,8 @@ def correct_sim_df(df):
 def correct_mvm_df(df, pressure_offset=0, pv2_thr=50):
   ''' Apply corrections to MVM data '''
   # correct for miscalibration of pressure sensor if necessary
-  df['pressure_pv1'] = df['pressure_pv1']  + pressure_offset
+  if 'pressure_pv1' in df:
+    df['pressure_pv1'] = df['pressure_pv1']  + pressure_offset
   df['airway_pressure'] = df['airway_pressure']  + pressure_offset
 
   #set MVM flux to 0 when out valve is open AND when the flux is negative
@@ -473,7 +474,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     ####################################################
     '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
     ####################################################
-    dfhd['display_flux'] = dfhd['flux_3']
+    if 'flux_3' in dfhd:
+      dfhd['display_flux'] = dfhd['flux_3']
+    elif 'flux_2' in dfhd:
+      dfhd['display_flux'] = dfhd['flux_2']
+    else:
+      dfhd['display_flux'] = dfhd['flux']
 
     ####################################################
     '''general service canavas'''
@@ -589,7 +595,7 @@ if __name__ == '__main__':
   print ("INPUT : : ",  args.input )
 
   # read metadata spreadsheet
-  df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
+  df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)    
 
   #if option -n, select only one test
   if len ( args.filename )  > 2 :
@@ -597,7 +603,12 @@ if __name__ == '__main__':
     reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
     print ( "Selecting only: " ,  reduced_filename  )
-    df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+    if 'TRIUMF' in args.db_range_name or 'Triumf' in args.db_range_name or 'triumf' in args.db_range_name:
+      df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename.strip('.json') )  ]
+      print('TRIUMF meta')
+    else:
+      df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+
 
   filenames = df_spreadsheet['MVM_filename'].unique()
 
@@ -616,7 +627,11 @@ if __name__ == '__main__':
     # compute the file location: local folder to the data repository + compaign folder + filename
     fname = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
     if not fname.endswith(".txt"):
-      fname = f'{fname}.txt'
+      if 'TRIUMF' in args.db_range_name or 'Triumf' in args.db_range_name or 'triumf' in args.db_range_name:
+        fname = f'{fname}.json'
+      else:
+        fname = f'{fname}.txt'
+
 
     print(f'\nFile name {fname}')
     if fname.split('/')[-1] in args.skip_files:
