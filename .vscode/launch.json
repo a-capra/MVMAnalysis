@@ -25,7 +25,8 @@
                 "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
                 "--mvm-col=mvm_triumf_1",
                 "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/triumf_plots",
-                "--db-range-name=TRIUMF!A2:AZ"
+                "--db-range-name=TRIUMF!A2:AZ",
+                "-p"
             ],
             "console": "integratedTerminal"
         },
@@ -53,7 +54,8 @@
                 "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
                 "--mvm-col=mvm_col_arduino",
                 "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/plots",
-                "--db-range-name=20200408 ISO!A2:AZ"
+                "--db-range-name=20200408 ISO!A2:AZ",
+                "-p"
             ],
             "console": "integratedTerminal"
         },
