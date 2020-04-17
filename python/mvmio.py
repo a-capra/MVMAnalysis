@@ -49,6 +49,17 @@ mapping = {
     'flux',
     'service_2',
     'derivative'
+  ],
+  
+  'mvm_triumf_1':[
+    'ts',
+    'mode',
+    'phase',
+    'ps1_p',
+    'ps1_t',
+    'fs1_r',
+    'inlet',
+    'outlet'
   ]
 }
 
