@@ -92,7 +92,8 @@ def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   sim_peak_hgts = sim_peaks['flux'].to_list()
   print ("I have identified: ", len(mvm_peak_times), len(sim_peak_times))
 
-  central_idx    = 10
+  #central_idx    = 10
+  central_idx = int(min(len(mvm_peak_times)*0.5,len(sim_peak_times)*0.5))
   min_difference = 1e7
   tdiff          = 0
   for i in range (9) :
@@ -102,14 +103,16 @@ def apply_good_shift(sim, mvm, resp_rate, manual_offset):
     pdiff  = sum ( [ (x-y)*( x-y) for (x,y) in zip (subset_mvm, subset_sim)  ] )
     if pdiff < min_difference :
       min_difference = pdiff
-      print ("minimisig distance: ",i, min_difference, mvm_peak_times[central_idx] - sim_peak_times [central_idx] )
+      print ("minimisig distance: ",i, min_difference, mvm_peak_times[central_idx] - sim_peak_times[central_idx] )
       tdiff =  - np.mean( [ (x-y) for (x,y) in zip (mvm_peak_times, sim_peak_times)  ] )
 
   mvm_mean = np.nanmean(mvm_intervals)
   sim_mean = np.nanmean(sim_intervals)
   print(np.mean(mvm_intervals), np.mean(sim_intervals))
 
-  interval = mvm_peaks.dt.to_list()[10]-sim_peaks.dt.to_list()[5]
+  idx1=min(len(sim_peaks.dt.to_list())-1,10)
+  idx2=min(len(sim_peaks.dt.to_list())-1,5)
+  interval = mvm_peaks.dt.to_list()[idx1]-sim_peaks.dt.to_list()[idx2]
 
   delay =  tdiff
   #delay = - ( interval - int(interval/mvm_mean)*mvm_mean )
@@ -623,6 +626,7 @@ if __name__ == '__main__':
     ntests += len(meta)
 
     objname = f'{filename}_0'   #at least first element is always there
+    if objname == 'nan_0': continue
 
     # compute the file location: local folder to the data repository + compaign folder + filename
     fname = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
@@ -644,7 +648,7 @@ if __name__ == '__main__':
         continue
 
     # determine RWA and DTA data locations
-    fullpath_rwa = f'{args.input}\{meta[objname]["Campaign"]}\{meta[objname]["SimulatorFileName"]}'
+    fullpath_rwa = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
 
     if fullpath_rwa.endswith('.dta'):
       fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
