@@ -383,7 +383,7 @@ if __name__ == '__main__':
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
   parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
   parser.add_argument("-show", "--show", action='store_true', help="show plots")
-  parser.add_argument("-save", "--save", action='store_true', help="save HDF")
+  parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
