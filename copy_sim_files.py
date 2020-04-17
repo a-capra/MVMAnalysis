@@ -6,6 +6,8 @@ parser.add_argument('src', help="origin")
 parser.add_argument('dest', help="destination")
 args = parser.parse_args()
 
+# reference
+# https://stackoverflow.com/a/296184
 
 files = glob.iglob(os.path.join(args.src, "*.rwa"))
 for file in files:
