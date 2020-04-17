@@ -11,7 +11,20 @@
                 "-p",
                 "--mvm-col=mvm_triumf_1",
                 "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/triumf_plots",
-                "-f C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/20200415/log_20200415-controlled-fr20-peep05-pin15-c50-r05-ratioxx-run08.json",
+                "-f C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/20200415/log_20200415-controlled-fr20-peep10-pin35-c10-r10-ratioxx-run01.json",
+                "--db-range-name=TRIUMF!A2:AZ"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "MVM-TR batch analysis",
+            "type": "python",
+            "request": "launch",
+            "program": "python/combine.py",
+            "args": [
+                "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data",
+                "--mvm-col=mvm_triumf_1",
+                "-dC:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/triumf_plots",
                 "--db-range-name=TRIUMF!A2:AZ"
             ],
             "console": "integratedTerminal"
