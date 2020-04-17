@@ -102,7 +102,12 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
     nominal_plateau_wid = 4 + 0.08 * nominal_plateau
     _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
-    axs[1].hist ( measured_plateaus, bins=100, range=_range   )
+    try:
+      axs[1].hist ( measured_plateaus, bins=100, range=_range   )
+    except ValueError as ve:
+      print(ve)
+      _range=(0.,40.)
+      axs[1].hist ( measured_plateaus, bins=100, range=_range   )
     aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[1].add_patch(aa)
     axs[1].set_title("plateau [cmH20], nominal: %s [cmH20]"%nominal_plateau, weight='heavy', fontsize=10)
@@ -113,8 +118,14 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     nominal_plateau_wid = 4 + 0.08 * nominal_plateau
     #print (measured_plateaus, mean_plateau, nominal_plateau )
     _range = ( min([ mean_plateau,nominal_plateau] )*0.7 , max( [mean_plateau,nominal_plateau] ) *1.4    )
-    axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
-    axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
+    try:
+      axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
+      axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
+    except ValueError as ve:
+      print(ve)
+      _range=(0.,40.)
+      axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
+      axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
     aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(nominal_plateau), weight='heavy', fontsize=10 )
     axs[2].legend(loc='upper left')
@@ -125,8 +136,14 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     nominal_volume_low = nominal_volume - 4 - 0.15 * nominal_volume
     nominal_volume_wid = 8 + 0.3 * nominal_volume
     _range = ( min([ mean_volume,nominal_volume] )*0.7 , max( [mean_volume,nominal_volume] ) *1.4    )
-    axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
-    axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
+    try:
+      axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
+      axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
+    except ValueError as ve:
+      print(ve)
+      _range=(0.,40.)
+      axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
+      axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
     aa = patches.Rectangle( (nominal_volume_low, axs[0].get_ylim()[0]  ) , nominal_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[3].set_title("TV [cl], <SIM>: %2.1f [cl], nominal %i [cl]"%(nominal_volume,int ( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
     axs[3].legend(loc='upper left')
