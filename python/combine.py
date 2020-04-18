@@ -351,12 +351,14 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
 
   # apply corrections
   correct_mvm_df(dfhd, pressure_offset)
-  correct_sim_df(df)
 
-  #rough shift for plotting purposes only - max in the first few seconds
-  apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)
+  if not ignore_sim :
+    correct_sim_df(df)
+
+    #add time shift
+    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -368,6 +370,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+
+  if ignore_sim :
+    if args.plot :
+      #combine_plot_mvm_only_canvases()
+    continue   #stop here
+
   reaction_times = get_reaction_times(df, start_times)
 
   # add info
