@@ -3,6 +3,7 @@
 Add upstream repo
 ```
 git remote add upstream https://github.com/vippolit/MVM
+git remote set-url upstream https://github.com/MechanicalVentilatorMilano/MVMAnalysis.git
 ```
 
 Verify
@@ -38,6 +39,8 @@ python get_tables.py plots_iso/*json --output-dir=plots_iso
 
 Folders:
   * `python`: python code
+  * `scrap`: to be removed
+  * `.vscode`: debug/develop
   
   
 ## Data location
