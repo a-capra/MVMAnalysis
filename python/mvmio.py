@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import json
 
 mapping = {
   'default': [
@@ -129,5 +130,29 @@ def get_mvm_df(fname, sep=' -> ', configuration='default'):
   #print (df.head())
   #dtmax = df.iloc[-1,:]['dt']
   #timestamp = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt']*(dtmax-0.08)/dtmax , len(df) )   #use this line if you want to stretch the x axis of MVM data
+
+  return df
+
+
+def get_mvm_df_json(fname) :
+
+  dict = json.loads(open(fname).read())
+  df = pd.DataFrame.from_dict(dict['data'])
+  df['date']            = df['time']
+
+  df['dt'] = ( pd.to_datetime(df['date'], unit='s') - pd.to_datetime(df['date'][0], unit='s') )/np.timedelta64(1,'s')
+
+  #temporary: convert arduino variable names into the analysis names
+  df['time_arduino']    = df['ts']
+  df['flux']            = df['last_flow']
+  df['pressure_pv1']    = df['last_pressure0']
+  df['airway_pressure'] = df['last_pressure1']
+  df['in']              = df['pid_monitor']
+  df['service_1']       = df['pid_monitor2']
+  df['out']             = df['valve2_status']
+  df['flux_2']          = df['venturi_flux']
+  df['flux_3']          = df['flow']
+  df['volume']          = df['tidal_volume']
+  df['service_2']       = df['dgb_delta']
 
   return df
