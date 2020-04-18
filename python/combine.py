@@ -51,6 +51,9 @@ def apply_rough_shift(sim, mvm, manual_offset):
   if (manual_offset > 0 ) : print ("...Adding additional manual shift by [s]: ", manual_offset)
   mvm['dt'] = mvm['timestamp'] + shift  + manual_offset # add arbitrary shift to better match data
 
+def apply_manual_shift(sim, mvm, manual_offset):
+  mvm['dt'] = mvm['timestamp'] + manual_offset
+
 def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   resp_period = 60./resp_rate
 
@@ -333,7 +336,7 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
-def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default'):
+def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default', mvm_json=False):
   # retrieve simulator data
   if not ignore_sim:
     df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
@@ -341,17 +344,19 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     print ("I am ignoring the simulator")
 
   # retrieve MVM data
-  dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+  if mvm_json==True :    dfhd = get_mvm_df_json (fname=input_mvm)
+  else : dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+
   add_timestamp(dfhd)
 
   # apply corrections
   correct_mvm_df(dfhd, pressure_offset)
   correct_sim_df(df)
 
-  #dfhd = dfhd[(dfhd['dt']>df['dt'].iloc[0]) & (dfhd['dt']<df['dt'].iloc[-1]) ]
   #rough shift for plotting purposes only - max in the first few seconds
+  apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
   #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)
+  #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)
 
   ##################################
   # cycles
@@ -546,6 +551,7 @@ if __name__ == '__main__':
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
+  parser.add_argument("-json", action='store_true', help="read json instead of csv")
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
@@ -640,7 +646,7 @@ if __name__ == '__main__':
     print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
     # run
-    process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col)
+    process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
 
   if args.plot:
     if ( len (filenames) < 2 ) :
