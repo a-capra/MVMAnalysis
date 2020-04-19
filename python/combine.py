@@ -14,6 +14,7 @@ from mvmio import *
 from combine_plot_service_canvases import *
 from combine_plot_arXiv_canvases import *
 from combine_plot_summary_canvases import *
+from combine_plot_mvm_only_canvases import *
 
 # usage
 # py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
@@ -382,6 +383,19 @@ def add_run_info(df, dist=25):
 
 def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default', mvm_json=False):
   # retrieve simulator data
+
+  if args.plot:
+    colors = {  "muscle_pressure": "#009933"  , #green
+      "sim_airway_pressure": "#cc3300" ,# red
+      "total_flow":"#ffb84d" , #
+      "tidal_volume":"#ddccff" , #purple
+      "total_vol":"pink" , #
+      "reaction_time" : "#999999", #
+      "pressure" : "black" , #  blue
+      "vent_airway_pressure": "#003399" ,# blue
+      "flux" : "#3399ff" #light blue
+    }
+
   if not ignore_sim:
     df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
   else:
@@ -395,12 +409,14 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
 
   # apply corrections
   correct_mvm_df(dfhd, pressure_offset)
-  correct_sim_df(df)
 
-  #rough shift for plotting purposes only - max in the first few seconds
-  apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)
+  if not ignore_sim :
+    correct_sim_df(df)
+
+    #add time shift
+    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -412,6 +428,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+
+  if ignore_sim :
+    if args.plot :
+      plot_mvm_only_canvases(dfhd, meta, objname,start_times, colors)
+    return #stop here if sim is ignored
+
   reaction_times = get_reaction_times(df, start_times)
   # Add some integer indexing fields for convenience in stats summary for
   # overlap plots
@@ -518,23 +540,11 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
 
-  if args.plot:
-    colors = {  "muscle_pressure": "#009933"  , #green
-      "sim_airway_pressure": "#cc3300" ,# red
-      "total_flow":"#ffb84d" , #
-      "tidal_volume":"#ddccff" , #purple
-      "total_vol":"pink" , #
-      "reaction_time" : "#999999", #
-      "pressure" : "black" , #  blue
-      "vent_airway_pressure": "#003399" ,# blue
-      "flux" : "#3399ff" #light blue
-    }
-
-
+  if args.plot :
     ####################################################
     '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
     ####################################################
-    dfhd['display_flux'] = dfhd['flux_3']
+    dfhd['display_flux'] = dfhd['flux']
 
     ####################################################
     '''general service canavas'''
