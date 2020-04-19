@@ -169,13 +169,20 @@ def get_reaction_times(df, start_times, quantity='total_flow', timecol='dt', thr
 
 def add_cycle_info(sim, mvm, start_times, reaction_times):
   ''' Add cycle start, reaction time, time-in-breath '''
+  ''' 
+  Add integer index information for easier lining up of 
+  stats at given bin on cycle overlay plots. 
+  Chris.Jillings@snolab.ca 2020-04-20 
+  '''
   sim['start'] = 0
   sim['tbreath'] = 0
   sim['reaction_time'] = 0
   for s,f in zip (start_times,reaction_times) :
+    this_iindex = sim.loc[sim.dt==s, 'iindex']
     sim.loc[sim.dt>s,'start']   = s
     sim.loc[sim.dt>s,'tbreath'] = sim.dt - s
     sim.loc[sim.dt>s,'reaction_time'] = f
+    sim.loc[sim.dt>s,'siindex'] = this_iindex.iloc[0]
 
   mvm['start'] = 0
   mvm['ncycle']= 0
@@ -199,6 +206,43 @@ def add_chunk_info(df):
   for i,r in cycle.iterrows():
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
+def stats_for_repeated_cycles(adf, variable='total_flow') :
+    ''' 
+    This function assumed that the simulator DataFrame has been pre-processed
+    to include integer indexing and that the start times for each cycle have been 
+    calculated. This loops through the given DataFrame and 
+    1: Checks that there really is a one-to-one correspondence between dtc and 
+    the integer indexing
+    2: Finds the series for the variable in question for a given integer index 
+    since start of cycle
+    3: calculates some basic stats that can be used in plotting
+    4: Returns a DataFrame for plotting.
+    N.B. This function must be called once for each variable to be plotted.
+    ---
+    Chris.Jillings@snolab.ca 2020-04-19
+    '''
+    nstats = 7
+    di_series = adf['diindex']
+    length = di_series.max() - di_series.min()+1
+    stats_array = np.zeros((length, nstats), dtype='float64')
+    di_arr = np.arange(di_series.min(), di_series.max())
+    for i in di_arr:
+        this_series = adf.loc[adf.diindex==1, variable]
+        # Do some sanity checking here that diindex and dtc track perfectly
+        dtcmin = adf[adf.diindex==i]['dtc'].min()
+        dtcmax = adf[adf.diindex==i]['dtc'].max()
+        if ( (dtcmax-dtcmin)>1e-8 ) :
+            print("Something realy bad happened preparing stats for repeated breaths.")
+            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
+            print("Error!")
+            print(dtcmin, dtcmax)
+        stats_array[i-di_series.min()] = [i, dtcmin, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
+    answer = DataFrame(stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+    return answer
+
+
+
+    
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -369,9 +413,21 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
   reaction_times = get_reaction_times(df, start_times)
-
+  # Add some integer indexing fields for convenience in stats summary for
+  # overlap plots
+  # iindex is an integer index corresponding to a "bin number" for dt
+  # after add_ccylce_index is called siindex will correspond to df.start
+  # diindex will correspond to dtc
+  # Chris.Jillings
+  this_shape = df.shape
+  df['iindex'] = np.arange(this_shape[0])
+  df['siindex'] = np.arange(this_shape[0])
+  
+  
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  df['dtc'] = df['dt'] - df['start']
+  df['diindex'] = df['iindex'] - df['siindex']
 
   ##################################
   # chunks

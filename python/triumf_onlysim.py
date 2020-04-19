@@ -62,13 +62,16 @@ def get_reaction_times(df, start_times, quantity='total_flow', timecol='dt', thr
 
 def add_cycle_info(sim, start_times, reaction_times):
   ''' Add cycle start, reaction time, time-in-breath '''
+  ''' Added integer index counting information - Chris.Jillings@snolab.ca - 2020-04-18'''
   sim['start'] = 0
   sim['tbreath'] = 0
   sim['reaction_time'] = 0
   for s,f in zip (start_times,reaction_times) :
+    this_iindex = sim.loc[sim.dt==s, 'iindex']
     sim.loc[sim.dt>s,'start']   = s
     sim.loc[sim.dt>s,'tbreath'] = sim.dt - s
     sim.loc[sim.dt>s,'reaction_time'] = f
+    sim.loc[sim.dt>s,'siindex'] = this_iindex.iloc[0]
 
 def add_chunk_info(df):
   ''' Add mean values computed on simulator dataframe chunk '''
@@ -86,6 +89,42 @@ def add_chunk_info(df):
   for i,r in cycle.iterrows():
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
+def stats_for_repeated_cycles(adf, variable='total_flow') :
+    ''' 
+    This function assumed that the simulator DataFrame has been pre-processed
+    to include integer indexing and that the start times for each cycle have been 
+    calculated. This loops through the given DataFrame and 
+    1: Checks that there really is a one-to-one correspondence between dtc and 
+    the integer indexing
+    2: Finds the series for the variable in question for a given integer index 
+    since start of cycle
+    3: calculates some basic stats that can be used in plotting
+    4: Returns a DataFrame for plotting.
+    N.B. This function must be called once for each variable to be plotted.
+    ---
+    Chris.Jillings@snolab.ca 2020-04-19
+    '''
+    nstats = 7
+    di_series = adf['diindex']
+    length = di_series.max() - di_series.min()+1
+    stats_array = np.zeros((length, nstats), dtype='float64')
+    di_arr = np.arange(di_series.min(), di_series.max())
+    for i in di_arr:
+        this_series = adf.loc[adf.diindex==1, variable]
+        # Do some sanity checking here that diindex and dtc track perfectly
+        dtcmin = adf[adf.diindex==i]['dtc'].min()
+        dtcmax = adf[adf.diindex==i]['dtc'].max()
+        if ( (dtcmax-dtcmin)>1e-8 ) :
+            print("Something realy bad happened preparing stats for repeated breaths.")
+            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
+            print("Error!")
+            print(dtcmin, dtcmax)
+        stats_array[i-di_series.min()] = [i, dtcmin, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
+    answer = DataFrame(stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+    return answer
+
+
+    
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -121,7 +160,7 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
-def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, mhracsv=None, pressure_offset=0, output_directory='plots_tmp'):
+def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, mhracsv=None, pressure_offset=0, output_directory='plots_tmp', cjjsaving=False):
   # retrieve simulator data
   df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
 
@@ -133,11 +172,18 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
   ##################################
 
   # compute cycle start
-  start_times    = get_start_times(df, thr=8, quantity='airway_pressure', timecol='dt')
+  start_times    = get_start_times(df, thr=5, quantity='total_flow', timecol='dt') 
   reaction_times = get_reaction_times(df, start_times)
-
+  # HTJI add integer indexing
+  this_shape = df.shape
+  df['iindex'] = np.arange(this_shape[0])
+  df['siindex'] = np.arange(this_shape[0])
+  
+  
   # add info
   add_cycle_info(sim=df, start_times=start_times, reaction_times=reaction_times)
+  df['dtc'] = df['dt'] - df['start']
+  df['diindex'] = df['iindex'] - df['siindex']
 
   ##################################
   # chunks
@@ -318,10 +364,15 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ len(start_times)-1 ])]
       ## the (redundant) line below avoids the annoying warning
       dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ len(start_times)-1 ])  ]
-      dftmp['dtc'] = df['dt'] - df['start']
+
 
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
+      #HTJI
+      if cjjsaving:
+        dftmp.to_hdf("cjj1.h5", key='simulator')
+        cjjsaving = False
+        
       dftmp.plot(ax=ax2, x='dtc', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] ,          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'],          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'], marker='o', markersize=0.3, linewidth=0)
@@ -336,7 +387,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ax2legend.legendHandles[2]._legmarker.set_markersize(legmarkersize)
 
       title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]        PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+      title2="HTJI Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
 
       ax2.set_xlabel("Time [s]")
 
@@ -363,6 +414,8 @@ if __name__ == '__main__':
   import matplotlib
   import style
 
+  
+  
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input file (.txt)")
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")
@@ -438,7 +491,7 @@ if __name__ == '__main__':
         continue
 
     # determine RWA and DTA data locations
-    fullpath_rwa = f'{fname}/{meta[objname]["SimulatorFileName"]}'
+    fullpath_rwa = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
 
     if fullpath_rwa.endswith('.dta'):
       fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
@@ -449,7 +502,7 @@ if __name__ == '__main__':
     print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
     # run
-    process_run(meta, objname=objname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset, output_directory=args.output_directory)
+    process_run(meta, objname=objname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset, output_directory=args.output_directory, cjjsaving=True)
 
   if args.plot:
     if ( len (filenames) < 2 ) :
