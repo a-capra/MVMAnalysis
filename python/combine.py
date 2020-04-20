@@ -179,11 +179,12 @@ def add_cycle_info(sim, mvm, start_times, reaction_times):
   sim['tbreath'] = 0
   sim['reaction_time'] = 0
   for s,f in zip (start_times,reaction_times) :
-    this_iindex = sim.loc[sim.dt==s, 'iindex']
+    times_open = sim[ ( sim.dt>s ) ]['iindex']
+    this_iindex = times_open.iloc[0]  #The sim data not synchronous to the start_times
     sim.loc[sim.dt>s,'start']   = s
     sim.loc[sim.dt>s,'tbreath'] = sim.dt - s
     sim.loc[sim.dt>s,'reaction_time'] = f
-    sim.loc[sim.dt>s,'siindex'] = this_iindex.iloc[0]
+    sim.loc[sim.dt>s,'siindex'] = this_iindex
 
   mvm['start'] = 0
   mvm['ncycle']= 0
@@ -225,20 +226,20 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     nstats = 7
     di_series = adf['diindex']
     length = di_series.max() - di_series.min()+1
-    stats_array = np.zeros((length, nstats), dtype='float64')
+    local_stats_array = np.zeros((int(length), nstats),dtype='float64')
     di_arr = np.arange(di_series.min(), di_series.max())
     for i in di_arr:
         this_series = adf.loc[adf.diindex==1, variable]
         # Do some sanity checking here that diindex and dtc track perfectly
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
-        if ( (dtcmax-dtcmin)>1e-8 ) :
+        if ( (dtcmax-dtcmin)>0.1 ) :
             print("Something realy bad happened preparing stats for repeated breaths.")
             print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
             print("Error!")
             print(dtcmin, dtcmax)
-        stats_array[i-di_series.min()] = [i, dtcmin, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
-    answer = DataFrame(stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
+    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
     return answer
 
 
@@ -443,7 +444,8 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # Chris.Jillings
   this_shape = df.shape
   df['iindex'] = np.arange(this_shape[0])
-  df['siindex'] = np.arange(this_shape[0])
+  df['siindex'] = np.zeros(this_shape[0])
+  df['diindex'] = np.zeros(this_shape[0])
   
   
   # add info
@@ -534,12 +536,22 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   add_run_info(df)
 
   ##################################
+  # Make data frames for statistics on overlayed cycles
+  ##################################
+  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])] 
+  stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
+  stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
+  stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'total_flow')
+  
+  
+  ##################################
   # saving and plotting
   ##################################
   if save:
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
 
+    
   if args.plot :
     ####################################################
     '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
@@ -598,7 +610,8 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
       plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-
+      plot_overlay_canvases ( df, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
 
