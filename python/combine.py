@@ -550,7 +550,9 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   if save:
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
-
+    stats_total_vol.to_hdf(f'{objname}.sim.h5', key='stats_total_vol')
+    stats_total_flow.to_hdf(f'{objname}.sim.h5', key='stats_total_flow')
+    stats_airway_pressure.to_hdf(f'{objname}.sim.h5', key='airway_pressure')
     
   if args.plot :
     ####################################################
@@ -610,7 +612,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
       plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( df, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      #plot_overlay_canvases ( df, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
       
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )

@@ -27,7 +27,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
 
     
-    '''
     fig2, ax2 = plt.subplots()
     #make a subset dataframe for simulator
     # This is hardcoded - should it be?
@@ -75,7 +74,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     figpath = "%s/%s_avg_%s.png" % (output_directory, meta[objname]['Campaign'] , objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     print(f'Saving figure to {figpath}')
     fig2.savefig(figpath)
-    '''
     
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
@@ -143,12 +141,13 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     figs.savefig(figpath)
 
 
+'''
 def plot_overlay_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
   for i in range (len(meta)) :
 
     ####################################################
-    '''plot the avg wfs'''
+    ### plot the avg wfs
     ####################################################
     local_objname = "%s_%i"% ( objname[:-2] , i )
 
@@ -208,3 +207,4 @@ def plot_overlay_canvases (df, dfhd, meta, objname, output_directory, start_time
     fig2.savefig(figpath)
 
 
+'''
