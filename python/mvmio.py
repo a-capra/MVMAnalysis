@@ -136,23 +136,35 @@ def get_mvm_df(fname, sep=' -> ', configuration='default'):
 
 def get_mvm_df_json(fname) :
 
-  dict = json.loads(open(fname).read())
-  df = pd.DataFrame.from_dict(dict['data'])
-  df['date']            = df['time']
+  mydict = json.loads(open(fname).read())
+  column_names = []
+
+  if isinstance( mydict['data'][0] , dict )   == False :
+    column_names = mydict['format']
+    data = []
+    for mylist in mydict['data'] :
+      data.append (dict ( zip (column_names , mylist ) ))
+    print ("mvmio.py: Reading compact dictionary format")
+    df = pd.DataFrame.from_dict(data)
+  else :
+    print ("mvmio.py: Reading full dictionary format")
+    df = pd.DataFrame.from_dict(mydict['data'])
+    column_names = [x for x in mydict['data'][0].keys()]
+
+  df['date'] = df['time']
 
   df['dt'] = ( pd.to_datetime(df['date'], unit='s') - pd.to_datetime(df['date'][0], unit='s') )/np.timedelta64(1,'s')
-
   #temporary: convert arduino variable names into the analysis names
-  df['time_arduino']    = df['ts']
-  df['flux']            = df['last_flow']
-  df['pressure_pv1']    = df['last_pressure0']
-  df['airway_pressure'] = df['last_pressure1']
-  df['in']              = df['pid_monitor']
-  df['service_1']       = df['pid_monitor2']
-  df['out']             = df['valve2_status']
-  df['flux_2']          = df['venturi_flux']
-  df['flux_3']          = df['flow']
-  df['volume']          = df['tidal_volume']
-  df['service_2']       = df['dgb_delta']
+  df['time_arduino']    =   df[column_names[1]]
+  df['flux']            =   df[column_names[2]]
+  df['pressure_pv1']    =   df[column_names[3]]
+  df['airway_pressure'] =   df[column_names[4]]
+  df['in']              =   df[column_names[5]]
+  df['service_1']       =   df[column_names[6]]
+  df['out']             =   df[column_names[7]]
+  df['flux_2']          =   df[column_names[8]]
+  df['flux_3']          =   df[column_names[9]]
+  df['volume']          =   df[column_names[10]]
+  df['service_2']       =   df[column_names[11]]
 
   return df
