@@ -104,7 +104,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
     aa = patches.Rectangle( (nom_peep_low, axs[0].get_ylim()[0]  ) , nom_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[0].add_patch(aa)
-    axs[0].set_title("PEEP [cmH20], nominal: %i [cmH20]"%nom_peep,weight='heavy', fontsize=10)
+    axs[0].set_title("PEEP [cmH20], nominal: %2.1f [cmH20]"%nom_peep, weight='heavy', fontsize=10)
 
     nominal_plateau = meta[objname]["Pinspiratia"]
     nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
@@ -136,7 +136,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
     axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
     aa = patches.Rectangle( (nominal_volume_low, axs[0].get_ylim()[0]  ) , nominal_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    axs[3].set_title("TV [cl], <SIM>: %2.1f [cl], nominal %i [cl]"%(nominal_volume,int ( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
+    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(nominal_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
