@@ -503,38 +503,54 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
 
-      #correct for outliers ?
+      #correct for outliers ?  no, we need to see them
       measured_peeps      = measured_peeps[3:-3]
       measured_plateaus   = measured_plateaus[3:-3]
-      measured_peaks       = measured_peaks[3:-3]
+      measured_peaks      = measured_peaks[3:-3]
       measured_volumes    = measured_volumes[3:-3]
 
       mean_peep    = np.mean(measured_peeps)
       mean_plateau = np.mean(measured_plateaus)
       mean_peak    = np.mean(measured_peaks)
       mean_volume  = np.mean(measured_volumes)
-      rms_peep    = np.std(measured_peeps)
-      rms_plateau = np.std(measured_plateaus)
-      rms_peak    = np.std(measured_peaks)
-      rms_volume  = np.std(measured_volumes)
+      rms_peep     = np.std(measured_peeps)
+      rms_plateau  = np.std(measured_plateaus)
+      rms_peak     = np.std(measured_peaks)
+      rms_volume   = np.std(measured_volumes)
+      max_peep     = np.max(measured_peeps)
+      max_plateau  = np.max(measured_plateaus)
+      max_peak     = np.max(measured_peaks)
+      max_volume   = np.max(measured_volumes)
+      min_peep     = np.min(measured_peeps)
+      min_plateau  = np.min(measured_plateaus)
+      min_peak     = np.min(measured_peaks)
+      min_volume   = np.min(measured_volumes)
 
       #simulator values
-      simulator_plateau   = np.array(real_plateaus)
-      simulator_plateau   = simulator_plateau[~np.isnan(simulator_plateau)]
-      simulator_plateau   = np.mean(  simulator_plateau  )
+      simulator_plateaus = np.array(real_plateaus)
+      simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
+      simulator_plateau  = np.mean(simulator_plateaus)
 
-      simulator_volume    = np.array(real_tidal_volumes)
-      simulator_volume    = simulator_volume[~np.isnan(simulator_volume)]
-      simulator_volume    = np.mean(  simulator_volume )
+      simulator_volumes = np.array(real_tidal_volumes)
+      simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
+      simulator_volume  = np.mean(simulator_volumes)
 
       meta[objname]["mean_peep"]         =  mean_peep
       meta[objname]["rms_peep"]          =  rms_peep
+      meta[objname]["max_peep"]          =  max_peep
+      meta[objname]["min_peep"]          =  min_peep
       meta[objname]["mean_plateau"]      =  mean_plateau
       meta[objname]["rms_plateau"]       =  rms_plateau
+      meta[objname]["max_plateau"]       =  max_plateau
+      meta[objname]["min_plateau"]       =  min_plateau
       meta[objname]["mean_peak"]         =  mean_peak
       meta[objname]["rms_peak"]          =  rms_peak
+      meta[objname]["max_peak"]          =  max_peak
+      meta[objname]["min_peak"]          =  min_peak
       meta[objname]["mean_volume"]       =  mean_volume
       meta[objname]["rms_volume"]        =  rms_volume
+      meta[objname]["max_volume"]        =  max_volume
+      meta[objname]["min_volume"]        =  min_volume
       meta[objname]["simulator_volume"]  =  simulator_volume
       meta[objname]["simulator_plateau"] =  simulator_plateau
 
