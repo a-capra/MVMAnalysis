@@ -424,16 +424,13 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     if i > len(dfhd['ncycle'].unique()) -2 : continue
     #compute tidal volume in simulator df
     subdf             = df[ (df.dt>start_times[i]) & (df.dt<start_times[i+1]) ]
-
-    subdf['total_vol_subtracted'] = subdf['total_vol'] - subdf['total_vol'].min()
-    real_tidal_volume = subdf['total_vol_subtracted' ] .max()
+    real_tidal_volume = ( subdf['total_vol'] - subdf['total_vol'].min() ).max()
     #compute plateau in simulator
     subdf             = df[ (df.dt>start_times[i]) & (df.dt<cycle_inspiration_end) ]
     real_plateau      = subdf[ (subdf.dt > cycle_inspiration_end - 20e-3) ]['airway_pressure'].mean()
     #this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
-    real_tidal_volumes.append(  real_tidal_volume   )
+    real_tidal_volumes.append(real_tidal_volume)
     real_plateaus.append (real_plateau)
-
 
     measured_peeps.append(  this_cycle['cycle_PEEP'].iloc[0])
     measured_volumes.append(this_cycle['cycle_tidal_volume'].iloc[0])
