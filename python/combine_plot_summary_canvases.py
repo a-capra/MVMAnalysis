@@ -96,9 +96,9 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     figs,axes = plt.subplots(2,2)
     figs.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-
     axs = axes.flatten()
-    #axs.set_title("PEEP", "", "a", "")
+
+    ## MVM PEEP compared with set value
     nom_peep_low = nom_peep - 2 - 0.04 * nom_peep
     nom_peep_wid = 4 + 0.08 * nom_peep
     axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
@@ -106,6 +106,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[0].add_patch(aa)
     axs[0].set_title("PEEP [cmH20], nominal: %2.1f [cmH20]"%nom_peep, weight='heavy', fontsize=10)
 
+    ## MVM Pinsp compared with set value
     nominal_plateau = meta[objname]["Pinspiratia"]
     nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
     nominal_plateau_wid = 4 + 0.08 * nominal_plateau
@@ -115,28 +116,26 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[1].add_patch(aa)
     axs[1].set_title("plateau [cmH20], nominal: %s [cmH20]"%nominal_plateau, weight='heavy', fontsize=10)
 
-
-    nominal_plateau     = simulator_plateau
-    nominal_plateau_low = nominal_plateau - 2 - 0.04 * nominal_plateau
-    nominal_plateau_wid = 4 + 0.08 * nominal_plateau
-    #print (measured_plateaus, mean_plateau, nominal_plateau )
-    _range = ( min([ mean_plateau,nominal_plateau] )*0.7 , max( [mean_plateau,nominal_plateau] ) *1.4    )
+    ## MVM Pinsp compared with simulator values
+    simulator_plateau_low = simulator_plateau - 2 - 0.04 * simulator_plateau
+    simulator_plateau_wid = 4 + 0.08 * simulator_plateau
+    #print (measured_plateaus, mean_plateau, simulator_plateau )
+    _range = ( min([ mean_plateau,simulator_plateau] )*0.7 , max( [mean_plateau,simulator_plateau] ) *1.4    )
     axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
     axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
-    aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(nominal_plateau), weight='heavy', fontsize=10 )
+    aa = patches.Rectangle( (simulator_plateau_low, axs[0].get_ylim()[0]  ) , simulator_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
+    axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(simulator_plateau), weight='heavy', fontsize=10 )
     axs[2].legend(loc='upper left')
     axs[2].add_patch(aa)
 
-    nominal_volume     =  simulator_volume
-    #print (nominal_volume)
-    nominal_volume_low = nominal_volume - 4 - 0.15 * nominal_volume
-    nominal_volume_wid = 8 + 0.3 * nominal_volume
-    _range = ( min([ mean_volume,nominal_volume] )*0.7 , max( [mean_volume,nominal_volume] ) *1.4    )
+    ## MVM tidal volumes compared with simulator values
+    simulator_volume_low = simulator_volume - 4 - 0.15 * simulator_volume
+    simulator_volume_wid = 8 + 0.3 * simulator_volume
+    _range = ( min([ mean_volume,simulator_volume] )*0.7 , max( [mean_volume,simulator_volume] ) *1.4    )
     axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
     axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
-    aa = patches.Rectangle( (nominal_volume_low, axs[0].get_ylim()[0]  ) , nominal_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(nominal_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
+    aa = patches.Rectangle( (simulator_volume_low, axs[0].get_ylim()[0]  ) , simulator_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
+    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
