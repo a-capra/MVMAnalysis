@@ -7,6 +7,8 @@ from matplotlib import colors
 from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
+from mvmconstants import *
+
 
 def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors,  measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes) :
 
@@ -98,18 +100,9 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     figs.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     axs = axes.flatten()
 
-    ## Define maximum bias error A, maximum linearity error B
-    ## EXAMPLE ±(A +(B % of the set pressure)) cmH2O
-    maximum_bias_error_peep = 2            # A in cmH2O
-    maximum_linearity_error_peep = 0.04    # B/100 for PEEP
-    maximum_bias_error_pinsp = 2           # A in cmH2O
-    maximum_linearity_error_pinsp = 0.04   # B/100 for Pinsp
-    maximum_bias_error_volume = 4          # A in cl
-    maximum_linearity_error_volume = 0.15  # B/100 for tidal volume
-
     ## MVM PEEP compared with set value
-    nom_peep_low = nom_peep - maximum_bias_error_peep - maximum_linearity_error_peep * nom_peep
-    nom_peep_wid = 2 * (maximum_bias_error_peep + maximum_linearity_error_peep * nom_peep)
+    nom_peep_low = nom_peep - MVM.maximum_bias_error_peep - MVM.maximum_linearity_error_peep * nom_peep
+    nom_peep_wid = 2 * (MVM.maximum_bias_error_peep + MVM.maximum_linearity_error_peep * nom_peep)
     axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
     aa = patches.Rectangle( (nom_peep_low, axs[0].get_ylim()[0]  ) , nom_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[0].add_patch(aa)
@@ -117,8 +110,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     ## MVM Pinsp compared with set value
     nominal_plateau = meta[objname]["Pinspiratia"]
-    nominal_plateau_low = nominal_plateau - maximum_bias_error_pinsp - maximum_linearity_error_pinsp * nominal_plateau
-    nominal_plateau_wid = 2 * (maximum_bias_error_pinsp + maximum_linearity_error_pinsp * nominal_plateau)
+    nominal_plateau_low = nominal_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * nominal_plateau
+    nominal_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * nominal_plateau)
     _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
     axs[1].hist ( measured_plateaus, bins=100, range=_range   )
     aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
@@ -126,8 +119,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[1].set_title("plateau [cmH2O], nominal: %s [cmH2O]"%nominal_plateau, weight='heavy', fontsize=10)
 
     ## MVM Pinsp compared with simulator values
-    simulator_plateau_low = simulator_plateau - maximum_bias_error_pinsp - maximum_linearity_error_pinsp * simulator_plateau
-    simulator_plateau_wid = 2 * (maximum_bias_error_pinsp + maximum_linearity_error_pinsp * simulator_plateau)
+    simulator_plateau_low = simulator_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * simulator_plateau
+    simulator_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * simulator_plateau)
     #print (measured_plateaus, mean_plateau, simulator_plateau )
     _range = ( min([ mean_plateau,simulator_plateau] )*0.7 , max( [mean_plateau,simulator_plateau] ) *1.4    )
     axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
@@ -138,8 +131,9 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[2].add_patch(aa)
 
     ## MVM tidal volumes compared with simulator values
-    simulator_volume_low = simulator_volume - maximum_bias_error_volume - maximum_linearity_error_volume * simulator_volume
-    simulator_volume_wid = 2 * (maximum_bias_error_volume + maximum_linearity_error_volume * simulator_volume)
+    MVM_maximum_bias_error_volume_cl = MVM.maximum_bias_error_volume * 0.1   # ml to cl
+    simulator_volume_low = simulator_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * simulator_volume
+    simulator_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * simulator_volume)
     _range = ( min([ mean_volume,simulator_volume] )*0.7 , max( [mean_volume,simulator_volume] ) *1.4    )
     axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
     axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
@@ -154,10 +148,10 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     ## Print test result, based on comparisons with maximum errors
     if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
-      print("SUCCESS: PEEP within maximum errors")
+      print("SUCCESS: PEEP all values within maximum errors")
     else:
       print("FAILURE: PEEP outside maximum errors")
     if min_plateau > nominal_plateau_low and max_plateau < nominal_plateau_low + nominal_plateau_wid:
-      print("SUCCESS: Pinsp within maximum errors")
+      print("SUCCESS: Pinsp all values within maximum errors")
     else:
       print("FAILURE: Pinsp outside maximum errors")

@@ -6,6 +6,9 @@ import json
 import matplotlib.pyplot as plt
 import lmfit
 
+from mvmconstants import *
+
+
 def get_table(df):
   toprint = []
 
@@ -60,6 +63,7 @@ def get_table(df):
   print(output)
   return output
 
+
 def process_files(files, output_dir):
   dfs = []
   for i, fname in enumerate(files):
@@ -100,24 +104,22 @@ def process_files(files, output_dir):
     ('$V_{tidal}$ from simulator [ml]', 'measured $V_{tidal}$ [ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
   ]
 
-  ## FIXME: same block in combine_plot_summary_canvases.py - Values should only be coded in one place
-  ## Define maximum bias error A, maximum linearity error B
-  ## EXAMPLE ±(A +(B % of the set pressure)) cmH2O
-  maximum_bias_error = {          # A
-    'mean_peep' : 2,
-    'mean_plateau' : 2,
-    'mean_volume_ml' : 40
+  ## Retrieve maximum errors, for use in loop
+  maximum_bias_error = {
+    'mean_peep' : MVM.maximum_bias_error_peep,
+    'mean_plateau' : MVM.maximum_bias_error_pinsp,
+    'mean_volume_ml' : MVM.maximum_bias_error_volume
   }
-  maximum_linearity_error = {     # B/100
-    'mean_peep' : 0.04,
-    'mean_plateau' : 0.04,
-    'mean_volume_ml' : 0.15
+  maximum_linearity_error = {
+    'mean_peep' : MVM.maximum_linearity_error_peep,
+    'mean_plateau' : MVM.maximum_linearity_error_pinsp,
+    'mean_volume_ml' : MVM.maximum_linearity_error_volume
   }
 
   line = lmfit.models.LinearModel()
   for xname, yname, setval, mean, rms, max, min in variables:
     fig, ax = plt.subplots(1, 1)
-    fig.canvas.set_window_title(f'x={setval}, y={mean}, yerr=full range')
+    fig.canvas.set_window_title(f'x={setval}, y={mean}, yerr=Full range of measured values')
 
     for setname, data in TV.items():
 #     params = line.guess(data[mean], x=data[setval])
@@ -139,7 +141,7 @@ def process_files(files, output_dir):
     fitstring = f'Best fit: y = {res.best_values["intercept"]:.1f} + {res.best_values["slope"]:.2f}x'
     ax.plot(df_to_fit[setval], res.best_fit, '-', label=fitstring)
 
-    maximum_error_string = f'$\pm$({maximum_bias_error[mean]:.1f} +({(maximum_linearity_error[mean]*100):.1f}% of the value))'
+    maximum_error_string = f'$\pm$({maximum_bias_error[mean]:.1f} +({(maximum_linearity_error[mean]*100):.1f}% of the x-axis value))'
     x_limit = np.arange(0.0, df_to_fit[setval].max()*1.2, 0.01)
     max_limit = maximum_bias_error[mean] + (1 + maximum_linearity_error[mean]) * x_limit
     min_limit = -maximum_bias_error[mean] + (1 - maximum_linearity_error[mean]) * x_limit
