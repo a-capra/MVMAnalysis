@@ -421,7 +421,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     if len(this_cycle_insp)<1 : continue
     cycle_inspiration_end   = this_cycle_insp['dt'].iloc[-1]
 
-    if i > len(dfhd['ncycle'].unique()) -2 : continue
+    if i > len(dfhd['ncycle'].unique()) -3 : continue
     #compute tidal volume in simulator df
     subdf             = df[ (df.dt>start_times[i]) & (df.dt<start_times[i+1]) ]
     real_tidal_volume = ( subdf['total_vol'] - subdf['total_vol'].min() ).max()
