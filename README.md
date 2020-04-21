@@ -1,32 +1,45 @@
 # MVM
 
-Add upstream repo
+
+## Getting started
+Checkout the package via
 ```
-git remote add upstream https://github.com/vippolit/MVM
-git remote set-url upstream https://github.com/MechanicalVentilatorMilano/MVMAnalysis.git
+  git clone https://github.com/vippolit/MVM.git
 ```
 
-Verify
+On a linux PC, run:
 ```
-git remote -v
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  bash Miniconda3-latest-Linux-x86_64.sh
 ```
-
-
-Syncing
+while on a Mac:
 ```
-git fetch upstream
-git checkout master
-git merge upstream/master
+  curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+  bash Miniconda3-latest-MacOSX-x86_64.sh
 ```
 
-Create the conda environment:
+Then, create the conda environment:
 ```
   conda config --add channels conda-forge
-  conda create --name mvm python=3.8
-  conda activate mvm
-  conda install mkl jupyter numpy scipy matplotlib scikit-learn h5py pandas pytables google-auth-oauthlib google-api-python-client lmfit
+  conda create --name piton3 root=6 python=3 mkl jupyter numpy scipy matplotlib scikit-learn h5py pandas pytables root_pandas pytables google-auth-oauthlib google-api-python-client lmfit
 ```
 
+and activate it:
+```
+  source activate piton3
+```
+
+In order to deactivate the environment and unsetup all packages (thus restoring your standard environment), simply do:
+
+```
+  source deactivate
+```
+
+If you use distributed computing resources, you may have access to CMVFS, where you can use
+```
+source /cvmfs/sft.cern.ch/lcg/views/LCG_96python3/x86_64-centos7-gcc8-opt/setup.sh
+pip install --user pytables
+```
 
 ## To run
 For example,
@@ -39,12 +52,5 @@ python get_tables.py plots_iso/*json --output-dir=plots_iso
 
 Folders:
   * `python`: python code
-  * `scrap`: to be removed
-  * `.vscode`: debug/develop
-  
-  
-## Data location
-CERN
-```
-/eos/experiment/re37/mvm
-```
+  * `cpp`: C++ code
+  * `scripts`: scripts (plotting, etc)
