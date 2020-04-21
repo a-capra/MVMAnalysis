@@ -276,8 +276,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ymin, ymax = ax11.get_ylim()
       ax11.set_ylim(ymin*1.45, ymax*1.55)
       ax11.legend(loc='upper center', ncol=2)
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]         PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]         PEEP = %s [cmH2O]"%(RT,CM,PE )
+      title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
       ax11.set_xlabel("Time [s]")
 
@@ -335,8 +335,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ax2legend.legendHandles[1]._legmarker.set_markersize(legmarkersize)
       ax2legend.legendHandles[2]._legmarker.set_markersize(legmarkersize)
 
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]        PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
+      title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
       ax2.set_xlabel("Time [s]")
 
