@@ -151,3 +151,13 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     figpath = "%s/%s_summary_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     print(f'Saving figure to {figpath}')
     figs.savefig(figpath)
+
+    ## Print test result, based on comparisons with maximum errors
+    if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
+      print("SUCCESS: PEEP within maximum errors")
+    else:
+      print("FAILURE: PEEP outside maximum errors")
+    if min_plateau > nominal_plateau_low and max_plateau < nominal_plateau_low + nominal_plateau_wid:
+      print("SUCCESS: Pinsp within maximum errors")
+    else:
+      print("FAILURE: Pinsp outside maximum errors")
