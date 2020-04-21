@@ -48,8 +48,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     ymin, ymax = ax2.get_ylim()
     ax2.set_ylim(ymin*1.4, ymax*1.5)
     ax2.legend(loc='upper center', ncol=2)
-    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]        PEEP = %s [cmH20]"%(RT,CM,PE )
-    title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
+    title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
     ax2.set_xlabel("Time [s]")
 
@@ -104,7 +104,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
     aa = patches.Rectangle( (nom_peep_low, axs[0].get_ylim()[0]  ) , nom_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[0].add_patch(aa)
-    axs[0].set_title("PEEP [cmH20], nominal: %2.1f [cmH20]"%nom_peep, weight='heavy', fontsize=10)
+    axs[0].set_title("PEEP [cmH2O], nominal: %2.1f [cmH2O]"%nom_peep, weight='heavy', fontsize=10)
 
     ## MVM Pinsp compared with set value
     nominal_plateau = meta[objname]["Pinspiratia"]
@@ -114,7 +114,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[1].hist ( measured_plateaus, bins=100, range=_range   )
     aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[1].add_patch(aa)
-    axs[1].set_title("plateau [cmH20], nominal: %s [cmH20]"%nominal_plateau, weight='heavy', fontsize=10)
+    axs[1].set_title("plateau [cmH2O], nominal: %s [cmH2O]"%nominal_plateau, weight='heavy', fontsize=10)
 
     ## MVM Pinsp compared with simulator values
     simulator_plateau_low = simulator_plateau - 2 - 0.04 * simulator_plateau
