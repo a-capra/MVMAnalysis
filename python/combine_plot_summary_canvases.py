@@ -133,4 +133,5 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[3].add_patch(aa)
 
     figpath = "%s/%s_summary_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    print(f'Saving figure to {figpath}')
     figs.savefig(figpath)
