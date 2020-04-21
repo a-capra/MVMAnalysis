@@ -98,7 +98,6 @@ def read_meta_from_spreadsheet (df, filename) :
       'SimulatorFileName': df["simulator_filename"].iloc[idx] ,
       'Campaign': df["campaign"].iloc[idx] ,
       'MVM_filename' : df["MVM_filename"].iloc[idx],
-#      'MVM_mapping' : df["MVM_mapping"].iloc[idx],  #HTJI
       'test_name' : df["N"].iloc[idx],
       'Tidal Volume' : df["TV"].iloc[idx],
       'leakage' : df["leakage"].iloc[idx],
