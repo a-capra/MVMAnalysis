@@ -83,8 +83,8 @@ def process_files(files, output_dir):
 
   # PLOTS
   TV = {
-    '$V_{tidal}$ > 300 ml': df[df['Tidal Volume'] > 300],
-    '300 ml > $V_{tidal}$ > 50 ml': df[(300 > df['Tidal Volume']) & (df['Tidal Volume'] > 50)],
+    '$V_{tidal}$ >= 300 ml': df[df['Tidal Volume'] >= 300],
+    '300 ml > $V_{tidal}$ >= 50 ml': df[(300 > df['Tidal Volume']) & (df['Tidal Volume'] >= 50)],
     '$V_{tidal}$ < 50 ml': df[df['Tidal Volume'] < 50]
   }
 
@@ -96,7 +96,7 @@ def process_files(files, output_dir):
     ('set $V_{tidal}$ [ml]', 'measured $V_{tidal}$ [ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml'),
     ('$V_{tidal}$ from simulator [ml]', 'measured $V_{tidal}$ [ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml'),
   ]
-  
+
   line = lmfit.models.LinearModel()
   for xname, yname, setval, mean, rms in variables:
     fig, ax = plt.subplots(1, 1)
@@ -127,7 +127,7 @@ def process_files(files, output_dir):
     fig.savefig(f'{output_dir}/isoplot_{setval}.pdf')
     #fig.show()
   plt.show()
-  
+
 
 if __name__ == '__main__':
   import argparse
