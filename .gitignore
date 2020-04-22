@@ -1,6 +1,4 @@
 data/
-plots/
-simple_plots/
-triumf_plots/
+*plots/
 *.pyc
 *.pickle
