@@ -107,7 +107,7 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   #local_objname = "%s_%i"% ( objname[:-2] , 1 )
 
   PE = meta["PEEP"]
-  PI = meta["PIP"]
+  PI = meta["P"]
   RR = meta["RR"]
   RT = meta["R"]
   CM = meta["C"]
