@@ -60,10 +60,22 @@
             "console": "integratedTerminal"
         },
         {
-            "name": " dumb down analysis ",
+            "name": " online analysis ",
             "type": "python",
             "request": "launch",
             "program": "python/simple.py",
+            "args": [
+                "run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json",
+                "run_035.rwa",
+                "-i./data/Napoli/",
+                "-C 25",
+                "-R 20",
+                "-r 10",
+                "-P 15",
+                "-Q 5",
+                "-f 0.5",
+                "-> Napoli"
+            ],
             "console": "integratedTerminal"
         }
     ]
