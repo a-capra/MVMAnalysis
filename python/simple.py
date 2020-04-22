@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import argparse
 
 from mvmio import *
 from combine import *
@@ -38,7 +39,7 @@ columns_dta = ['breath_no',
     'ventilator_pressure',
   ]
 
-output_directory="C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/simple_plots"
+output_directory="C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/online_plots"
 colors = {  "muscle_pressure": "#009933"  , #green
       "sim_airway_pressure": "#cc3300" ,# red
       "total_flow":"#ffb84d" , #
@@ -58,7 +59,6 @@ fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/
 #simname='08042020_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO05.rwa'
 simname='run_035.rwa'
 fullpath_rwa = fullpath+simname
-fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
 
 #fname="VENTILATOR_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO0.50.txt"
 fname="run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json"
@@ -66,31 +66,67 @@ input_mvm = fullpath+fname
 
 mvm_sep = " -> "
 mvm_columns = "mvm_col_arduino"
-mvm_json=True
-
-pressure_offset=0
-manual_offset=0
-
-# sett = { 'C':20,
-# 'R':6,
-# 'RR':20,
-# 'PIP':30,
-# 'PEEP':5,
-# 'RF':0.5}
 
 sett = { 'C':25,
 'R':20,
 'RR':10,
-'PIP':15,
+'P':15,
 'PEEP':5,
 'RF':0.5}
 
 
 if __name__ == '__main__':
 
-  # retrieve simulator data
-  df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
+  parser = argparse.ArgumentParser(description='MVM online analysis')
+  parser.add_argument("input_mvm", help="name of the MVM input file (.json)",default='run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json')
+  parser.add_argument("input_asl", help="name of the ASL5000 simulation file (.rwa)",default='run_035.rwa')
 
+  parser.add_argument("-i", "--input_directory", type=str, help="name of the output directory for plots", default='./data/')
+  parser.add_argument("-d", "--output_directory", type=str, help="name of the output directory for plots", default='./online_plots')
+  parser.add_argument("-s", "--skip_sim", action='store_true',  help="skip_sim")
+  #parser.add_argument("-json", action='store_true', help="read json instead of csv")
+  parser.add_argument("-txt", action='store_true', help="read csv instead of json")
+  parser.add_argument("-t", "--time_offset", type=float, help="time offset between vent/sim", default=0)
+  parser.add_argument("-o", "--pressure_offset", type=float, help="pressure offset between vent/sim", default=0)
+  parser.add_argument("->","--tag", type=str, help="global label", default="test")
+
+  parser.add_argument("-C", "--compliance", type=float, help="Compliance of the respiratory system  [ml/hPa]", default=0)
+  parser.add_argument("-R", "--resistance", type=float, help="Resistance of the respiratory system  [hPa/l/s]", default=0)
+  parser.add_argument("-P", "--inspiratory_pressure", type=float, help="Targeted Pressure [cmH2O]", default=0)
+  parser.add_argument("-Q", "--PEEP",type=float, help="Positive end-expiratory pressure  [cmH2O]", default=0)
+  parser.add_argument("-r", "--respiratory_rate", help='Number of breath per minute',default=1)
+  parser.add_argument("-f", "--respiratory_fraction", help='I:E',default=0)
+
+  args = parser.parse_args()
+
+  fullpath=args.input_directory
+  input_mvm = fullpath+args.input_mvm
+  print('Reading MVM data from',input_mvm)
+  fullpath_rwa = fullpath+args.input_asl
+  print('Reading ASL5000 data from',fullpath_rwa)
+  fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
+
+  pressure_offset = args.pressure_offset
+  manual_offset = args.time_offset
+
+  sett = { 
+          'C':float(args.compliance),
+          'R':float(args.resistance),
+          'RR':float(args.respiratory_rate),
+          'P':float(args.inspiratory_pressure),
+          'PEEP':float(args.PEEP),
+          'RF':float(args.respiratory_fraction)
+          }
+
+  # retrieve simulator data
+  if not args.skip_sim:
+    df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
+  else:
+    print('Ignore ASL5000 data')
+
+  mvm_json=True
+  if args.txt: 
+    mvm_json = False
   # retrieve MVM data
   if mvm_json:    dfhd = get_mvm_df_json (fname=input_mvm)
   else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
@@ -98,7 +134,8 @@ if __name__ == '__main__':
 
   # apply corrections
   correct_mvm_df(dfhd, pressure_offset)
-  correct_sim_df(df)
+  if not args.skip_sim:
+    correct_sim_df(df)
 
   apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
 
@@ -112,6 +149,11 @@ if __name__ == '__main__':
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+
+  if args.skip_sim:
+      plot_mvm_only_canvases(dfhd, {'dummy':{'test_name':'test'}}, 'dummy', start_times, colors)
+      exit #stop here if sim is ignored
+
   reaction_times = get_reaction_times(df, start_times)
 
   # add info
@@ -127,6 +169,7 @@ if __name__ == '__main__':
   add_clinical_values(df)
   respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
 
+  """   
   #thispeep  = [ dfhd[dfhd.ncycle==i]['cycle_PEEP'].iloc[0] for
   measured_peeps      = []
   measured_volumes    = []
@@ -165,8 +208,8 @@ if __name__ == '__main__':
   print ("measured_peeps", measured_peeps)
   print ("measured_volumes",measured_volumes)
   print ("measured_peaks",measured_peaks)
-  #print ("measured_plateau",measured_plateau)
-
+  print ("measured_plateau",measured_plateau)
+  """
 
   ##################################
   # find runs
@@ -176,11 +219,11 @@ if __name__ == '__main__':
   ####################################################
   # plot simple canavas
   ####################################################
-  plot_general_canvases(df, dfhd, fname, output_directory, start_times, colors, respiration_rate, inspiration_duration)
+  plot_general_canvases(df, dfhd, fname, args.output_directory, start_times, colors, respiration_rate, inspiration_duration, args.tag)
 
   # 'choose here the name of the MVM flux variable to be shown in arXiv plots
   dfhd['display_flux'] = dfhd['flux_3'] # why???
-  plot_arXiv_style(df, dfhd, fname, output_directory, start_times, colors, sett)
+  plot_arXiv_style(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.tag)
 
 
   fig=plt.figure(figsize=(13,8))
@@ -212,4 +255,4 @@ if __name__ == '__main__':
 
   fig.tight_layout()
   plt.show()
-  fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(output_directory,sett['C'],sett['R'],sett['RR'],sett['PIP'],sett['PEEP']))
+  fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(args.output_directory,sett['C'],sett['R'],sett['RR'],sett['P'],sett['PEEP']))
