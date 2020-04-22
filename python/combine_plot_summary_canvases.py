@@ -152,6 +152,13 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     print(f'Saving figure to {figpath}')
     figs.savefig(figpath)
 
+    ## Debug output
+    #print("measured_peeps:", measured_peeps)
+    #print("measured_plateaus:", measured_plateaus)
+    #print("real_plateaus:", real_plateaus)
+    #print("measured_volumes:", measured_volumes)
+    #print("real_tidal_volumes:", real_tidal_volumes)
+
     ## Print test result, based on comparisons with maximum errors
     if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
       print("SUCCESS: PEEP within maximum errors")
