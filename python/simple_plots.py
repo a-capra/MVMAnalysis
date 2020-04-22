@@ -98,13 +98,17 @@ def plot_general_canvases (df, dfhd, objname, output_directory, start_times, col
   figbis.savefig(figpath)
 
 
-def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, meta, tag='TRIUMF_test'):
+def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, meta, my_selected_cycle ,tag='TRIUMF_test'):
 
   ####################################################
   '''formatted plots for ISO std / arXiv'''
   ####################################################
 
-  #local_objname = "%s_%i"% ( objname[:-2] , 1 )
+  Nbreath=6
+  if (my_selected_cycle + Nbreath) >= len(start_times):
+    my_selected_cycle = len(start_times) - 1 - Nbreath
+    print('move beginning of selected cycle to',my_selected_cycle)
+  if my_selected_cycle < 0: my_selected_cycle=0
 
   PE = meta["PEEP"]
   PI = meta["P"]
@@ -116,17 +120,15 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
 
   print ("Looking for R=%s, C=%s, RR=%s, PEEP=%s, PINSP=%s"%(RT,CM,RR,PE,PI) )
 
-  my_selected_cycle = 3
-
   print ("\nFor test I am selecting cycle %i, starting at %f \n"%( my_selected_cycle , start_times[ my_selected_cycle ]))
 
   fig11,ax11 = plt.subplots()
 
   print (start_times)
   #make a subset dataframe for simulator
-  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + 6])  ]
+  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + Nbreath])  ]
   #the (redundant) line below avoids the annoying warning
-  dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
+  dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + Nbreath])  ]
 
   #make a subset dataframe for ventilator
   first_time_bin  = dftmp['dt'].iloc[0]

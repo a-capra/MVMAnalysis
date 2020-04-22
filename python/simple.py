@@ -90,7 +90,9 @@ if __name__ == '__main__':
   parser.add_argument("-txt", action='store_true', help="read csv instead of json")
   parser.add_argument("-t", "--time_offset", type=float, help="time offset between vent/sim", default=0)
   parser.add_argument("-o", "--pressure_offset", type=float, help="pressure offset between vent/sim", default=0)
+  parser.add_argument("-b", "--breath", type=int, help="breath cycle offset", default=0)
   parser.add_argument("->","--tag", type=str, help="global label", default="test")
+
 
   parser.add_argument("-C", "--compliance", type=float, help="Compliance of the respiratory system  [ml/hPa]", default=0)
   parser.add_argument("-R", "--resistance", type=float, help="Resistance of the respiratory system  [hPa/l/s]", default=0)
@@ -170,48 +172,6 @@ if __name__ == '__main__':
   add_clinical_values(df)
   respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
 
-  """   
-  #thispeep  = [ dfhd[dfhd.ncycle==i]['cycle_PEEP'].iloc[0] for
-  measured_peeps      = []
-  measured_volumes    = []
-  measured_peaks      = []
-  measured_plateaus   = []
-  real_tidal_volumes  = []
-  real_plateaus       = []
-
-  for i,nc in enumerate(dfhd['ncycle'].unique()) :
-
-    this_cycle              = dfhd[ dfhd.ncycle==nc ]
-    this_cycle_insp         = this_cycle[this_cycle.is_inspiration==1]
-
-    if len(this_cycle_insp)<1 : continue
-    cycle_inspiration_end   = this_cycle_insp['dt'].iloc[-1]
-
-    if i > len(dfhd['ncycle'].unique()) -2 : continue
-    #compute tidal volume in simulator df
-    subdf             = df[ (df.dt>start_times[i]) & (df.dt<start_times[i+1]) ]
-
-    subdf['total_vol_subtracted'] = subdf['total_vol'] - subdf['total_vol'].min()
-    real_tidal_volume = subdf['total_vol_subtracted' ] .max()
-    #compute plateau in simulator
-    subdf             = df[ (df.dt>start_times[i]) & (df.dt<cycle_inspiration_end) ]
-    real_plateau      = subdf[ (subdf.dt > cycle_inspiration_end - 20e-3) ]['airway_pressure'].mean()
-    #this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
-    real_tidal_volumes.append(  real_tidal_volume   )
-    real_plateaus.append (real_plateau)
-
-
-    measured_peeps.append(  this_cycle['cycle_PEEP'].iloc[0])
-    measured_volumes.append(this_cycle['cycle_tidal_volume'].iloc[0])
-    measured_peaks.append(   this_cycle['cycle_peak_pressure'].iloc[0])
-    measured_plateaus.append(this_cycle['cycle_plateau_pressure'].iloc[0])
-
-  print ("measured_peeps", measured_peeps)
-  print ("measured_volumes",measured_volumes)
-  print ("measured_peaks",measured_peaks)
-  print ("measured_plateau",measured_plateau)
-  """
-
   ##################################
   # find runs
   ##################################
@@ -224,7 +184,7 @@ if __name__ == '__main__':
 
   # 'choose here the name of the MVM flux variable to be shown in arXiv plots
   dfhd['display_flux'] = dfhd['flux_3'] # why???
-  plot_arXiv_style(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.tag)
+  plot_arXiv_style(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
 
 
   fig=plt.figure(figsize=(13,8))
