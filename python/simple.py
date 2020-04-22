@@ -38,23 +38,6 @@ columns_dta = ['breath_no',
     'ventilator_pressure',
   ]
 
-#fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/"
-fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"
-
-#simname='passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa'
-simname='08042020_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO05.rwa'
-fullpath_rwa = fullpath+simname
-fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
-
-fname="VENTILATOR_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO0.50.txt"
-input_mvm = fullpath+fname
-
-mvm_sep = " -> "
-mvm_columns = "mvm_col_arduino"
-
-pressure_offset=0
-manual_offset=0
-
 output_directory="C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/simple_plots"
 colors = {  "muscle_pressure": "#009933"  , #green
       "sim_airway_pressure": "#cc3300" ,# red
@@ -67,10 +50,38 @@ colors = {  "muscle_pressure": "#009933"  , #green
       "flux" : "#3399ff" #light blue
     }
 
-sett = { 'C':20,
-'R':6,
-'RR':20,
-'PIP':30,
+#fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/"
+#fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"
+fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Napoli/"
+
+#simname='passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa'
+#simname='08042020_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO05.rwa'
+simname='run_035.rwa'
+fullpath_rwa = fullpath+simname
+fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
+
+#fname="VENTILATOR_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO0.50.txt"
+fname="run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json"
+input_mvm = fullpath+fname
+
+mvm_sep = " -> "
+mvm_columns = "mvm_col_arduino"
+mvm_json=True
+
+pressure_offset=0
+manual_offset=0
+
+# sett = { 'C':20,
+# 'R':6,
+# 'RR':20,
+# 'PIP':30,
+# 'PEEP':5,
+# 'RF':0.5}
+
+sett = { 'C':25,
+'R':20,
+'RR':10,
+'PIP':15,
 'PEEP':5,
 'RF':0.5}
 
@@ -81,7 +92,8 @@ if __name__ == '__main__':
   df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
 
   # retrieve MVM data
-  dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+  if mvm_json:    dfhd = get_mvm_df_json (fname=input_mvm)
+  else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
   add_timestamp(dfhd)
 
   # apply corrections
