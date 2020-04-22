@@ -88,20 +88,22 @@ def process_files(files, output_dir):
   with open(f'{output_dir}/isotable.tex', 'w') as isotable:
     isotable.write(table)
 
-  # PLOTS
+  ## Plot different series by tidal volume as per ISO
   TV = {
     '$V_{tidal}$ >= 300 ml': df[df['Tidal Volume'] >= 300],
     '300 ml > $V_{tidal}$ >= 50 ml': df[(300 > df['Tidal Volume']) & (df['Tidal Volume'] >= 50)],
     '$V_{tidal}$ < 50 ml': df[df['Tidal Volume'] < 50]
   }
 
+  ## Variables to plot.  See start of for loop below for convention
+  ## x-axis and y-axis must use the same unit
   variables = [
-    ('BAP [$cmH_{2}O$]', 'PEEP [$cmH_{2}O$]', 'Peep', 'mean_peep', 'rms_peep', 'max_peep', 'min_peep'),
-    ('$P_{plateau}$ from simulator [$cmH_{2}O$]', 'measured $P_{plateau}$ [$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-    ('set $P_{insp}$ [$cmH_{2}O$]', 'measured $P_{plateau}$ [$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-#   ('set $P_{insp}$ [$cmH_{2}O$]', 'measured $P_{peak}$ [$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
-    ('set $V_{tidal}$ [ml]', 'measured $V_{tidal}$ [ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
-    ('$V_{tidal}$ from simulator [ml]', 'measured $V_{tidal}$ [ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('BAP', 'PEEP', '[$cmH_{2}O$]', 'Peep', 'mean_peep', 'rms_peep', 'max_peep', 'min_peep'),
+    ('$P_{plateau}$ from simulator', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+    ('set $P_{insp}$', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+#   ('set $P_{insp}$', 'measured $P_{peak}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
+    ('set $V_{tidal}$', 'measured $V_{tidal}$', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('$V_{tidal}$ from simulator', 'measured $V_{tidal}$', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
   ]
 
   ## Retrieve maximum errors, for use in loop
@@ -117,7 +119,8 @@ def process_files(files, output_dir):
   }
 
   line = lmfit.models.LinearModel()
-  for xname, yname, setval, mean, rms, max, min in variables:
+  for xname, yname, unit, setval, mean, rms, max, min in variables:
+    print(f'\nMaking compliance summary plots for {yname} vs {xname}')
     fig, ax = plt.subplots(1, 1)
     fig.canvas.set_window_title(f'x={setval}, y={mean}, yerr=Full range of measured values')
 
@@ -141,14 +144,14 @@ def process_files(files, output_dir):
     fitstring = f'Best fit: y = {res.best_values["intercept"]:.1f} + {res.best_values["slope"]:.2f}x'
     ax.plot(df_to_fit[setval], res.best_fit, '-', label=fitstring)
 
-    maximum_error_string = f'$\pm$({maximum_bias_error[mean]:.1f} +({(maximum_linearity_error[mean]*100):.1f}% of the x-axis value))'
+    maximum_error_string = f'$\pm$({maximum_bias_error[mean]:.1f} +({(maximum_linearity_error[mean]*100):.1f}% of {xname})) {unit}'
     x_limit = np.arange(0.0, df_to_fit[setval].max()*1.2, 0.01)
     max_limit = maximum_bias_error[mean] + (1 + maximum_linearity_error[mean]) * x_limit
     min_limit = -maximum_bias_error[mean] + (1 - maximum_linearity_error[mean]) * x_limit
     ax.fill_between(x_limit, min_limit, max_limit, facecolor='green', alpha=0.2, label=maximum_error_string)
     ax.legend()
-    ax.set_xlabel(f'{xname}')
-    ax.set_ylabel(f'{yname}')
+    ax.set_xlabel(f'{xname} {unit}')
+    ax.set_ylabel(f'{yname} {unit}')
     ax.set_xlim(0, df_to_fit[setval].max()*1.2)
     ax.set_ylim(0, df_to_fit[mean].max()*1.2)
     fig.savefig(f'{output_dir}/isoplot_{setval}.pdf')
