@@ -744,7 +744,7 @@ if __name__ == '__main__':
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
       if (not args.json and not fname.endswith(".txt")):
-        print ("adding extra tst")
+        print ("adding extra .txt to fname")
         fname = f'{fname}.txt'
 
       print(f'\nFile name {fname}')
