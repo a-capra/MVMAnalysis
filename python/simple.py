@@ -38,7 +38,9 @@ columns_dta = ['breath_no',
     'ventilator_pressure',
   ]
 
-fullpath_rwa = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa"
+#fullpath_rwa = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa"
+simname='08042020_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO05.rwa'
+fullpath_rwa = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"+simname
 fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
 
 fname="VENTILATOR_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO0.50.txt"
@@ -63,9 +65,9 @@ colors = {  "muscle_pressure": "#009933"  , #green
 
 sett = { 'C':20,
 'R':6,
-'RR':15,
+'RR':20,
 'PIP':30,
-'PEEP':7,
+'PEEP':5,
 'RF':0.5}
 
 
@@ -168,6 +170,7 @@ if __name__ == '__main__':
   fig=plt.figure(figsize=(13,8))
   
   ax1 = plt.subplot(311)
+  plt.title(' '.join([k+str(sett[k]) for k in sett]))
   plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway_pressure')
   plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
   plt.setp(ax1.get_xticklabels(), visible=False)

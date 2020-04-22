@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 
-def plot_general_canvases (df, dfhd, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration):
+def plot_general_canvases (df, dfhd, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration, tag='TRIUMF_test'):
 
   ####################################################
   '''general service canavas number 1'''
@@ -49,8 +49,8 @@ def plot_general_canvases (df, dfhd, objname, output_directory, start_times, col
   ax.set_xlabel("Time [sec]")
   ax.legend(loc='upper center', ncol=2)
 
-  ax.set_title ("Test BCIT", weight='heavy')
-  figpath = "%s/%s_service_%s.png" % (output_directory, "BCIT test",  objname.replace('.txt', ''))
+  ax.set_title (tag.replace('_',' '), weight='heavy')
+  figpath = "%s/%s_service_%s.png" % (output_directory, tag, objname.replace('.txt', ''))
   print(f'Saving figure to {figpath}')
   plt.savefig(figpath)
 
@@ -60,7 +60,7 @@ def plot_general_canvases (df, dfhd, objname, output_directory, start_times, col
   ####################################################
 
   figbis = plt.figure()
-  figbis.suptitle ("Test BCIT", weight='heavy')
+  figbis.suptitle (tag.replace('_',' '), weight='heavy')
   gs = gridspec.GridSpec(nrows=2, ncols=2, height_ratios=[.7,1.3], width_ratios = [1,1])
 
   axbis0 = figbis.add_subplot(gs[0, 0])
@@ -93,12 +93,12 @@ def plot_general_canvases (df, dfhd, objname, output_directory, start_times, col
   axbis1.hist ( dfhd[( dfhd['resistance']>0)]['resistance'].unique() , bins=50 )
   axbis1.set_xlabel("Measured resistance [cmH2O/l/s]")
 
-  figpath = "%s/%s_service2_%s.png" % (output_directory, "BCIT test",  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+  figpath = "%s/%s_service2_%s.png" % (output_directory, tag,  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
   print(f'Saving figure to {figpath}')
   figbis.savefig(figpath)
 
 
-def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, meta):
+def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, meta, tag='TRIUMF_test'):
 
   ####################################################
   '''formatted plots for ISO std / arXiv'''
@@ -112,11 +112,13 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   RT = meta["R"]
   CM = meta["C"]
 
+  ttl=' '.join([k+str(meta[k]) for k in meta])
+
   print ("Looking for R=%s, C=%s, RR=%s, PEEP=%s, PINSP=%s"%(RT,CM,RR,PE,PI) )
 
-  my_selected_cycle = 0
+  my_selected_cycle = 3
 
-  print ("\nFor test BCIT  I am selecting cycle %i, starting at %f \n"%( my_selected_cycle , start_times[ my_selected_cycle ]))
+  print ("\nFor test I am selecting cycle %i, starting at %f \n"%( my_selected_cycle , start_times[ my_selected_cycle ]))
 
   fig11,ax11 = plt.subplots()
 
@@ -164,8 +166,8 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   #add / remove PEEP line
   #ax11.add_patch(rect)
 
-  ax11.set_title ("Test BCIT ", weight='heavy')
-  figpath = "%s/%s_%s.pdf" % (output_directory, "BCIT test",  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+  ax11.set_title (tag.replace('_',' '), weight='heavy')
+  figpath = "%s/%s_%s.pdf" % (output_directory, tag,  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
   print(f'Saving figure to {figpath}')
   fig11.savefig(figpath)
 
@@ -191,8 +193,8 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   ax31[1].set_xlabel("Time [s]")
   ax31[2].set_xlabel("Time [s]")
 
-  fig31.suptitle ("Test BCIT", weight='heavy')
-  figpath = "%s/%s_3views_%s.png" % (output_directory, "BCIT test",  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+  fig31.suptitle(tag.replace('_',' ') + ' ' + ttl, weight='heavy')
+  figpath = "%s/%s_3views_%s.png" % (output_directory, tag,  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
   print(f'Saving figure to {figpath}')
   fig31.savefig(figpath)
 
