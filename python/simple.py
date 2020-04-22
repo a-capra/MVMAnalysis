@@ -38,13 +38,17 @@ columns_dta = ['breath_no',
     'ventilator_pressure',
   ]
 
-#fullpath_rwa = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa"
+#fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/20200408/rawdata/"
+fullpath = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"
+
+#simname='passive_C20R6_RR15_Pins30_It1.5_PEEP7.rwa'
 simname='08042020_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO05.rwa'
-fullpath_rwa = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"+simname
+fullpath_rwa = fullpath+simname
 fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
 
 fname="VENTILATOR_CONTROLLED_FR20_PEEP5_PINSP30_C20_R5_RATIO0.50.txt"
-input_mvm = "C:/Users/andre/Documents/MVM/breathing_simulator_test/data_analysis/data/Run_12_Apr_8/"+fname
+input_mvm = fullpath+fname
+
 mvm_sep = " -> "
 mvm_columns = "mvm_col_arduino"
 
@@ -171,7 +175,7 @@ if __name__ == '__main__':
   
   ax1 = plt.subplot(311)
   plt.title(' '.join([k+str(sett[k]) for k in sett]))
-  plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway_pressure')
+  plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway p')
   plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
   plt.setp(ax1.get_xticklabels(), visible=False)
   plt.ylabel('[cmH2O]')
@@ -179,17 +183,17 @@ if __name__ == '__main__':
 
 
   ax2 = plt.subplot(312, sharex=ax1)
-  plt.plot(df['dt'], df['total_vol'], label='ASL5000 total vol')
-  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal volume')
+  plt.plot(df['dt'], df['total_vol'], label='ASL5000 tot vol')
+  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal vol')
   plt.setp(ax2.get_xticklabels(), visible=False)
-  plt.ylabel('[L]')
+  plt.ylabel('[cL]')
   plt.legend()
 
   ax3 = plt.subplot(313, sharex=ax1)
-  plt.plot(df['dt'], df['total_flow'], label='ASL5000 total_flow')
+  plt.plot(df['dt'], df['total_flow'], label='ASL5000 tot flow')
   plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
   plt.xlabel('[sec]')
-  plt.ylabel('[L/s]')
+  plt.ylabel('[L/min]')
   plt.legend()
 
   plt.xlim(10, 60)
