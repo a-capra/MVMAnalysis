@@ -139,7 +139,7 @@ def get_start_times(df, thr=50, dist=0.1, quantity='out', timecol='dt'):
   ''' Get times where a given quantity starts being above threshold
   times_open = df[ ( df[quantity]>thr ) ][timecol]
   start_times = [ float(times_open.iloc[i]) for i in range(0, len(times_open)-1) if times_open.iloc[i+1]-times_open.iloc[i] > 0.1  or i == 0  ]
-  '''
+'''
   start_times = df[df['out_status'] == 'closing']['dt'].unique()
   return start_times
 
@@ -429,6 +429,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+  #  start_times    = get_start_times(df, thr=8, quantity='total_flow', timecol='dt') 
 
   if ignore_sim :
     if args.plot :
