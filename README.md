@@ -4,7 +4,7 @@
 ## Getting started
 Checkout the package via
 ```
-  git clone https://github.com/vippolit/MVM.git
+  git clone https://github.com/MechanicalVentilatorMilano/MVMAnalysis.git
 ```
 
 On a linux PC, run:
