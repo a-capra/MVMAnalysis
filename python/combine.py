@@ -139,7 +139,7 @@ def get_start_times(df, thr=50, dist=0.1, quantity='out', timecol='dt'):
   ''' Get times where a given quantity starts being above threshold
   times_open = df[ ( df[quantity]>thr ) ][timecol]
   start_times = [ float(times_open.iloc[i]) for i in range(0, len(times_open)-1) if times_open.iloc[i+1]-times_open.iloc[i] > 0.1  or i == 0  ]
-  '''
+'''
   start_times = df[df['out_status'] == 'closing']['dt'].unique()
   return start_times
 
@@ -170,13 +170,21 @@ def get_reaction_times(df, start_times, quantity='total_flow', timecol='dt', thr
 
 def add_cycle_info(sim, mvm, start_times, reaction_times):
   ''' Add cycle start, reaction time, time-in-breath '''
+  ''' 
+  Add integer index information for easier lining up of 
+  stats at given bin on cycle overlay plots. 
+  Chris.Jillings@snolab.ca 2020-04-20 
+  '''
   sim['start'] = 0
   sim['tbreath'] = 0
   sim['reaction_time'] = 0
   for s,f in zip (start_times,reaction_times) :
+    times_open = sim[ ( sim.dt>s ) ]['iindex']
+    this_iindex = times_open.iloc[0]  #The sim data not synchronous to the start_times
     sim.loc[sim.dt>s,'start']   = s
     sim.loc[sim.dt>s,'tbreath'] = sim.dt - s
     sim.loc[sim.dt>s,'reaction_time'] = f
+    sim.loc[sim.dt>s,'siindex'] = this_iindex
 
   mvm['start'] = 0
   mvm['ncycle']= 0
@@ -200,6 +208,43 @@ def add_chunk_info(df):
   for i,r in cycle.iterrows():
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
+def stats_for_repeated_cycles(adf, variable='total_flow') :
+    ''' 
+    This function assumed that the simulator DataFrame has been pre-processed
+    to include integer indexing and that the start times for each cycle have been 
+    calculated. This loops through the given DataFrame and 
+    1: Checks that there really is a one-to-one correspondence between dtc and 
+    the integer indexing
+    2: Finds the series for the variable in question for a given integer index 
+    since start of cycle
+    3: calculates some basic stats that can be used in plotting
+    4: Returns a DataFrame for plotting.
+    N.B. This function must be called once for each variable to be plotted.
+    ---
+    Chris.Jillings@snolab.ca 2020-04-19
+    '''
+    nstats = 7
+    di_series = adf['diindex']
+    length = di_series.max() - di_series.min()
+    local_stats_array = np.zeros((int(length), nstats),dtype='float64')
+    di_arr = np.arange(di_series.min(), di_series.max())
+    for i in di_arr:
+        this_series = adf.loc[adf.diindex==i, variable]
+        # Do some sanity checking here that diindex and dtc track perfectly
+        dtcmin = adf[adf.diindex==i]['dtc'].min()
+        dtcmax = adf[adf.diindex==i]['dtc'].max()
+        if ( (dtcmax-dtcmin)>0.1 ) :
+            print("Something realy bad happened preparing stats for repeated breaths.")
+            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
+            print("Error!")
+            print(dtcmin, dtcmax)
+        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
+    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+    return answer
+
+
+
+    
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -384,6 +429,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+  #  start_times    = get_start_times(df, thr=8, quantity='total_flow', timecol='dt') 
 
   if ignore_sim :
     if args.plot :
@@ -391,9 +437,22 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     return #stop here if sim is ignored
 
   reaction_times = get_reaction_times(df, start_times)
-
+  # Add some integer indexing fields for convenience in stats summary for
+  # overlap plots
+  # iindex is an integer index corresponding to a "bin number" for dt
+  # after add_ccylce_index is called siindex will correspond to df.start
+  # diindex will correspond to dtc
+  # Chris.Jillings
+  this_shape = df.shape
+  df['iindex'] = np.arange(this_shape[0])
+  df['siindex'] = np.zeros(this_shape[0])
+  df['diindex'] = np.zeros(this_shape[0])
+  
+  
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  df['dtc'] = df['dt'] - df['start']
+  df['diindex'] = df['iindex'] - df['siindex']
 
   ##################################
   # chunks
@@ -475,12 +534,25 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   add_run_info(df)
 
   ##################################
+  # Make data frames for statistics on overlayed cycles
+  ##################################
+  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-2] )  ])] 
+  stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
+  stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
+  stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
+  
+  
+  ##################################
   # saving and plotting
   ##################################
   if save:
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
+    dftmp.to_hdf(f'{objname}.sim.h5', key='simulator_truncated')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
-
+    stats_total_vol.to_hdf(f'{objname}.sim.h5', key='stats_total_vol')
+    stats_total_flow.to_hdf(f'{objname}.sim.h5', key='stats_total_flow')
+    stats_airway_pressure.to_hdf(f'{objname}.sim.h5', key='stats_airway_pressure')
+    
   if args.plot :
     ####################################################
     '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
@@ -555,7 +627,8 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
       plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-
+      plot_overlay_canvases ( dftmp, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
 
