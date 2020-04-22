@@ -120,7 +120,7 @@ def process_files(files, output_dir):
 
   line = lmfit.models.LinearModel()
   for xname, yname, unit, setval, mean, rms, max, min in variables:
-    print(f'\nMaking compliance summary plots for {yname} vs {xname}')
+    print(f'\nMaking compliance summary plot for {yname} vs {xname}')
     fig, ax = plt.subplots(1, 1)
     fig.canvas.set_window_title(f'x={setval}, y={mean}, yerr=Full range of measured values')
 
@@ -133,22 +133,26 @@ def process_files(files, output_dir):
       max_values_subtr = data[max] - data[mean]
       ax.errorbar(data[setval], data[mean], yerr=[min_values_subtr, max_values_subtr], fmt='o', label=setname)
 
-    # linear fit
+    # define data frame to consider for compliance tests
     df_to_fit = df
     if setval == 'simulator_volume_ml':
       df_to_fit = df_to_fit[df_to_fit[setval] > 50] # 201.12.1.104 from ISO
+
+    # linear fit
     params = line.guess(df_to_fit[mean], x=df_to_fit[setval])
     res = line.fit(df_to_fit[mean], params, x=df_to_fit[setval], weights=1./df_to_fit[rms])
     print(res.fit_report())
-   #fitstring = f'${res.best_values["intercept"]} \pm {(res.best_values["slope"]-1)*100}$%'
+    #fitstring = f'${res.best_values["intercept"]} \pm {(res.best_values["slope"]-1)*100}$%'
     fitstring = f'Best fit: y = {res.best_values["intercept"]:.1f} + {res.best_values["slope"]:.2f}x'
     ax.plot(df_to_fit[setval], res.best_fit, '-', label=fitstring)
 
+    # show compliance requirement band
     maximum_error_string = f'$\pm$({maximum_bias_error[mean]:.1f} +({(maximum_linearity_error[mean]*100):.1f}% of {xname})) {unit}'
     x_limit = np.arange(0.0, df_to_fit[setval].max()*1.2, 0.01)
     max_limit = maximum_bias_error[mean] + (1 + maximum_linearity_error[mean]) * x_limit
     min_limit = -maximum_bias_error[mean] + (1 - maximum_linearity_error[mean]) * x_limit
     ax.fill_between(x_limit, min_limit, max_limit, facecolor='green', alpha=0.2, label=maximum_error_string)
+
     ax.legend()
     ax.set_xlabel(f'{xname} {unit}')
     ax.set_ylabel(f'{yname} {unit}')
