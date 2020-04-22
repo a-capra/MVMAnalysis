@@ -6,6 +6,8 @@ from mvmio import *
 from combine import *
 from simple_plots import *
 
+from sys import exit
+
 columns_rwa = ['dt',
     'airway_pressure',
     'muscle_pressure',
@@ -130,30 +132,29 @@ if __name__ == '__main__':
   # retrieve MVM data
   if mvm_json:    dfhd = get_mvm_df_json (fname=input_mvm)
   else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+  
+  
   add_timestamp(dfhd)
-
-  # apply corrections
-  correct_mvm_df(dfhd, pressure_offset)
-  if not args.skip_sim:
-    correct_sim_df(df)
-
-  apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
-
-  ##################################
-  # cycles
-  ##################################
-
-  # add PV2 status info
+   # add PV2 status info
   add_pv2_status(dfhd)
 
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
 
+  # apply corrections
+  correct_mvm_df(dfhd, pressure_offset)
   if args.skip_sim:
-      plot_mvm_only_canvases(dfhd, {'dummy':{'test_name':'test'}}, 'dummy', start_times, colors)
-      exit #stop here if sim is ignored
+      plot_mvm_only_canvases(dfhd, {'dummy':{'test_name':args.input_mvm}}, 'dummy', start_times, colors)
+      plt.show()
+      exit(0) #stop here if sim is ignored
 
+  correct_sim_df(df)
+
+  #add time shift
+  #apply_manual_shift(sim=None, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
+  apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
+  
   reaction_times = get_reaction_times(df, start_times)
 
   # add info
