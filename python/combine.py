@@ -32,7 +32,7 @@ def get_deltat(df, timestampcol='timestamp', timecol='dt'):
 def correct_sim_df(df):
   ''' Apply corrections to simulator data '''
   df['total_vol'] = df['total_vol'] * 0.1
-
+  
 def correct_mvm_df(df, pressure_offset=0, pv2_thr=50):
   ''' Apply corrections to MVM data '''
   # correct for miscalibration of pressure sensor if necessary
@@ -421,19 +421,16 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     if len(this_cycle_insp)<1 : continue
     cycle_inspiration_end   = this_cycle_insp['dt'].iloc[-1]
 
-    if i > len(dfhd['ncycle'].unique()) -2 : continue
+    if i > len(dfhd['ncycle'].unique()) -3 : continue
     #compute tidal volume in simulator df
     subdf             = df[ (df.dt>start_times[i]) & (df.dt<start_times[i+1]) ]
-
-    subdf['total_vol_subtracted'] = subdf['total_vol'] - subdf['total_vol'].min()
-    real_tidal_volume = subdf['total_vol_subtracted' ] .max()
+    real_tidal_volume = ( subdf['total_vol'] - subdf['total_vol'].min() ).max()
     #compute plateau in simulator
     subdf             = df[ (df.dt>start_times[i]) & (df.dt<cycle_inspiration_end) ]
     real_plateau      = subdf[ (subdf.dt > cycle_inspiration_end - 20e-3) ]['airway_pressure'].mean()
     #this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
-    real_tidal_volumes.append(  real_tidal_volume   )
+    real_tidal_volumes.append(real_tidal_volume)
     real_plateaus.append (real_plateau)
-
 
     measured_peeps.append(  this_cycle['cycle_PEEP'].iloc[0])
     measured_volumes.append(this_cycle['cycle_tidal_volume'].iloc[0])
@@ -562,6 +559,13 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
 
+    ####################################################
+    '''show then close figures for this run'''
+    ####################################################
+    if args.show:
+      plt.show()
+    plt.close('all')
+
 
 if __name__ == '__main__':
   import argparse
@@ -573,7 +577,8 @@ if __name__ == '__main__':
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")
   parser.add_argument("-i", "--ignore_sim", action='store_true',  help="ignore_sim")
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
-  parser.add_argument("-p", "--plot", action='store_true', help="show plots")
+  parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
+  parser.add_argument("-show", "--show", action='store_true', help="show plots")
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
@@ -687,10 +692,3 @@ if __name__ == '__main__':
 
       # run
       process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
-
-  if args.plot:
-    if ( len (filenames) < 2 ) :
-      plt.show()
-    else :
-      answer = input("plot all the files? (return: yes, Ctrl-D: no)")
-      plt.show()
