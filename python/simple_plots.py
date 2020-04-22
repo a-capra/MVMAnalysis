@@ -104,7 +104,7 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   '''formatted plots for ISO std / arXiv'''
   ####################################################
 
-  local_objname = "%s_%i"% ( objname[:-2] , 1 )
+  #local_objname = "%s_%i"% ( objname[:-2] , 1 )
 
   PE = meta["PEEP"]
   PI = meta["PIP"]
@@ -159,12 +159,12 @@ def plot_arXiv_style(df, dfhd, objname, output_directory, start_times, colors, m
   nom_pressure = float(PI)
   rect = patches.Rectangle((xmin,nom_pressure-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
   #add / remove nominal pressure band
-  #ax11.add_patch(rect)
+  ax11.add_patch(rect)
 
   nom_peep = float(PE)
   rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
   #add / remove PEEP line
-  #ax11.add_patch(rect)
+  ax11.add_patch(rect)
 
   ax11.set_title (tag.replace('_',' '), weight='heavy')
   figpath = "%s/%s_%s.pdf" % (output_directory, tag,  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
