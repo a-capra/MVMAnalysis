@@ -57,8 +57,8 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     ymin, ymax = ax11.get_ylim()
     ax11.set_ylim(ymin*1.45, ymax*1.55)
     ax11.legend(loc='upper center', ncol=2)
-    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]         PEEP = %s [cmH20]"%(RT,CM,PE )
-    title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]         PEEP = %s [cmH2O]"%(RT,CM,PE )
+    title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
     ax11.set_xlabel("Time [s]")
 

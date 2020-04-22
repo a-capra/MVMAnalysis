@@ -133,7 +133,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
   ##################################
 
   # compute cycle start
-  start_times    = get_start_times(df, thr=8, quantity='airway_pressure', timecol='dt')
+  start_times    = get_start_times(df, thr=5, quantity='total_flow', timecol='dt')
   reaction_times = get_reaction_times(df, start_times)
 
   # add info
@@ -255,16 +255,23 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
 
       print ("Looking for R=%s, C=%s, RR=%s, PEEP=%s, PINSP=%s"%(RT,CM,RR,PE,PI) )
 
+      print ("start_times", start_times)
+
+      cycles_to_show = 6
       my_selected_cycle = meta[local_objname]["cycle_index"]
-      print ("\nFor test [ %s ]  I am selecting cycle %i, starting at %f \n"%(meta[local_objname]["test_name"], my_selected_cycle , start_times[ my_selected_cycle ]))
+      print ("For test [ %s ]  I am selecting cycle %i"%(meta[local_objname]["test_name"], my_selected_cycle))
+      ## check whether enough start times were detected
+      if len(start_times) < my_selected_cycle + cycles_to_show:
+        print (f"Not enough start times available for {cycles_to_show} cycles to show, continue")
+        continue
+      print ("starting at %f"%(start_times[ my_selected_cycle ]))
 
       fig11, ax11 = plt.subplots()
 
-      print (start_times)
       ## make a subset dataframe for simulator
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + 6])  ]
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
       ## the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
+      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
 
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
@@ -276,8 +283,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ymin, ymax = ax11.get_ylim()
       ax11.set_ylim(ymin*1.45, ymax*1.55)
       ax11.legend(loc='upper center', ncol=2)
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]         PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]         PEEP = %s [cmH2O]"%(RT,CM,PE )
+      title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
       ax11.set_xlabel("Time [s]")
 
@@ -335,8 +342,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ax2legend.legendHandles[1]._legmarker.set_markersize(legmarkersize)
       ax2legend.legendHandles[2]._legmarker.set_markersize(legmarkersize)
 
-      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH20]        PEEP = %s [cmH20]"%(RT,CM,PE )
-      title2="Inspiration Pressure = %s [cmH20]       Frequency = %s [breath/min]"%(PI,RR)
+      title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
+      title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
       ax2.set_xlabel("Time [s]")
 
@@ -357,6 +364,13 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       print(f'Saving figure to {figpath}')
       fig2.savefig(figpath)
 
+    ####################################################
+    '''show then close figures for this run'''
+    ####################################################
+    if args.show:
+      plt.show()
+    plt.close('all')
+
 
 if __name__ == '__main__':
   import argparse
@@ -367,7 +381,8 @@ if __name__ == '__main__':
   parser.add_argument("input", help="name of the MVM input file (.txt)")
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
-  parser.add_argument("-p", "--plot", action='store_true', help="show plots")
+  parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
+  parser.add_argument("-show", "--show", action='store_true', help="show plots")
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
@@ -438,7 +453,7 @@ if __name__ == '__main__':
         continue
 
     # determine RWA and DTA data locations
-    fullpath_rwa = f'{fname}/{meta[objname]["SimulatorFileName"]}'
+    fullpath_rwa = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
 
     if fullpath_rwa.endswith('.dta'):
       fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
@@ -451,9 +466,10 @@ if __name__ == '__main__':
     # run
     process_run(meta, objname=objname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset, output_directory=args.output_directory)
 
-  if args.plot:
-    if ( len (filenames) < 2 ) :
-      plt.show()
-    else :
-      answer = input("plot all the files? (return: yes, Ctrl-D: no)")
-      plt.show()
+  ## start using new show flag instead of the following
+  #if args.plot:
+  #  if ( len (filenames) < 2 ) :
+  #    plt.show()
+  #  else :
+  #    answer = input("plot all the files? (return: yes, Ctrl-D: no)")
+  #    plt.show()

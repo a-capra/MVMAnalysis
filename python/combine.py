@@ -14,6 +14,7 @@ from mvmio import *
 from combine_plot_service_canvases import *
 from combine_plot_arXiv_canvases import *
 from combine_plot_summary_canvases import *
+from combine_plot_mvm_only_canvases import *
 
 # usage
 # py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
@@ -51,6 +52,9 @@ def apply_rough_shift(sim, mvm, manual_offset):
   shift  = tmax2 - tmax1
   if (manual_offset > 0 ) : print ("...Adding additional manual shift by [s]: ", manual_offset)
   mvm['dt'] = mvm['timestamp'] + shift  + manual_offset # add arbitrary shift to better match data
+
+def apply_manual_shift(sim, mvm, manual_offset):
+  mvm['dt'] = mvm['timestamp'] + manual_offset
 
 def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   resp_period = 60./resp_rate
@@ -337,25 +341,42 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
-def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default'):
+def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default', mvm_json=False):
   # retrieve simulator data
+
+  if args.plot:
+    colors = {  "muscle_pressure": "#009933"  , #green
+      "sim_airway_pressure": "#cc3300" ,# red
+      "total_flow":"#ffb84d" , #
+      "tidal_volume":"#ddccff" , #purple
+      "total_vol":"pink" , #
+      "reaction_time" : "#999999", #
+      "pressure" : "black" , #  blue
+      "vent_airway_pressure": "#003399" ,# blue
+      "flux" : "#3399ff" #light blue
+    }
+
   if not ignore_sim:
     df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
   else:
     print ("I am ignoring the simulator")
 
   # retrieve MVM data
-  dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+  if mvm_json==True :    dfhd = get_mvm_df_json (fname=input_mvm)
+  else : dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+
   add_timestamp(dfhd)
 
   # apply corrections
   correct_mvm_df(dfhd, pressure_offset)
-  correct_sim_df(df)
 
-  #dfhd = dfhd[(dfhd['dt']>df['dt'].iloc[0]) & (dfhd['dt']<df['dt'].iloc[-1]) ]
-  #rough shift for plotting purposes only - max in the first few seconds
-  #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)
-  apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)
+  if not ignore_sim :
+    correct_sim_df(df)
+
+    #add time shift
+    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -367,6 +388,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
   start_times    = get_start_times(dfhd) # based on PV2
+
+  if ignore_sim :
+    if args.plot :
+      plot_mvm_only_canvases(dfhd, meta, objname,start_times, colors)
+    return #stop here if sim is ignored
+
   reaction_times = get_reaction_times(df, start_times)
 
   # add info
@@ -461,19 +488,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
 
-  if args.plot:
-    colors = {  "muscle_pressure": "#009933"  , #green
-      "sim_airway_pressure": "#cc3300" ,# red
-      "total_flow":"#ffb84d" , #
-      "tidal_volume":"#ddccff" , #purple
-      "total_vol":"pink" , #
-      "reaction_time" : "#999999", #
-      "pressure" : "black" , #  blue
-      "vent_airway_pressure": "#003399" ,# blue
-      "flux" : "#3399ff" #light blue
-    }
-
-
+  if args.plot :
     ####################################################
     '''choose here the name of the MVM flux variable to be shown in arXiv plots'''
     ####################################################
@@ -497,38 +512,54 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
 
-      #correct for outliers ?
+      #correct for outliers ?  no, we need to see them
       measured_peeps      = measured_peeps[3:-3]
       measured_plateaus   = measured_plateaus[3:-3]
-      measured_peaks       = measured_peaks[3:-3]
+      measured_peaks      = measured_peaks[3:-3]
       measured_volumes    = measured_volumes[3:-3]
 
       mean_peep    = np.mean(measured_peeps)
       mean_plateau = np.mean(measured_plateaus)
       mean_peak    = np.mean(measured_peaks)
       mean_volume  = np.mean(measured_volumes)
-      rms_peep    = np.std(measured_peeps)
-      rms_plateau = np.std(measured_plateaus)
-      rms_peak    = np.std(measured_peaks)
-      rms_volume  = np.std(measured_volumes)
+      rms_peep     = np.std(measured_peeps)
+      rms_plateau  = np.std(measured_plateaus)
+      rms_peak     = np.std(measured_peaks)
+      rms_volume   = np.std(measured_volumes)
+      max_peep     = np.max(measured_peeps)
+      max_plateau  = np.max(measured_plateaus)
+      max_peak     = np.max(measured_peaks)
+      max_volume   = np.max(measured_volumes)
+      min_peep     = np.min(measured_peeps)
+      min_plateau  = np.min(measured_plateaus)
+      min_peak     = np.min(measured_peaks)
+      min_volume   = np.min(measured_volumes)
 
       #simulator values
-      simulator_plateau   = np.array(real_plateaus)
-      simulator_plateau   = simulator_plateau[~np.isnan(simulator_plateau)]
-      simulator_plateau   = np.mean(  simulator_plateau  )
+      simulator_plateaus = np.array(real_plateaus)
+      simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
+      simulator_plateau  = np.mean(simulator_plateaus)
 
-      simulator_volume    = np.array(real_tidal_volumes)
-      simulator_volume    = simulator_volume[~np.isnan(simulator_volume)]
-      simulator_volume    = np.mean(  simulator_volume )
+      simulator_volumes = np.array(real_tidal_volumes)
+      simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
+      simulator_volume  = np.mean(simulator_volumes)
 
       meta[objname]["mean_peep"]         =  mean_peep
       meta[objname]["rms_peep"]          =  rms_peep
+      meta[objname]["max_peep"]          =  max_peep
+      meta[objname]["min_peep"]          =  min_peep
       meta[objname]["mean_plateau"]      =  mean_plateau
       meta[objname]["rms_plateau"]       =  rms_plateau
+      meta[objname]["max_plateau"]       =  max_plateau
+      meta[objname]["min_plateau"]       =  min_plateau
       meta[objname]["mean_peak"]         =  mean_peak
       meta[objname]["rms_peak"]          =  rms_peak
+      meta[objname]["max_peak"]          =  max_peak
+      meta[objname]["min_peak"]          =  min_peak
       meta[objname]["mean_volume"]       =  mean_volume
       meta[objname]["rms_volume"]        =  rms_volume
+      meta[objname]["max_volume"]        =  max_volume
+      meta[objname]["min_volume"]        =  min_volume
       meta[objname]["simulator_volume"]  =  simulator_volume
       meta[objname]["simulator_plateau"] =  simulator_plateau
 
@@ -555,6 +586,7 @@ if __name__ == '__main__':
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
+  parser.add_argument("-json", action='store_true', help="read json instead of csv")
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
@@ -659,7 +691,7 @@ if __name__ == '__main__':
     print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
     # run
-    process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col)
+    process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
 
   if args.plot:
     if ( len (filenames) < 2 ) :
