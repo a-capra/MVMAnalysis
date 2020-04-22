@@ -32,7 +32,7 @@ def get_deltat(df, timestampcol='timestamp', timecol='dt'):
 def correct_sim_df(df):
   ''' Apply corrections to simulator data '''
   df['total_vol'] = df['total_vol'] * 0.1
-
+  
 def correct_mvm_df(df, pressure_offset=0, pv2_thr=50):
   ''' Apply corrections to MVM data '''
   # correct for miscalibration of pressure sensor if necessary
@@ -646,7 +646,7 @@ if __name__ == '__main__':
   import style
 
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
-  parser.add_argument("input", help="name of the MVM input file (.txt)")
+  parser.add_argument("input", help="name of the MVM input files (.txt)", nargs='+')
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")
   parser.add_argument("-i", "--ignore_sim", action='store_true',  help="ignore_sim")
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
@@ -659,8 +659,8 @@ if __name__ == '__main__':
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
-  parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default=" -> ")
-  parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="default")
+  parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
+  parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
 
   columns_rwa = ['dt',
@@ -696,58 +696,72 @@ if __name__ == '__main__':
     'ventilator_pressure',
   ]
 
-  print ("INPUT : : ",  args.input )
+  filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
+  if args.input[0].split('.')[-1]== 'json' :
+    for input in args.input :
+      meta  = read_meta_from_spreadsheet_json (input)
+      objname = list ( meta.keys()) [0]
+      basedir = '/'.join ( input.split('/')[0:-1] )
+      fullpath_rwa = "%s/%s"%( basedir,meta[objname]['RwaFileName'] )
+      fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
+      fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
+      filenames.append(fname)
+      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
 
-  # read metadata spreadsheet
-  df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
+  else :
+    #take only the first input as data folder path
+    input = args.input[0]
 
-  #if option -n, select only one test
-  if len ( args.filename )  > 2 :
-    unreduced_filename = args.filename.split("/")[-1]
-    reduced_filename = '.'.join(unreduced_filename.split('.')[:])
+    # else read metadata spreadsheet
+    df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
 
-    print ( "Selecting only: " ,  reduced_filename  )
-    df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+    #if option -n, select only one test
+    if len ( args.filename )  > 2 :
+      unreduced_filename = args.filename.split("/")[-1]
+      reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
-  filenames = df_spreadsheet['MVM_filename'].unique()
+      print ( "Selecting only: " ,  reduced_filename  )
+      df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
 
-  ntests = 0
+    filenames = df_spreadsheet['MVM_filename'].unique()
 
-  for filename in filenames:
-    # continue if there is no filename
-    if not filename: continue
+    ntests = 0
 
-    # read the metadata and create a dictionary with relevant info
-    meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
-    ntests += len(meta)
+    for filename in filenames:
+      # continue if there is no filename
+      if not filename: continue
 
-    objname = f'{filename}_0'   #at least first element is always there
+      # read the metadata and create a dictionary with relevant info
+      meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
+      ntests += len(meta)
 
-    # compute the file location: local folder to the data repository + compaign folder + filename
-    fname = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
-    if not fname.endswith(".txt"):
-      fname = f'{fname}.txt'
+      objname = f'{filename}_0'   #at least first element is always there
 
-    print(f'\nFile name {fname}')
-    if fname.split('/')[-1] in args.skip_files:
-      print('    ... skipped')
-      continue
+      # compute the file location: local folder to the data repository + compaign folder + filename
+      fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
+      if not fname.endswith(".txt"):
+        fname = f'{fname}.txt'
 
-    if args.campaign:
-      if args.campaign not in fname:
-        print(f'    ... not in selected campaign {args.campaign}')
+      print(f'\nFile name {fname}')
+      if fname.split('/')[-1] in args.skip_files:
+        print('    ... skipped')
         continue
 
-    # determine RWA and DTA data locations
-    fullpath_rwa = f'{args.input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
+      if args.campaign:
+        if args.campaign not in fname:
+          print(f'    ... not in selected campaign {args.campaign}')
+          continue
 
-    if fullpath_rwa.endswith('.dta'):
-      fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
-    if not fullpath_rwa.endswith('.rwa'):
-      fullpath_rwa =  f'{fullpath_rwa}.rwa'  #if .rwa extension not present, add it
+      # determine RWA and DTA data locations
+      fullpath_rwa = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
 
-    fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
-    print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
+      if fullpath_rwa.endswith('.dta'):
+        fullpath_rwa =  fullpath_rwa[:-4]      #remove extension if dta
+      if not fullpath_rwa.endswith('.rwa'):
+        fullpath_rwa =  f'{fullpath_rwa}.rwa'  #if .rwa extension not present, add it
 
-    # run
-    process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
+      fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
+      print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
+
+      # run
+      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
