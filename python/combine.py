@@ -146,9 +146,9 @@ def get_start_times(df, thr=50, dist=0.1, quantity='out', timecol='dt'):
   start_times = [ float(times_open.iloc[i]) for i in range(0, len(times_open)-1) if times_open.iloc[i+1]-times_open.iloc[i] > 0.1  or i == 0  ]
   '''
   try:
-    start_times = df[df['out_status'] == 'closing']['dt'].unique()
+    start_times = df[df['out_status'] == 'closing'][timecol].unique()
   except KeyError:
-    start_times = df[df['out'] == 'CLOSED']['dt'].unique()
+    start_times = df[df['out'] == 'CLOSED'][timecol].unique()
   return start_times
 
 def get_muscle_start_times(df, quantity='muscle_pressure', timecol='dt'):
