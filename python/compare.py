@@ -196,7 +196,7 @@ if __name__ == "__main__":
   if args.test_names:
     test_names = [args.test_names]
     for tn, rc, ss in zip (test_names[0], run_config, df_spreadsheet):
-      if not ss["N"].isin(tn).any():
+      if not ss["N"].isin([tn]).any():
         print(f"ERROR: Failed to find {tn[0]} in {rc['db_range_name']}!")
         sys.exit(1)
   else:
