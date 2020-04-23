@@ -210,7 +210,7 @@ if __name__ == "__main__":
       print("WARNING: The following tests are only present in the second dataset. Skipping...")
       print(df_spreadsheet_2_only)
     # Just duplicate the test names
-    test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"])]
+    test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"]]
 
   for test_pair in test_names:
     success = True
