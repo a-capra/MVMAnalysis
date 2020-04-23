@@ -775,7 +775,11 @@ if __name__ == '__main__':
         fullpath_rwa =  f'{fullpath_rwa}.rwa'  #if .rwa extension not present, add it
 
       fullpath_dta = fullpath_rwa.replace('rwa', 'dta')
-      print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
+      if path.isfile(fullpath_rwa) and path.isfile(fullpath_dta):
+        print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
+      else:
+        print(f"SKIP over {filename}: {fullpath_rwa} and {fullpath_dta} don't exist?")
+        continue
 
       # run
       process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
