@@ -216,10 +216,14 @@ if __name__ == "__main__":
     elif len(cur_tests[1]) > 1:
       print(f"WARNING: More than one test {test_name} found in second dataset. Using first one...")
 
-    in_campaign = True
+    success = True
     for i, rc in enumerate(run_config):
       # Read meta data from spreadsheets
       filename = cur_tests[i].iloc[0]["MVM_filename"]
+      if not filename:
+        success = False
+        break
+
       rc["meta"] = db.read_meta_from_spreadsheet(cur_tests[i], filename)
 
       # Only use first element
@@ -229,7 +233,8 @@ if __name__ == "__main__":
       # Only process selected campaigns
       if rc["single_campaign"] and (rc["meta"]["Campaign"] != rc["single_campaign"]):
         print(f"Test {test_name} not in selected campaign {rc['single_campaign']}. Skipping...")
-        in_campaign = False
+        success = False
+        break
 
       # Build MVM paths and skip user requested files
       rc["fullpath_mvm"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['MVM_filename']}"
