@@ -66,7 +66,7 @@ def read_online_spreadsheet (spreadsheet_id, range_name) :
       creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(
-      'python/mvm_credentials.json', SCOPES)
+      'mvm_credentials.json', SCOPES)
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
     with open('token.pickle', 'wb') as token:
@@ -106,7 +106,7 @@ def read_meta_from_spreadsheet (df, filename) :
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
       'Tidal Volume' : df["TV"].iloc[idx],
-      #'leakage' : df["leakage"].iloc[idx],
+      'leakage' : df["leakage"].iloc[idx],
       'cycle_index' : int ( df["cycle_index"].iloc[idx]) ,
     }
   return meta

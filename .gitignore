@@ -1,7 +1,3 @@
-data/
-*plots/
-*.pyc
-*.pickle
 .DS_Store
 python/.DS_Store
 python/__pycache__
