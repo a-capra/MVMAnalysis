@@ -728,13 +728,12 @@ if __name__ == '__main__':
       reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
       print ( "Selecting only: " ,  reduced_filename  )
-      # protect against stored filenames without extesion (assuming consitency w/ 1st entry)  -- AC
-      name, ext = path.splitext(df_spreadsheet["MVM_filename"][0])
-      if ext=='':
-        name, ext = path.splitext(unreduced_filename)
-        df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename.strip(ext) ) ]
-      else:
-        df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+      # protect against stored filenames without extesion  -- AC
+      stripped_unreduced_filename, ext = path.splitext(unreduced_filename)
+      print('MVM file is',ext)
+      MVM_filename_list=[ path.splitext(fff)[0]==stripped_unreduced_filename for fff in df_spreadsheet["MVM_filename"]]
+      df_spreadsheet = df_spreadsheet[ pd.Series(MVM_filename_list) ]
+      #df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
 
     filenames = df_spreadsheet['MVM_filename'].unique()
 
