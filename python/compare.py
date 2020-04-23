@@ -182,23 +182,23 @@ if __name__ == "__main__":
   df_spreadsheet = [db.read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
 
   # Check for tests only present in one of the spreadsheets
-  df_spreadsheet_1_only = df_spreadsheet[0][~df_spreadsheet[0]["test_name"].isin(df_spreadsheet[1]["test_name"])]
+  df_spreadsheet_1_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
   if not df_spreadsheet_1_only.empty:
     print("WARNING: The following tests are only present in the first dataset. Skipping...")
     print(df_spreadsheet_1_only)
-  df_spreadsheet_2_only = df_spreadsheet[1][~df_spreadsheet[1]["test_name"].isin(df_spreadsheet[0]["test_name"])]
+  df_spreadsheet_2_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
   if not df_spreadsheet_2_only.empty:
     print("WARNING: The following tests are only present in the second dataset. Skipping...")
     print(df_spreadsheet_2_only)
 
-  test_names = df_spreadsheet[0]["test_name"].unique()
+  test_names = df_spreadsheet[0]["N"].unique()
   for test_name in test_names:
     cur_tests = []
     # Warn about duplicate tests
-    cur_tests[0] = df_spreadsheet[0][df_spreadsheet[0]["test_name"] == test_name]
+    cur_tests[0] = df_spreadsheet[0][df_spreadsheet[0]["N"] == test_name]
     if len(cur_tests[0]) > 1:
       print(f"WARNING: More than one test {test_name} found in first dataset. Using first one...")
-    cur_tests[1] = df_spreadsheet[1][df_spreadsheet[1]["test_name"] == test_name]
+    cur_tests[1] = df_spreadsheet[1][df_spreadsheet[1]["N"] == test_name]
     # Skip tests not present in second dataset. We've already warned about this above.
     if cur_tests[1].empty:
       continue
