@@ -83,12 +83,5 @@ python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i
 
 Folders:
   * `python`: python code
-  * `scrap`: to be removed
-  * `.vscode`: debug/develop
-  
-  
-## Data location
-CERN
-```
-/eos/experiment/re37/mvm
-```
+  * `cpp`: C++ code
+  * `scripts`: scripts (plotting, etc)
