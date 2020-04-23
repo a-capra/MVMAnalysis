@@ -216,6 +216,7 @@ if __name__ == "__main__":
     elif len(cur_tests[1]) > 1:
       print(f"WARNING: More than one test {test_name} found in second dataset. Using first one...")
 
+    in_campaign = True
     for i, rc in enumerate(run_config):
       # Read meta data from spreadsheets
       filename = cur_tests[i].iloc[0]["MVM_filename"]
@@ -228,7 +229,7 @@ if __name__ == "__main__":
       # Only process selected campaigns
       if rc["single_campaign"] and (rc["meta"]["Campaign"] != rc["single_campaign"]):
         print(f"Test {test_name} not in selected campaign {rc['single_campaign']}. Skipping...")
-        continue
+        in_campaign = False
 
       # Build MVM paths and skip user requested files
       rc["fullpath_mvm"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['MVM_filename']}"
@@ -246,4 +247,5 @@ if __name__ == "__main__":
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
       print(f"Files of simulation {i+1}: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
-    process_run(run_config, args.output_directory)
+    if in_campaign:
+      process_run(run_config, args.output_directory)
