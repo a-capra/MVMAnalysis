@@ -11,8 +11,8 @@ def plot_3views(data, run_config, output_directory):
 
   fig31, ax31 = plt.subplots(3, 1)
   ax31 = ax31.flatten()
-  run_config[0]["marker"] = "+"
-  run_config[1]["marker"] = "x"
+  run_config[0]["linestyle"] = "--"
+  run_config[1]["linestyle"] = ":"
 
   for rc, d in zip(run_config, data):
     my_selected_cycle = rc["meta"]["cycle_index"]
@@ -28,12 +28,12 @@ def plot_3views(data, run_config, output_directory):
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
     dataset_name = rc["db_range_name"].split("!")[0]
-    d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {dataset_name} flux [l/min]", c="r", marker=rc["marker"])
-    d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {dataset_name} airway pressure [cmH2O]", c="r", marker=rc["marker"])
-    d["sim_sel"].plot(ax=ax31[2], x="dt", y="total_vol", label=f"SIM {dataset_name} tidal volume [cl]", c="r", marker=rc["marker"])
-    d["mvm_sel"].plot(ax=ax31[0], x="dt", y="display_flux", label=f"MVM {dataset_name} flux [l/min]", c="b", marker=rc["marker"])
-    d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {dataset_name} airway pressure [cmH2O]", c="b", marker=rc["marker"])
-    d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {dataset_name} tidal volume [cl]", c="b", marker=rc["marker"])
+    d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {dataset_name} flux [l/min]", c="r", linestyle=rc["linestyle"])
+    d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {dataset_name} airway pressure [cmH2O]", c="r", linestyle=rc["linestyle"])
+    d["sim_sel"].plot(ax=ax31[2], x="dt", y="total_vol", label=f"SIM {dataset_name} tidal volume [cl]", c="r", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[0], x="dt", y="display_flux", label=f"MVM {dataset_name} flux [l/min]", c="b", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {dataset_name} airway pressure [cmH2O]", c="b", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {dataset_name} tidal volume [cl]", c="b", linestyle=rc["linestyle"])
 
   ax31[0].set_xlabel("Time [s]")
   ax31[1].set_xlabel("Time [s]")
