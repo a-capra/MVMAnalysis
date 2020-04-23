@@ -65,7 +65,7 @@ def process_run(run_config, output_directory):
     d["sim"] = io.get_simulator_df(rc["fullpath_rwa"], rc["fullpath_dta"], columns_rwa, columns_dta)
 
     # MVM data
-    d["mvm"] = io.get_mvm_df_json(rc["fullpath_mvm"]) if rc["json"] else io.get_mvm_df(fname=rc["fullpath_mvm"], sep=rc["mem_sep"], configuration=rc["mvm_col"])
+    d["mvm"] = io.get_mvm_df_json(rc["fullpath_mvm"]) if rc["json"] else io.get_mvm_df(fname=rc["fullpath_mvm"], sep=rc["mvm_sep"], configuration=rc["mvm_col"])
 
     cb.add_timestamp(d["mvm"])
 
