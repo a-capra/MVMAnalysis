@@ -195,10 +195,10 @@ if __name__ == "__main__":
   for test_name in test_names:
     cur_tests = []
     # Warn about duplicate tests
-    cur_tests[0] = df_spreadsheet[0][df_spreadsheet[0]["N"] == test_name]
+    cur_tests.append(df_spreadsheet[0][df_spreadsheet[0]["N"] == test_name])
     if len(cur_tests[0]) > 1:
       print(f"WARNING: More than one test {test_name} found in first dataset. Using first one...")
-    cur_tests[1] = df_spreadsheet[1][df_spreadsheet[1]["N"] == test_name]
+    cur_tests.append(df_spreadsheet[1][df_spreadsheet[1]["N"] == test_name])
     # Skip tests not present in second dataset. We've already warned about this above.
     if cur_tests[1].empty:
       continue
