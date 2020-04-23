@@ -25,6 +25,10 @@ def plot_3views(data, run_config, output_directory):
 
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
+    # Align timestamps
+    d["mvm_sel".loc[:, "dt"] = d["mvm_sel"]["dt"] - d["mvm_sel"]["dt"].iloc[0]
+    d["sim_sel".loc[:, "dt"] = d["sim_sel"]["dt"] - d["sim_sel"]["dt"].iloc[0]
+
     d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
     d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
     d["sim_sel"].plot(ax=ax31[2], x="dt", y="total_vol", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
@@ -197,7 +201,7 @@ if __name__ == "__main__":
     test_names = [args.test_names]
     for tn, rc, ss in zip (test_names[0], run_config, df_spreadsheet):
       if not ss["N"].isin([tn]).any():
-        print(f"ERROR: Failed to find {tn[0]} in {rc['db_range_name']}!")
+        print(f"ERROR: Failed to find {tn} in {rc['db_range_name']}!")
         sys.exit(1)
   else:
     # Check for tests only present in one of the spreadsheets
