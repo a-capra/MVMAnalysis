@@ -106,6 +106,7 @@ def process_run(run_config, output_directory):
 if __name__ == "__main__":
   import argparse
   import style
+  import sys
 
   parser = argparse.ArgumentParser(description="Compare two datasets.")
   parser.add_argument("db_range_name_1", help="Name and range of the metadata spreadsheet for the first dataset")
@@ -113,7 +114,7 @@ if __name__ == "__main__":
   parser.add_argument("db_range_name_2", help="Name and range of the metadata spreadsheet for the second dataset")
   parser.add_argument("data_location_2", help="Path to the second dataset.")
   parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="plots_iso")
-  parser.add_argument("-t", "--test-names", type=str, help="Only process listed tests.", nargs="+", default="")
+  parser.add_argument("-t", "--test-names", type=str, help="Only process listed test pair.", nargs="2", default="")
   parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.", default="")
   parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.", default="")
   parser.add_argument("--j1", action="store_true", help="Try to read first dataste as JSON instead of CSV.")
@@ -192,49 +193,46 @@ if __name__ == "__main__":
   # read metadata spreadsheet
   df_spreadsheet = [db.read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
 
-  # Check for tests only present in one of the spreadsheets
-  df_spreadsheet_1_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
-  if not df_spreadsheet_1_only.empty:
-    print("WARNING: The following tests are only present in the first dataset. Skipping...")
-    print(df_spreadsheet_1_only)
-  df_spreadsheet_2_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
-  if not df_spreadsheet_2_only.empty:
-    print("WARNING: The following tests are only present in the second dataset. Skipping...")
-    print(df_spreadsheet_2_only)
+  if args.test_names:
+    test_names = [args.test_names]
+    for tn, rc, ss in zip (test_names[0], run_config, df_spreadsheet):
+      if not ss["N"].isin(tn).any():
+        print(f"ERROR: Failed to find {tn[0]} in {rc['db_range_name']}!")
+        sys.exit(1)
+  else:
+    # Check for tests only present in one of the spreadsheets
+    df_spreadsheet_1_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
+    if not df_spreadsheet_1_only.empty:
+      print("WARNING: The following tests are only present in the first dataset. Skipping...")
+      print(df_spreadsheet_1_only)
+    df_spreadsheet_2_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
+    if not df_spreadsheet_2_only.empty:
+      print("WARNING: The following tests are only present in the second dataset. Skipping...")
+      print(df_spreadsheet_2_only)
+    # Just duplicate the test names
+    test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"])]
 
-  test_names = args.test_names if args.test_names else df_spreadsheet[0]["N"].unique()
-  for test_name in test_names:
-    cur_tests = []
-    # Warn about duplicate tests
-    cur_tests.append(df_spreadsheet[0][df_spreadsheet[0]["N"] == test_name])
-    if len(cur_tests[0]) > 1:
-      print(f"WARNING: More than one test {test_name} found in first dataset. Using first one...")
-    cur_tests.append(df_spreadsheet[1][df_spreadsheet[1]["N"] == test_name])
-    # Skip tests not present in second dataset. We've already warned about this above.
-    if cur_tests[1].empty:
-      continue
-    elif len(cur_tests[1]) > 1:
-      print(f"WARNING: More than one test {test_name} found in second dataset. Using first one...")
-
+  for test_pair in test_names:
     success = True
-    for i, rc in enumerate(run_config):
+    for tn, rc, ss in zip(test_pair, run_config, df_spreadsheet):
+      if rc["single_campaign"]:
+        print(f"Only processing tests from {rc['db_range_name']} {rc['single_campaign']}...")
+        cur_test = ss[(ss["N"] == tn) & (ss["Campaign"] == rc["single_campaign"])]
+      else:
+        cur_test = ss[ss["N"] == tn]
+      if len(cur_test) > 1:
+        print(f"WARNING: More than one test {test_name} found in rc['db_range_name']. Using first one...")
+
       # Read meta data from spreadsheets
-      filename = cur_tests[i].iloc[0]["MVM_filename"]
+      filename = cur_test.iloc[0]["MVM_filename"]
       if not filename:
         success = False
         break
-
-      rc["meta"] = db.read_meta_from_spreadsheet(cur_tests[i], filename)
+      rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
 
       # Only use first element
       rc["objname"] = f"{filename}_0"
       rc["meta"] = rc["meta"][rc["objname"]]
-
-      # Only process selected campaigns
-      if rc["single_campaign"] and (rc["meta"]["Campaign"] != rc["single_campaign"]):
-        print(f"Test {test_name} not in selected campaign {rc['single_campaign']}. Skipping...")
-        success = False
-        break
 
       # Build MVM paths and skip user requested files
       rc["fullpath_mvm"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['MVM_filename']}"
