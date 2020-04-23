@@ -219,6 +219,8 @@ if __name__ == "__main__":
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
         if cur_test.empty:
           print(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
+          success = False
+          break
       else:
         cur_test = ss[ss["N"] == tn]
       if len(cur_test) > 1:
