@@ -134,6 +134,10 @@ def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   """
 
 def add_pv2_status(df):
+  try:
+    float(df['out'][0])
+  except ValueError:
+    return
   df['out_diff'] = df['out'].diff().fillna(0)
   df['out_status'] = np.where(df['out_diff'] == 0, 'steady', np.where(df['out_diff'] < 0, 'closing', 'opening'))
 
@@ -142,7 +146,10 @@ def get_start_times(df, thr=50, dist=0.1, quantity='out', timecol='dt'):
   times_open = df[ ( df[quantity]>thr ) ][timecol]
   start_times = [ float(times_open.iloc[i]) for i in range(0, len(times_open)-1) if times_open.iloc[i+1]-times_open.iloc[i] > 0.1  or i == 0  ]
   '''
-  start_times = df[df['out_status'] == 'closing']['dt'].unique()
+  try:
+    start_times = df[df['out_status'] == 'closing']['dt'].unique()
+  except KeyError:
+    start_times = df[df['out'] == 'CLOSED']['dt'].unique()
   return start_times
 
 def get_muscle_start_times(df, quantity='muscle_pressure', timecol='dt'):
@@ -405,7 +412,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     print ("I am ignoring the simulator")
 
   # retrieve MVM data
-  if mvm_json==True :    dfhd = get_mvm_df_json (fname=input_mvm)
+  if mvm_json==True :    dfhd = get_mvm_df_json (fname=input_mvm, map=args.mapping)
   else : dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
 
   add_timestamp(dfhd)
@@ -646,6 +653,7 @@ if __name__ == '__main__':
   import argparse
   import matplotlib
   import style
+  from os import path
 
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input files (.txt)", nargs='+')
@@ -663,6 +671,7 @@ if __name__ == '__main__':
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
   parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
+  parser.add_argument("-m","--mapping", type=str, help="convert json dictionary to analysis dictionary", default="mvm_napoli")
   args = parser.parse_args()
 
   columns_rwa = ['dt',
@@ -723,7 +732,13 @@ if __name__ == '__main__':
       reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
       print ( "Selecting only: " ,  reduced_filename  )
-      df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+      # protect against stored filenames without extesion (assuming consitency w/ 1st entry)  -- AC
+      name, ext = path.splitext(df_spreadsheet["MVM_filename"][0])
+      if ext=='':
+        name, ext = path.splitext(unreduced_filename)
+        df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename.strip(ext) ) ]
+      else:
+        df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
 
     filenames = df_spreadsheet['MVM_filename'].unique()
 
@@ -741,8 +756,10 @@ if __name__ == '__main__':
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
-      if not fname.endswith(".txt"):
+      if not fname.endswith(".txt") and not args.json:
         fname = f'{fname}.txt'
+      elif  not fname.endswith(".json") and args.json:
+        fname = f'{fname}.json'
 
       print(f'\nFile name {fname}')
       if fname.split('/')[-1] in args.skip_files:
