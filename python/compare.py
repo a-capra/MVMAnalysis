@@ -97,6 +97,7 @@ def process_run(run_config, output_directory):
 
 if __name__ == "__main__":
   import argparse
+  import style
 
   parser = argparse.ArgumentParser(description="Compare two datasets.")
   parser.add_argument("db_range_name_1", help="Name and range of the metadata spreadsheet for the first dataset")
