@@ -105,7 +105,7 @@ if __name__ == "__main__":
   parser.add_argument("db_range_name_2", help="Name and range of the metadata spreadsheet for the second dataset")
   parser.add_argument("data_location_2", help="Path to the second dataset.")
   parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="plots_iso")
-  parser.add_argument("-S", "--skip-files", type=str, help="Skip listed files in both datasets.", nargs="+", default="")
+  parser.add_argument("-t", "--test-names", type=str, help="Only process listed tests.", nargs="+", default="")
   parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.", default="")
   parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.", default="")
   parser.add_argument("--j1", action="store_true", help="Try to read first dataste as JSON instead of CSV.")
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     print("WARNING: The following tests are only present in the second dataset. Skipping...")
     print(df_spreadsheet_2_only)
 
-  test_names = df_spreadsheet[0]["N"].unique()
+  test_names = args.test_names if args.test_names else df_spreadsheet[0]["N"].unique()
   for test_name in test_names:
     cur_tests = []
     # Warn about duplicate tests
@@ -227,9 +227,6 @@ if __name__ == "__main__":
       if not rc["fullpath_mvm"].endswith(".txt"):
         rc["fullpath_mvm"] += ".txt"
       print(f"\nMVM file {i+1}: {rc['fullpath_mvm']}")
-      if rc["fullpath_mvm"].split("/")[-1] in args.skip_files:
-        print("\tskipping per user request...")
-        continue
 
       # Build simulations paths
       rc["fullpath_rwa"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['SimulatorFileName']}"
