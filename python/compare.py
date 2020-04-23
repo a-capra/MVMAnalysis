@@ -138,7 +138,7 @@ if __name__ == "__main__":
         "offset" : args.offset_1,
         "db_google_id" : args.db_google_id_1,
         "mvm_sep" : args.mvm_sep_1,
-        "mcm_col" : args.mvm_col_1
+        "mvm_col" : args.mvm_col_1
       },
       {
         "db_range_name" : args.db_range_name_2,
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         "offset" : args.offset_2,
         "db_google_id" : args.db_google_id_2,
         "mvm_sep" : args.mvm_sep_2,
-        "mcm_col" : args.mvm_col_2
+        "mvm_col" : args.mvm_col_2
       }
   ]
 
