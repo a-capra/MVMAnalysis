@@ -189,7 +189,10 @@ def add_cycle_info(sim, mvm, start_times, reaction_times):
   sim['reaction_time'] = 0
   for s,f in zip (start_times,reaction_times) :
     times_open = sim[ ( sim.dt>s ) ]['iindex']
-    this_iindex = times_open.iloc[0]  #The sim data not synchronous to the start_times
+    try:
+      this_iindex = times_open.iloc[0]  #The sim data not synchronous to the start_times
+    except IndexError:
+      break
     sim.loc[sim.dt>s,'start']   = s
     sim.loc[sim.dt>s,'tbreath'] = sim.dt - s
     sim.loc[sim.dt>s,'reaction_time'] = f
