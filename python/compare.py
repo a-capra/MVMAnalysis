@@ -216,12 +216,13 @@ if __name__ == "__main__":
     success = True
     for tn, rc, ss in zip(test_pair, run_config, df_spreadsheet):
       if rc["single_campaign"]:
-        print(f"Only processing tests from {rc['db_range_name']} {rc['single_campaign']}...")
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
+        if cur_test.empty:
+          print(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
       else:
         cur_test = ss[ss["N"] == tn]
       if len(cur_test) > 1:
-        print(f"WARNING: More than one test {test_name} found in rc['db_range_name']. Using first one...")
+        print(f"WARNING: More than one test {tn} found in rc['db_range_name']. Using first one...")
 
       # Read meta data from spreadsheets
       filename = cur_test.iloc[0]["MVM_filename"]
