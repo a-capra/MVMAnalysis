@@ -18,7 +18,7 @@ def plot_3views(data, run_config, output_directory):
     my_selected_cycle = rc["meta"]["cycle_index"]
 
     # Simulator subset
-    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle] + 6))]
+    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle + 6]))].copy()
 
     # Ventilator subset
     first_time_bin = d["sim_sel"]["dt"].iloc[0]
