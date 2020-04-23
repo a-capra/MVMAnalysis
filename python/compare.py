@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
       # Only process selected campaigns
       if rc["single_campaign"] and (rc["meta"]["Campaign"] != rc["single_campaign"]):
-        print(f"Test {test_name} not in selected campaign {rc['campaign']}. Skipping...")
+        print(f"Test {test_name} not in selected campaign {rc['single_campaign']}. Skipping...")
         continue
 
       # Build MVM paths and skip user requested files
