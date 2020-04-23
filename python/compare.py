@@ -92,6 +92,8 @@ def process_run(run_config, output_directory):
     # Choose the flux to plot
     d["mvm"]["display_flux"] = d["mvm"]["flux"]
 
+  plot_3views(data, run_config, output_directory)
+
 
 if __name__ == "__main__":
   import argparse
