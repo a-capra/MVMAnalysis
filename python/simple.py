@@ -76,6 +76,18 @@ sett = { 'C':25,
 'PEEP':5,
 'RF':0.5}
 
+def add_some_integer_indexing_fields(sim):
+  # Add some integer indexing fields for convenience in stats summary for
+  # overlap plots
+  # iindex is an integer index corresponding to a "bin number" for dt
+  # after add_ccylce_index is called siindex will correspond to df.start
+  # diindex will correspond to dtc
+  # Chris.Jillings
+  this_shape = sim.shape
+  sim['iindex'] = np.arange(this_shape[0])
+  sim['siindex'] = np.zeros(this_shape[0])
+  sim['diindex'] = np.zeros(this_shape[0])
+
 
 if __name__ == '__main__':
 
@@ -159,23 +171,16 @@ if __name__ == '__main__':
   
   reaction_times = get_reaction_times(df, start_times)
 
+  add_some_integer_indexing_fields(sim=df)
+
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
-
-  ##################################
-  # chunks
-  ##################################
-
-  add_chunk_info(df)
+  df['dtc'] = df['dt'] - df['start']
+  df['diindex'] = df['iindex'] - df['siindex']
 
   # compute tidal volume etc
   add_clinical_values(df)
   respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
-
-  ##################################
-  # find runs
-  ##################################
-  add_run_info(df)
 
   ####################################################
   # plot simple canavas

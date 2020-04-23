@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os
 import pandas as pd
+import json
 
 """ Converts Google sheet data to a Pandas DataFrame.
 Note: This script assumes that your data contains a header file on the first row!
@@ -114,3 +115,36 @@ def read_mhra_csv(fname):
   dfmhra = pd.read_csv(fname, sep=',')
   dfmhra['plot'] = 0
   return dfmhra
+
+
+
+def read_meta_from_spreadsheet_json (filename) :
+  meta = {}
+  mydict0 = json.loads(open(filename).read())
+  key =  "%s_%i"%('.'.join( mydict0['MVM_file'].split('.')[0:-1]),0)   
+  mydict = mydict0['conditions']
+  meta[ key ] = {
+    'Compliance': float ( mydict['C'] ) ,
+    'Resistance': float ( mydict['R'] )  ,
+    'Rate respiratio':  float ( mydict['rate'] )   ,
+    'I:E': mydict['ratio'],
+    'Peep':   float (mydict['PEEP'] ) ,
+    'Run' : mydict['run'],
+    'Pinspiratia': float (mydict['plateau'] ) ,
+    'SimulatorFileName': '.'.join( mydict0['simulator_RWA_file'].split('.')[0:-1]) ,
+    'RwaFileName': mydict0['simulator_RWA_file'] ,
+    'DtaFileName': mydict0['simulator_DTA_file'] ,
+    'Campaign': mydict0['campaign'] ,
+    'MVM_filename' : mydict0['MVM_file'],
+    'test_name' : mydict0['testID'],
+    'Tidal Volume' : mydict['TV'],
+    'leakage' : mydict['leakage'],
+    'cycle_index' : int ( mydict['cycle_index'] ) ,
+  }
+  print (meta)
+
+  return meta
+
+
+if __name__ == "__main__" :
+  read_meta_from_spreadsheet_json ('json_example.json')
