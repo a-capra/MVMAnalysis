@@ -26,8 +26,8 @@ def plot_3views(data, run_config, output_directory):
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
     # Align timestamps
-    d["mvm_sel".loc[:, "dt"] = d["mvm_sel"]["dt"] - d["mvm_sel"]["dt"].iloc[0]
-    d["sim_sel".loc[:, "dt"] = d["sim_sel"]["dt"] - d["sim_sel"]["dt"].iloc[0]
+    d["mvm_sel"].loc[:, "dt"] = d["mvm_sel"]["dt"] - d["mvm_sel"]["dt"].iloc[0]
+    d["sim_sel"].loc[:, "dt"] = d["sim_sel"]["dt"] - d["sim_sel"]["dt"].iloc[0]
 
     d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
     d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
