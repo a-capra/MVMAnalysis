@@ -225,7 +225,7 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     ---
     Chris.Jillings@snolab.ca 2020-04-19
     '''
-    nstats = 7
+    nstats = 8
     di_series = adf['diindex']
     length = di_series.max() - di_series.min()
     local_stats_array = np.zeros((int(length), nstats),dtype='float64')
@@ -236,12 +236,9 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
         if ( (dtcmax-dtcmin)>0.1 ) :
-            print("Something realy bad happened preparing stats for repeated breaths.")
-            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
-            print("Error!")
-            print(dtcmin, dtcmax)
-        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
-    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+            Warning("In stats_for_repeated cyclyes the intger step counting and floating-point times are out of sync. Overlay plots may be afected.")
+        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std(), this_series.count()]
+    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std', 'N'] )
     return answer
 
 
@@ -656,6 +653,7 @@ if __name__ == '__main__':
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
   parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
   parser.add_argument("-show", "--show", action='store_true', help="show plots")
+  parser.add_argument("-v", "--verbose", action='store_true', help="verbose output")
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
@@ -710,6 +708,9 @@ if __name__ == '__main__':
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
+      if args.verbose :
+        print("HTJI: Looking to the following files: ", filenames)
+      
       process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
 
   else :
@@ -717,6 +718,8 @@ if __name__ == '__main__':
     input = args.input[0]
 
     # else read metadata spreadsheet
+    if args.verbose :
+      print("Reading from spreadsheet...")
     df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
 
     #if option -n, select only one test
@@ -725,24 +728,34 @@ if __name__ == '__main__':
       reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
       print ( "Selecting only: " ,  reduced_filename  )
+      if( args.verbose ) :
+        print(df_spreadsheet)
       df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+      if( args.verbose ) :
+        print(df_spreadsheet)
 
     filenames = df_spreadsheet['MVM_filename'].unique()
 
     ntests = 0
-
+    if args.verbose : print(filenames)
     for filename in filenames:
       # continue if there is no filename
-      if not filename: continue
+      if not filename:
+        print("HTJI")
+        continue
 
       # read the metadata and create a dictionary with relevant info
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
       ntests += len(meta)
-
+      if args.verbose : print(ntests)
+      
       objname = f'{filename}_0'   #at least first element is always there
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
+      if args.verbose :
+        print ( "Full path: " ,  fname  )
+
       if (not args.json and not fname.endswith(".txt")):
         print ("adding extra .txt to fname")
         fname = f'{fname}.txt'
