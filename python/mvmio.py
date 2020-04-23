@@ -50,32 +50,7 @@ mapping = {
     'flux',
     'service_2',
     'derivative'
-  ],
-
-  'mvm_triumf_1':[
-    'date',#'ts',
-    'mode',
-    'phase',
-    'airway_pressure',#'ps1_p',
-    'ps1_t',
-    'flux_2',#'fs1_r',
-    'flux',
-    'in',#'inlet',
-    'out'#'outlet'
   ]
-}
-
-map_arduino_bs={
-  'mvm_triumf_1':{
-    'ts':'date',
-    'mode':'mode',
-    'phase':'phase',
-    'ps1_p':'airway_pressure',
-    'ps1_t':'ps1_t',
-    'fs1_r':'flux_2',
-    'inlet':'in',
-    'outlet':'out'
-  }
 }
 
 
@@ -94,11 +69,12 @@ def get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
   df['dt'] = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt'] , len(df) ) # correct for duplicate times
   return df
 
-def get_csv(fname, sep, conf):
+def get_mvm_df(fname, sep=' -> ', configuration='default'):
   #data from the ventilator
   data = []
 
-  columns = mapping[conf]
+  is_unix = False
+  columns = mapping[configuration]
   print ("This is the chosen column mapping for the MVM file: ", columns)
 
   with open(fname) as f:
@@ -111,7 +87,7 @@ def get_csv(fname, sep, conf):
       if not line: continue
       l = line.split(sep)
       try:
-        par = ''.join(l[1:]).split(',')
+        par = sep.join(l[1:]).split(',')
       except :
         print (line)
         continue
@@ -124,61 +100,26 @@ def get_csv(fname, sep, conf):
       t = l[0]
       if ':' not in l[0]:
         t = float(l[0]) # in this way, t is either a string (if HHMMSS) or a float
+        is_unix = True
 
-      if "mvm_col_no_time" in conf:
+      if ( "mvm_col_no_time" in configuration  ) :
         dataline = dict ( zip ( columns[0:10], [float(i) for i in par[0:10]]  )   )
         step = 0.012 #s
         dataline['date']  = iline * step
         data.append(  dataline )
-      elif conf == "mvm_col_arduino":
+        is_unix = True
+      elif (configuration == "mvm_col_arduino") :
         dataline = dict ( zip ( columns[2:11], [float(i) for i in par[1:10]]  )   )
         dataline['date'] = float ( par[0] )  * 1e-3
+        is_unix = True
         #dataline['date'] = t
         data.append(  dataline )
-      else:  #default
+      else :  #default
         dataline = dict (   zip ( columns[1:8], [float(i) for i in par[0:7]]  )   )
         dataline['date'] = t
         data.append( dataline )
 
-  return data
-
-def get_json(fname, conf):
-  #data from the ventilator
-  data = []
-  with open(fname) as f:
-    log_data = json.load(f)["data"]
-
-  offset = log_data[0]["ts"]
-
-  for rec in log_data:
-    for key, val in map_arduino_bs[conf].items():
-      rec[val]=rec.pop(key)
-    rec['date']-=offset
-    rec['flux']=rec['flux_2'] # <-- patch! fix me
-    if rec['out'] == 'OPEN':
-      rec['out'] = 1
-    else:
-      rec['out'] = 0
-    data.append(rec)
-
-  return data
-
-def get_mvm_df(fname, sep=' -> ', configuration='default'):
-  #data from the ventilator
-  print ("This is the chosen column mapping for the MVM file: ", mapping[configuration])
-
-  is_unix = False
-  if configuration=="mvm_col_arduino":
-    is_unix = True
-
-  print(f'MVM datafile: {fname}')
-  if fname[-5:]=='.json':
-    is_unix = True
-    data = get_json(fname,configuration)
-  else:
-    data = get_csv(fname,sep,configuration)
-
-  #is_manual = False
+  is_manual = False
   df = pd.DataFrame(data)
   if not is_unix: # text timestamp
     df['dt'] = ( pd.to_datetime(df['date']) - pd.to_datetime(df['date'][0]) )/np.timedelta64(1,'s')
