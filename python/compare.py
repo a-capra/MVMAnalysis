@@ -7,15 +7,12 @@ import matplotlib.pyplot as plt
 
 # Adapted from plot_arxXiv_canvases
 def plot_3views(data, run_config, output_directory):
-  # Test name is the same for both datasets by construction
-  test_name = run_config[0]["meta"]["test_name"]
-
   fig31, ax31 = plt.subplots(3, 1)
   ax31 = ax31.flatten()
   run_config[0]["linestyle"] = "--"
   run_config[1]["linestyle"] = ":"
 
-  for rc, d in zip(run_config, data):
+  for idx, rc, d in zip(range(1, (len(run_config) + 1)), run_config, data):
     my_selected_cycle = rc["meta"]["cycle_index"]
 
     # Simulator subset
@@ -28,20 +25,21 @@ def plot_3views(data, run_config, output_directory):
 
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
-    dataset_name = rc["db_range_name"].split("!")[0]
-    d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {dataset_name} flux [l/min]", c="r", linestyle=rc["linestyle"])
-    d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {dataset_name} airway pressure [cmH2O]", c="r", linestyle=rc["linestyle"])
-    d["sim_sel"].plot(ax=ax31[2], x="dt", y="total_vol", label=f"SIM {dataset_name} tidal volume [cl]", c="r", linestyle=rc["linestyle"])
-    d["mvm_sel"].plot(ax=ax31[0], x="dt", y="display_flux", label=f"MVM {dataset_name} flux [l/min]", c="b", linestyle=rc["linestyle"])
-    d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {dataset_name} airway pressure [cmH2O]", c="b", linestyle=rc["linestyle"])
-    d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {dataset_name} tidal volume [cl]", c="b", linestyle=rc["linestyle"])
+    d["sim_sel"].plot(ax=ax31[0], x="dt", y="total_flow", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
+    d["sim_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
+    d["sim_sel"].plot(ax=ax31[2], x="dt", y="total_vol", label=f"SIM {idx}", c="r", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[0], x="dt", y="display_flux", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
+    d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
 
-  ax31[0].set_xlabel("Time [s]")
-  ax31[1].set_xlabel("Time [s]")
+  ax31[0].set_ylabel("Flux [l/min]")
+  ax31[1].set_ylabel("Airway pressure [cmH2O]")
   ax31[2].set_xlabel("Time [s]")
+  ax31[2].set_ylabel("Tidal volume [cl]")
 
+  title = f"{run_config[0]['dataset_name']} test {run_config[0]['test_name']} (1) vs {run_config[1]['dataset_name']} test {run_config[1]['test_name']} (2)"
   fig31.suptitle(f"Test nr. {test_name}", weight="heavy")
-  figpath = f"{output_directory}/{test_name}.png"
+  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{run_config[0]['test_name']}_vs_{run_config[1]['dataset_name']}_{run_config[1]['test_name']}.png"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
 
@@ -252,6 +250,8 @@ if __name__ == "__main__":
         rc["fullpath_rwa"] += ".rwa"
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
       print(f"Files of simulation {i+1}: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
+
+      rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{rc['meta']['Campaign']}"
 
     if success:
       process_run(run_config, args.output_directory)
