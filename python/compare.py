@@ -37,9 +37,9 @@ def plot_3views(data, run_config, output_directory):
   ax31[2].set_xlabel("Time [s]")
   ax31[2].set_ylabel("Tidal volume [cl]")
 
-  title = f"{run_config[0]['dataset_name']} test {run_config[0]['test_name']} (1) vs {run_config[1]['dataset_name']} test {run_config[1]['test_name']} (2)"
-  fig31.suptitle(f"Test nr. {test_name}", weight="heavy")
-  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{run_config[0]['test_name']}_vs_{run_config[1]['dataset_name']}_{run_config[1]['test_name']}.png"
+  title = f"{run_config[0]['dataset_name']} test {run_config[0]['meta']['test_name']} (1) vs {run_config[1]['dataset_name']} test {run_config[1]['meta']['test_name']} (2)"
+  fig31.suptitle(title, weight="heavy")
+  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{run_config[0]['meta']['test_name']}_vs_{run_config[1]['dataset_name']}_{run_config[1]['meta']['test_name']}.png"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
 
