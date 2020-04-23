@@ -72,11 +72,11 @@ The time synchronisation between datasets is a critical step to compare MVM and 
 The goal is to have a quick plotting script, without recording the run in the google spreasheet
 Example:
 ```
-python python/simple.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -C 25 -R 20 -r 10 -P 15 -Q 5 -f 0.5 -> Napoli -b 3
+python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -C 25 -R 20 -r 10 -P 15 -Q 5 -f 0.5 -> Napoli -b 3
 ```
 Or even without the simulation:
 ```
-python python/simple.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -s
+python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -s
 ```
 
 ## Repository structure
