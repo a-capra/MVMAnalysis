@@ -97,12 +97,12 @@ if __name__ == "__main__":
   import argparse
 
   parser = argparse.ArgumentParser(description="Compare two datasets.")
-  parser.add_argument("db-range-name-1", help="Name and range of the metadata spreadsheet for the first dataset")
-  parser.add_argument("data-location-1", help="Path to the first dataset.")
-  parser.add_argument("db-range-name-2", help="Name and range of the metadata spreadsheet for the second dataset")
-  parser.add_argument("data-location_2", help="Path to the second dataset.")
+  parser.add_argument("db_range_name_1", help="Name and range of the metadata spreadsheet for the first dataset")
+  parser.add_argument("data_location_1", help="Path to the first dataset.")
+  parser.add_argument("db_range_name_2", help="Name and range of the metadata spreadsheet for the second dataset")
+  parser.add_argument("data_location_2", help="Path to the second dataset.")
   parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="plots_iso")
-  parser.add_argument("-S", "--skip_files", type=str, help="Skip listed files in both datasets.", nargs="+", default="")
+  parser.add_argument("-S", "--skip-files", type=str, help="Skip listed files in both datasets.", nargs="+", default="")
   parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.", default="")
   parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.", default="")
   parser.add_argument("--j1", action="store_true", help="Try to read first dataste as JSON instead of CSV.")
