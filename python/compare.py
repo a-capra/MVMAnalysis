@@ -242,7 +242,7 @@ if __name__ == "__main__":
       if not (rc["json"] or rc["fullpath_mvm"].endswith(".txt")):
         print("Adding missing txt extension to MVM path.")
         rc["fullpath_mvm"] += ".txt"
-      print(f"\nMVM file {i+1}: {rc['fullpath_mvm']}")
+      print(f"\nMVM file: {rc['fullpath_mvm']}")
 
       # Build simulations paths
       rc["fullpath_rwa"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['SimulatorFileName']}"
@@ -252,7 +252,7 @@ if __name__ == "__main__":
       if not rc["fullpath_rwa"].endswith(".rwa"):
         rc["fullpath_rwa"] += ".rwa"
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
-      print(f"Files of simulation {i+1}: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
+      print(f"Files of simulation: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
       rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{rc['meta']['Campaign']}"
 
