@@ -95,10 +95,12 @@ def get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
   df['dt'] = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt'] , len(df) ) # correct for duplicate times
   return df
 
-def get_mvm_df(fname, sep, configuration):
+
+def get_mvm_df(fname, sep=' -> ', configuration='default'):
   #data from the ventilator
   data = []
 
+  is_unix = False
   columns = mapping[configuration]
   print ("This is the chosen column mapping for the MVM file: ", columns)
 
@@ -112,7 +114,7 @@ def get_mvm_df(fname, sep, configuration):
       if not line: continue
       l = line.split(sep)
       try:
-        par = ''.join(l[1:]).split(',')
+        par = sep.join(l[1:]).split(',')
       except :
         print (line)
         continue
@@ -125,23 +127,39 @@ def get_mvm_df(fname, sep, configuration):
       t = l[0]
       if ':' not in l[0]:
         t = float(l[0]) # in this way, t is either a string (if HHMMSS) or a float
+        is_unix = True
 
-      if "mvm_col_no_time" in configuration:
+      if ( "mvm_col_no_time" in configuration  ) :
         dataline = dict ( zip ( columns[0:10], [float(i) for i in par[0:10]]  )   )
         step = 0.012 #s
         dataline['date']  = iline * step
         data.append(  dataline )
-      elif configuration == "mvm_col_arduino":
+        is_unix = True
+      elif (configuration == "mvm_col_arduino") :
         dataline = dict ( zip ( columns[2:11], [float(i) for i in par[1:10]]  )   )
         dataline['date'] = float ( par[0] )  * 1e-3
+        is_unix = True
         #dataline['date'] = t
         data.append(  dataline )
-      else:  #default
+      else :  #default
         dataline = dict (   zip ( columns[1:8], [float(i) for i in par[0:7]]  )   )
         dataline['date'] = t
         data.append( dataline )
 
-  return data
+  is_manual = False
+  df = pd.DataFrame(data)
+  if not is_unix: # text timestamp
+    df['dt'] = ( pd.to_datetime(df['date']) - pd.to_datetime(df['date'][0]) )/np.timedelta64(1,'s')
+  else: # unix timestamp in seconds
+    #print (df['date'])
+    df['dt'] = ( pd.to_datetime(df['date'], unit='s') - pd.to_datetime(df['date'][0], unit='s') )/np.timedelta64(1,'s')
+
+  #print (df.head())
+  #dtmax = df.iloc[-1,:]['dt']
+  #timestamp = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt']*(dtmax-0.08)/dtmax , len(df) )   #use this line if you want to stretch the x axis of MVM data
+
+  return df
+
 
 def get_mvm_df_json(fname, map='mvm_triumf_1') :
 
