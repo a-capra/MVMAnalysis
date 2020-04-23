@@ -238,7 +238,8 @@ if __name__ == "__main__":
 
       # Build MVM paths and skip user requested files
       rc["fullpath_mvm"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['MVM_filename']}"
-      if not rc["fullpath_mvm"].endswith(".txt"):
+      if not (rc["json"] or rc["fullpath_mvm"].endswith(".txt")):
+        print("Adding missing txt extension to MVM path.")
         rc["fullpath_mvm"] += ".txt"
       print(f"\nMVM file {i+1}: {rc['fullpath_mvm']}")
 
