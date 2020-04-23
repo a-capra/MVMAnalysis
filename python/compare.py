@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
     for i, rc in enumerate(run_config):
       # Read meta data from spreadsheets
-      filename = cur_test[i].iloc[0]["MVM_filename"]
+      filename = cur_tests[i].iloc[0]["MVM_filename"]
       rc["meta"] = db.read_meta_from_spreadsheet(cur_tests[i], filename)
 
       # Only use first element
