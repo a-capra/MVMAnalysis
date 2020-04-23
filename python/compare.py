@@ -84,7 +84,7 @@ def process_run(run_config, output_directory):
     cb.add_chunk_info(d["sim"])
 
     # Compute tidal volume etc.
-    add_clinical_values(d["sim"])
+    cb.add_clinical_values(d["sim"])
     d["respiration_rate"], d["inspiration_duration"] = cb.measure_clinical_values(d["mvm"], start_times=d["start_times"])
 
     cb.add_run_info(d["sim"])
