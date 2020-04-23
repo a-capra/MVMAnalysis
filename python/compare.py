@@ -86,7 +86,7 @@ def process_run(run_config, output_directory):
     d["sim"]["diindex"] = np.zeros(this_shape[0])
 
     cb.add_cycle_info(sim=d["sim"], mvm=d["mvm"], start_times=d["start_times"], reaction_times=d["reaction_times"])
-    d["sim"]["dtc"] = d["sim"]["dt"] - d["start"]
+    d["sim"]["dtc"] = d["sim"]["dt"] - d["sim"]["start"]
     d["sim"]["diindex"] = d["sim"]["diindex"] - d["sim"]["siindex"]
 
     cb.add_chunk_info(d["sim"])
