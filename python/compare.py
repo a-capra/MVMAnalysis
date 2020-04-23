@@ -68,7 +68,7 @@ def process_run(run_config, output_directory):
 
     cb.add_timestamp(d["mvm"])
 
-    cb.correct_sim(d["sim"])
+    cb.correct_sim_df(d["sim"])
     # Add time shift
     cb.apply_manual_shift(sim=d["sim"], mvm=d["mvm"], manual_offset=rc["offset"])
 
