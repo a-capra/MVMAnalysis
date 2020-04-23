@@ -252,5 +252,5 @@ if __name__ == "__main__":
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
       print(f"Files of simulation {i+1}: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
-    if in_campaign:
+    if success:
       process_run(run_config, args.output_directory)
