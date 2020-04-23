@@ -238,4 +238,4 @@ if __name__ == "__main__":
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
       print(f"Files of simulation {i+1}: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
-    process_run(rc, output_directory)
+    process_run(rc, args.output_directory)
