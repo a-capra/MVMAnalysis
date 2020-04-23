@@ -37,11 +37,11 @@ def plot_3views(data, run_config, output_directory):
     d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
 
   ax31[0].set_xlabel("")
-  ax31[0].set_ylabel("Flux [l/min]")
+  ax31[0].set_ylabel("F [l/min]")
   ax31[1].set_xlabel("")
-  ax31[1].set_ylabel("Airway pressure [cmH2O]")
+  ax31[1].set_ylabel("AWP [cmH2O]")
   ax31[2].set_xlabel("Time [s]")
-  ax31[2].set_ylabel("Tidal volume [cl]")
+  ax31[2].set_ylabel("TV [cl]")
 
   title = f"{run_config[0]['dataset_name']} test {run_config[0]['meta']['test_name']} (1) vs {run_config[1]['dataset_name']} test {run_config[1]['meta']['test_name']} (2)"
   fig31.suptitle(title, weight="heavy")
