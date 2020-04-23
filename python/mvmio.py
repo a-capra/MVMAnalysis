@@ -74,11 +74,22 @@ map_arduino2analysis={
                     'out':'outlet',
                     'flux':'fs1_r',
                     'flux_3':'fs1_r'
-  },
-  'mvm_napoli':dict(zip(
-                mapping['mvm_col_arduino'],
-                ['time', 'ts', 'flux_inhale', 'p_valve', 'p_patient', 'pv1_ctrl', 'p_slow', 'pv2_ctrl', 'f_vent_raw', 'f_total', 'v_total', 'p_patient_dv2']))
-}
+                    },
+    'mvm_control':{
+                  'date':'time',
+                  'time_arduino':'ts',
+                  'flux':'flux_inhale',
+                  'pressure_pv1':'p_valve',
+                  'airway_pressure':'p_patient',
+                  'in':'pv1_ctrl',
+                  'service_1':'p_slow',
+                  'out':'pv2_ctrl',
+                  'flux_2':'f_vent_raw',
+                  'flux_3':'f_total',
+                  'volume':'v_total',
+                  'service_2':'p_patient_dv2'
+                  }
+      }
 
 def get_raw_df(fname, columns, columns_to_deriv, timecol='dt'):
   df = pd.read_csv(fname, skiprows=4, names=columns, sep='\t', engine='python')
@@ -178,6 +189,7 @@ def get_mvm_df_json(fname, map='mvm_triumf_1') :
     df = pd.DataFrame.from_dict(mydict['data'])
     column_names = [x for x in mydict['data'][0].keys()]
 
+  #print(column_names)
   #temporary: convert arduino variable names into the analysis names
   for key,val in map_arduino2analysis[map].items():
     try:

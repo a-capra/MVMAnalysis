@@ -667,7 +667,7 @@ if __name__ == '__main__':
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
   parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
-  parser.add_argument("-m","--mapping", type=str, help="convert json dictionary to analysis dictionary", default="mvm_napoli")
+  parser.add_argument("-m","--mapping", type=str, help="convert json dictionary to analysis dictionary", default="mvm_control")
   args = parser.parse_args()
 
   columns_rwa = ['dt',
