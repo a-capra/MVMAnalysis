@@ -1,3 +1,4 @@
+import numpy as np
 import db
 import combine as cb
 import mvmio as io
