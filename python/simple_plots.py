@@ -39,7 +39,7 @@ def plot_all(df, dfhd, objname, output_directory, start_times, colors, meta, tag
   fig31.set_size_inches(13,10)
   ttl=' '.join([k+str(meta[k]) for k in meta])
   fig31.suptitle(tag.replace('_',' ') + ' ' + ttl, weight='heavy')
-  figpath = "%s/%s_3views_%s.png" % (output_directory, tag,  objname.replace('.json', '')) # TODO: make sure it is correct, or will overwrite!
+  figpath = "%s/%s_all_%s.png" % (output_directory, tag,  objname.replace('.json', '')) # TODO: make sure it is correct, or will overwrite!
   print(f'Saving figure to {figpath}')
   fig31.tight_layout()
   fig31.savefig(figpath)

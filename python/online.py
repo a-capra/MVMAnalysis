@@ -154,7 +154,8 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   fullpath=args.input_directory
-  input_mvm = fullpath+args.input_mvm
+  fname=args.input_mvm
+  input_mvm = fullpath+fname
   print('Reading MVM data from',input_mvm)
   fullpath_rwa = fullpath+args.input_asl
   print('Reading ASL5000 data from',fullpath_rwa)
@@ -183,8 +184,7 @@ if __name__ == '__main__':
     mvm_json = False
   # retrieve MVM data
   if mvm_json:    dfhd = get_mvm_df_json (fname=input_mvm)
-  else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
-  
+  else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)  
   
   print('add timestamp')
   add_timestamp(dfhd)
