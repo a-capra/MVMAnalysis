@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 
-def plot_service_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, web, respiration_rate, inspiration_duration) :
+def plot_service_canvases (df, dfhd, meta, sitename, objname, output_directory, start_times, colors, web, respiration_rate, inspiration_duration) :
 
   ####################################################
   '''general service canavas number 1'''
@@ -52,7 +52,7 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, site_name,
   ax.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
   figpath = "%s/%s_service_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', ''))
   if web:
-    figpath = "%s/%s_%s_test%s_run%s_service.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+    figpath = "%s/%s_%s_test%s_run%s_service.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
   print(f'Saving figure to {figpath}')
   plt.savefig(figpath)
 
@@ -97,6 +97,6 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, site_name,
 
   figpath = "%s/%s_service2_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
   if web:
-    figpath = "%s/%s_%s_test%s_run%s_service2.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+    figpath = "%s/%s_%s_test%s_run%s_service2.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
   print(f'Saving figure to {figpath}')
   figbis.savefig(figpath)

@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 
-def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, web) :
+def plot_arXiv_canvases (df, dfhd, meta, sitename, objname, output_directory, start_times, colors, web) :
 
 
   ####################################################
@@ -80,7 +80,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, s
     ax11.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     figpath = "%s/%s_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_%icycles.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'], cycles_to_show)
+      figpath = "%s/%s_%s_test%s_run%s_%icycles.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'], cycles_to_show)
     print(f'Saving figure to {figpath}')
     fig11.savefig(figpath)
 
@@ -107,7 +107,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, s
     fig31.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     figpath = "%s/%s_3views_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_3views.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+      figpath = "%s/%s_%s_test%s_run%s_3views.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     fig31.savefig(figpath)
 
@@ -159,7 +159,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, s
     #ax30cycles.set_title ("Test n %s"%meta[objname]['test_name'])
     figpath = "%s/%s_30cycles_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_30cycles.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+      figpath = "%s/%s_%s_test%s_run%s_30cycles.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     fig30c.savefig(figpath)
     """

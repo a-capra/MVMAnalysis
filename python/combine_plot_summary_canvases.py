@@ -10,7 +10,7 @@ import matplotlib.patches as patches
 from mvmconstants import *
 
 
-def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes) :
+def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
 
   for i in range (len(meta)) :
 
@@ -75,7 +75,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name,
     ax2.set_title ("Test n %s"%meta[objname]['test_name'])
     figpath = "%s/%s_avg_%s.png" % (output_directory, meta[objname]['Campaign'] , objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_avg.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+      figpath = "%s/%s_%s_test%s_run%s_avg.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     fig2.savefig(figpath)
 
@@ -151,7 +151,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name,
 
     figpath = "%s/%s_summary_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_summary.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+      figpath = "%s/%s_%s_test%s_run%s_summary.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     figs.savefig(figpath)
 
@@ -177,7 +177,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name,
       print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
-def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, site_name, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
+def plot_overlay_canvases (dftmp, dfhd, meta, sitename, objname, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
     figoverlay, axoverlay = plt.subplots(6)
     figoverlay.set_size_inches(7,9)
@@ -220,5 +220,5 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, site_na
 
     figpath = "%s/%s_overlay_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     if web:
-      figpath = "%s/%s_%s_test%s_run%s_overlay.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
+      figpath = "%s/%s_%s_test%s_run%s_overlay.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     figoverlay.savefig(figpath)
