@@ -162,7 +162,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name,
     #print("measured_volumes:", measured_volumes)
     #print("real_tidal_volumes:", real_tidal_volumes)
 
-    ## Print test result, based on comparisons with maximum errors
+    ## Print test results, based on comparisons with maximum errors
     if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
       print("SUCCESS: PEEP all values within maximum errors")
     else:
@@ -171,7 +171,10 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name,
       print("SUCCESS: Pinsp all values within maximum errors")
     else:
       print("FAILURE: Pinsp outside maximum errors")
-
+    if min_volume > simulator_volume_low and max_volume < simulator_volume_low + simulator_volume_wid:
+      print("SUCCESS: Volume all values within maximum errors wrt simulator")
+    else:
+      print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
 def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, site_name, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
