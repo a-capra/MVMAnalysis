@@ -192,7 +192,7 @@ if __name__ == '__main__':
   plot_arXiv_style(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
 
 
-  fig=plt.figure(figsize=(13,8))
+  fig=plt.figure(figsize=(15,8))
   
   ax1 = plt.subplot(311)
   plt.title(' '.join([k+str(sett[k]) for k in sett]))
@@ -217,7 +217,7 @@ if __name__ == '__main__':
   plt.ylabel('[L/min]')
   plt.legend()
 
-  plt.xlim(10, 60)
+  #plt.xlim(10, 60)
 
   fig.tight_layout()
   plt.show()
