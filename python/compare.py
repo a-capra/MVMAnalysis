@@ -248,7 +248,7 @@ if __name__ == "__main__":
       if not (rc["json"] or rc["fullpath_mvm"].endswith(".txt")):
         print("Adding missing txt extension to MVM path.")
         rc["fullpath_mvm"] += ".txt"
-      if rc["json"] and not rc["fullpath_mvm"].endswith(".json")):
+      if rc["json"] and not rc["fullpath_mvm"].endswith(".json"):
         print("Adding missing json extension to MVM path.")
         rc["fullpath_mvm"] += ".json"
       print(f"\nMVM file: {rc['fullpath_mvm']}")
