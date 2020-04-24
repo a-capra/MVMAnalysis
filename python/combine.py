@@ -233,6 +233,8 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     ---
     Chris.Jillings@snolab.ca 2020-04-19
     '''
+    # protect against empty df and nan
+    if adf.empty: return adf 
     nstats = 7
     di_series = adf['diindex']
     length = di_series.max() - di_series.min()
@@ -259,15 +261,15 @@ def add_clinical_values (df, max_R=250, max_C=100) :
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
 
   #true resistance
-  df['delta_pout_pin']        =  df['airway_pressure'] - df['chamber1_pressure']                  # cmH2O
-  df['delta_vol']             = ( df['chamber1_vol'] * 2. ) .diff()                               # ml
-  df['airway_resistance']     =  df['delta_pout_pin'] / ( df['delta_vol'] / deltaT/1000. )                 # cmH2O/(l/s)
+  df['delta_pout_pin']        =  df['airway_pressure'].astype(float) - df['chamber1_pressure'].astype(float)                # cmH2O
+  df['delta_vol']             = ( df['chamber1_vol'].astype(float) * 2. ) .diff()                               # ml
+  df['airway_resistance']     =  df['delta_pout_pin'].astype(float) / ( df['delta_vol'].astype(float) / deltaT/1000. )                 # cmH2O/(l/s)
   df.loc[ (abs(df.airway_resistance)>max_R) | (df.airway_resistance<0) ,"airway_resistance"] = 0
 
   #true compliance
-  df['deltapin']     =  df['chamber1_pressure'].diff()
-  df['delta_volin']  =  ( df['chamber1_vol']  + df['chamber2_vol']) . diff()
-  df['compliance']   =  df['delta_volin']/df['deltapin']
+  df['deltapin']     =  df['chamber1_pressure'].astype(float).diff()
+  df['delta_volin']  =  ( df['chamber1_vol'].astype(float)  + df['chamber2_vol'].astype(float)) . diff()
+  df['compliance']   =  df['delta_volin'].astype(float)/df['deltapin'].astype(float)
   df.loc[abs(df.compliance)>max_C,"compliance"] = 0
 
   #integral of flux - double checks only
@@ -580,9 +582,13 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
 
       #correct for outliers ?  no, we need to see them
       measured_peeps      = measured_peeps[3:-3]
+      if len(measured_peeps) == 0: measured_peeps=[0.0]
       measured_plateaus   = measured_plateaus[3:-3]
+      if len(measured_plateaus) == 0: measured_plateaus=[0.0]
       measured_peaks      = measured_peaks[3:-3]
+      if len(measured_peaks) == 0: measured_peaks=[0.0]
       measured_volumes    = measured_volumes[3:-3]
+      if len(measured_volumes) == 0: measured_volumes=[0.0]
 
       mean_peep    = np.mean(measured_peeps)
       mean_plateau = np.mean(measured_plateaus)
