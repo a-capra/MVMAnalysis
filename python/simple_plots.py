@@ -13,7 +13,7 @@ def plot_all(df, dfhd, objname, output_directory, start_times, colors, meta, tag
   '''general service canavas number 1'''
   ####################################################
 
-  fig31,ax31 = plt.subplots(3,1)
+  fig31,ax31 = plt.subplots(3,1,sharex=True)
   ax31 = ax31.flatten()
 
   if df is not None:
