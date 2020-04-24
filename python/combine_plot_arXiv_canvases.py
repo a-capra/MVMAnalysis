@@ -39,9 +39,12 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
 
     #make a subset dataframe for ventilator
-    first_time_bin  = dftmp['dt'].iloc[0]
-    last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
-    dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
+    try:
+      first_time_bin  = dftmp['dt'].iloc[0]
+      last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
+      dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
+    except IndexError:
+      dfvent = dfhd
 
     dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
