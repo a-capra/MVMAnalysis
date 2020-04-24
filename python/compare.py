@@ -191,8 +191,8 @@ if __name__ == "__main__":
     'ventilator_pressure',
   ]
 
-  print ("First dataset location: ", run_config[0]["data_location"])
-  print ("Second dataset location: ", run_config[1]["data_location"])
+  for idx, rc in enumerate(run_config):
+    print(f"Meta data {idx}: {rc['db_range_name']} Data location {idx}: {rc['data_location']}")
 
   # read metadata spreadsheet
   df_spreadsheet = [db.read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
@@ -205,20 +205,21 @@ if __name__ == "__main__":
         sys.exit(1)
   else:
     # Check for tests only present in one of the spreadsheets
-    df_spreadsheet_1_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
+    df_spreadsheet_0_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
+    if not df_spreadsheet_0_only.empty:
+      print("WARNING: The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
+      print(df_spreadsheet_0_only)
+    df_spreadsheet_1_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
     if not df_spreadsheet_1_only.empty:
-      print("WARNING: The following tests are only present in the first dataset. Skipping...")
+      print("WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
-    df_spreadsheet_2_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
-    if not df_spreadsheet_2_only.empty:
-      print("WARNING: The following tests are only present in the second dataset. Skipping...")
-      print(df_spreadsheet_2_only)
     # Just duplicate the test names
     test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"]]
 
   for test_pair in test_names:
     success = True
     for tn, rc, ss in zip(test_pair, run_config, df_spreadsheet):
+      print(f"Looking for {tn} in {rc['db_range_name']}...")
       if rc["single_campaign"]:
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
         if cur_test.empty:
@@ -228,11 +229,12 @@ if __name__ == "__main__":
       else:
         cur_test = ss[ss["N"] == tn]
       if len(cur_test) > 1:
-        print(f"WARNING: More than one test {tn} found in rc['db_range_name']. Using first one...")
+        print(f"WARNING: More than one test {tn} found in {rc['db_range_name']}. Using first one...")
 
       # Read meta data from spreadsheets
       filename = cur_test.iloc[0]["MVM_filename"]
       if not filename:
+        print(f"WARNING: Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
         success = False
         break
       rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
@@ -261,4 +263,5 @@ if __name__ == "__main__":
       rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{rc['meta']['Campaign']}"
 
     if success:
+      print(f"Processing {test_pair[0]} in {run_config[0]['dataset_name']} and {test_pair[1]} in {run_config[1]['dataset_name']}...")
       process_run(run_config, args.output_directory)
