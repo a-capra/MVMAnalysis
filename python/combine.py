@@ -129,7 +129,8 @@ def apply_good_shift(sim, mvm, resp_rate, manual_offset):
   sim.plot(ax=ax, x='dt',y='flux')
   ax.plot(sim_peaks['dt'].to_list(),sim_peaks['flux'].to_list(),'x')
   ax.plot(mvm_peaks['dt'].to_list(),mvm_peaks['flux'].to_list(),'x')
-  plt.show()
+  if args.show:
+    plt.show()
   """
 
 def add_pv2_status(df):
@@ -255,7 +256,6 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     return answer
 
 
-
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -373,7 +373,6 @@ def measure_clinical_values(df, start_times):
   return respiration_rate, inspiration_duration
 
 
-
 def add_run_info(df, dist=25):
   ''' Add run info based on max pressure '''
   df['mean_max_pressure'] = df['max_pressure'].rolling(4).mean()
@@ -393,7 +392,8 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
-def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default', mvm_json=False):
+
+def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
   # retrieve simulator data
 
   if args.plot:
@@ -408,27 +408,29 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       "flux" : "#3399ff" #light blue
     }
 
-  if not ignore_sim:
+  if not args.ignore_sim:
     df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
   else:
     print ("I am ignoring the simulator")
 
   # retrieve MVM data
-  if mvm_json==True :    dfhd = get_mvm_df_json (fname=input_mvm, map=args.mapping)
-  else : dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+  if args.json:
+    dfhd = get_mvm_df_json(fname=input_mvm)
+  else:
+    dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
   add_timestamp(dfhd)
 
   # apply corrections
-  correct_mvm_df(dfhd, pressure_offset)
+  correct_mvm_df(dfhd, args.pressure_offset)
 
-  if not ignore_sim :
+  if not args.ignore_sim :
     correct_sim_df(df)
 
     #add time shift
-    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
-    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #rough version, based on one pair of local maxima of flux
-    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)  #more elaborate alg, based on matching several maxima
+    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=args.offset)  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -442,11 +444,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   start_times    = get_start_times(dfhd) # based on PV2
   #  start_times    = get_start_times(df, thr=8, quantity='total_flow', timecol='dt') 
 
-  if ignore_sim :
+  if args.ignore_sim :
     if args.plot :
       plot_mvm_only_canvases(dfhd, meta, objname,start_times, colors)
       print ("Quitting due to ignore_sim")
-      plt.show()
+      if args.show:
+        plt.show()
     return #stop here if sim is ignored
 
   reaction_times = get_reaction_times(df, start_times)
@@ -531,7 +534,8 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   #plt.plot(dfhd['dt'], dfhd['compliance'], label='meas compliance')
 
   plt.legend()
-  plt.show()
+  if args.show:
+    plt.show()
   print('Press ENTER to continue to real plots')
   input()
   """
@@ -554,7 +558,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   ##################################
   # saving and plotting
   ##################################
-  if save:
+  if args.save:
     df.to_hdf(f'{objname}.sim.h5', key='simulator')
     dftmp.to_hdf(f'{objname}.sim.h5', key='simulator_truncated')
     dfhd.to_hdf(f'{objname}.mvm.h5', key='MVM')
@@ -570,12 +574,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors)
+    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors)
 
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
@@ -638,9 +642,10 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       ####################################################
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
-      filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+      plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+      plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+
+      filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
@@ -660,7 +665,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input files (.txt)", nargs='+')
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")
-  parser.add_argument("-i", "--ignore_sim", action='store_true',  help="ignore_sim")
+  parser.add_argument("-i", "--ignore_sim", action='store_true',  help="ignore simulator")
   parser.add_argument("-skip", "--skip_files", type=str,  help="skip files", nargs='+', default="")
   parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
   parser.add_argument("-show", "--show", action='store_true', help="show plots")
@@ -668,7 +673,8 @@ if __name__ == '__main__':
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
-  parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
+  parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='0.')
+  parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
@@ -711,6 +717,10 @@ if __name__ == '__main__':
 
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
+    if not args.json:
+      print("json input file detected, setting args.json = True")
+      args.json = True
+
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
       objname = list ( meta.keys()) [0]
@@ -719,29 +729,26 @@ if __name__ == '__main__':
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
-      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
+      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
 
   else :
-    #take only the first input as data folder path
+    # take only the first input as data folder path
     input = args.input[0]
 
     # else read metadata spreadsheet
     df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
 
-    #if option -n, select only one test
+    # if option -n, select only one test
     if len ( args.filename )  > 2 :
       unreduced_filename = args.filename.split("/")[-1]
       reduced_filename = '.'.join(unreduced_filename.split('.')[:])
 
-      print ( "Selecting only: " ,  reduced_filename  )
-      # protect against stored filenames without extesion  -- AC
-      stripped_unreduced_filename, ext = path.splitext(unreduced_filename)
-      print('MVM file is',ext)
-      MVM_filename_list=[ path.splitext(fff)[0]==stripped_unreduced_filename for fff in df_spreadsheet["MVM_filename"]]
-      df_spreadsheet = df_spreadsheet[ pd.Series(MVM_filename_list) ]
-      #df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
+      print ( "Selecting only: ", reduced_filename )
+      df_spreadsheet = df_spreadsheet[ ( df_spreadsheet["MVM_filename"] == unreduced_filename )  ]
 
     filenames = df_spreadsheet['MVM_filename'].unique()
+    if not filenames.size > 0:
+      print("No valid file name found in selected metadata spreadsheet range")
 
     ntests = 0
 
@@ -753,15 +760,32 @@ if __name__ == '__main__':
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
       ntests += len(meta)
 
-      objname = f'{filename}_0'   #at least first element is always there
+      objname = f'{filename}_0'   # at least first element is always there
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
-      if not fname.endswith(".txt") and not args.json:
-        fname = f'{fname}.txt'
-      elif  not fname.endswith(".json") and args.json:
-        fname = f'{fname}.json'
 
+      # detect whether input file is txt or json
+      if fname.endswith(".txt"):
+        # here json argument should be False
+        if args.json:
+          print("txt input file detected, setting args.json = False")
+          args.json = False
+      elif fname.endswith(".json"):
+        # here json argument should be True
+        if not args.json:
+          print("json input file detected, setting args.json = True")
+          args.json = True
+      else:
+        # if the file name does not end in .txt or .json, try adding an extension based on argument json
+        if args.json:
+          print ("args.json is True, adding extra .json to fname")
+          fname = f'{fname}.json'
+        else:
+          print ("args.json is False, adding extra .txt to fname")
+          fname = f'{fname}.txt'
+
+      # print file name, then check whether it should be skipped
       print(f'\nFile name {fname}')
       if fname.split('/')[-1] in args.skip_files:
         print('    ... skipped')
@@ -788,4 +812,4 @@ if __name__ == '__main__':
         continue
 
       # run
-      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
+      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
