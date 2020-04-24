@@ -383,7 +383,7 @@ def add_run_info(df, dist=25):
   df['run'] = df['run']*10
 
 
-def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default'):
+def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
   # retrieve simulator data
 
   if args.plot:
@@ -407,20 +407,20 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
   if args.json:
     dfhd = get_mvm_df_json(fname=input_mvm)
   else:
-    dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
+    dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
   add_timestamp(dfhd)
 
   # apply corrections
-  correct_mvm_df(dfhd, pressure_offset)
+  correct_mvm_df(dfhd, args.pressure_offset)
 
   if not args.ignore_sim :
     correct_sim_df(df)
 
     #add time shift
-    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
-    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=manual_offset)   #rough version, based on one pair of local maxima of flux
-    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=manual_offset)  #more elaborate alg, based on matching several maxima
+    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=args.offset)  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -569,12 +569,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors)
+    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors)
 
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
@@ -633,10 +633,10 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       ####################################################
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+      plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
 
-      filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+      filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
@@ -663,7 +663,8 @@ if __name__ == '__main__':
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
-  parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='.0')
+  parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='0.')
+  parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
@@ -713,7 +714,7 @@ if __name__ == '__main__':
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
-      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, manual_offset=args.offset, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col)
+      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
 
   else :
     # take only the first input as data folder path
@@ -775,4 +776,4 @@ if __name__ == '__main__':
       print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
       # run
-      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, manual_offset=args.offset, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col)
+      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
