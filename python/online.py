@@ -177,6 +177,7 @@ if __name__ == '__main__':
   if not args.skip_sim:
     df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
   else:
+    df=None
     print('Ignore ASL5000 data')
 
   mvm_json=True
@@ -185,55 +186,43 @@ if __name__ == '__main__':
   # retrieve MVM data
   if mvm_json:    dfhd = get_mvm_df_json (fname=input_mvm)
   else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)  
+
+  # ------------ end of inputs
   
   print('add timestamp')
   add_timestamp(dfhd)
-   # add PV2 status info
+  # add PV2 status info
   print('add PV2 status')
   add_pv2_status(dfhd)
 
+  #add time shift
+  #manual version, -o option from command line
+  apply_manual_shift(sim=None, mvm=dfhd, manual_offset=manual_offset)
+
   # compute cycle start
-  # start_times = get_muscle_start_times(df) # based on muscle pressure
   print('compute cycle start based on PV2')
   start_times    = get_start_times(dfhd) # based on PV2
+
+  dfhd['start'] = 0
+  dfhd['ncycle']= 0
+  for i,s in enumerate(start_times) :
+    dfhd.loc[dfhd.dt>s,  'start' ]   = s
+    dfhd.loc[dfhd.dt>s,  'ncycle']   = i
+
+  # compute tidal volume etc
+  print('measure clinical values')
+  respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
 
   # apply corrections
   print('apply corrections')
   correct_mvm_df(dfhd, pressure_offset)
-  if args.skip_sim:
-      plot_mvm_only_canvases(dfhd, {'dummy':{'test_name':args.input_mvm}}, 'dummy', start_times, colors)
-      plt.show()
-      exit(0) #stop here if sim is ignored
-
-  correct_sim_df(df)
-
-  #add time shift
-  apply_manual_shift(sim=None, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
-  #apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
-  
-  reaction_times = get_reaction_times(df, start_times)
-
-  add_some_integer_indexing_fields(sim=df)
-
-  # add info
-  print('add other info')
-  add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
-  df['dtc'] = df['dt'] - df['start']
-  df['diindex'] = df['iindex'] - df['siindex']
-
-  # compute tidal volume etc
-  print('add clinical values')
-  add_clinical_values(df)
-  print('measure clinical values')
-  respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
 
   ####################################################
   # plot simple canavas
   ####################################################
-  # 'choose here the name of the MVM flux variable to be shown in arXiv plots
-  dfhd['display_flux'] = dfhd['flux_3'] # why???
+  # 'choose here the name of the MVM flux variable to be shown
+  dfhd['display_flux'] = dfhd['flux_3']
   plot_all(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.tag)
-  plot_3views(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
 
   ####################################################
   # plot analysis histo
@@ -243,33 +232,23 @@ if __name__ == '__main__':
             respiration_rate, inspiration_duration, 
             measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes)
 
-  # fig=plt.figure(figsize=(15,8))
+  if args.skip_sim:
+    plt.show()
+    exit(0) #stop here if sim is ignored
+
+  correct_sim_df(df)
+
+  #add time shift
+  #apply_good_shift(df=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
   
-  # ax1 = plt.subplot(311)
-  # plt.title(' '.join([k+str(sett[k]) for k in sett]))
-  # plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway p')
-  # plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
-  # plt.setp(ax1.get_xticklabels(), visible=False)
-  # plt.ylabel('[cmH2O]')
-  # plt.legend()
+  reaction_times = get_reaction_times(df, start_times)
+  df['start'] = 0
+  for s,f in zip (start_times,reaction_times) :
+    df.loc[df.dt>s,'start']   = s
 
+  ####################################################
+  # plot simple canavas
+  ####################################################
+  plot_3views(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
 
-  # ax2 = plt.subplot(312, sharex=ax1)
-  # plt.plot(df['dt'], df['total_vol'], label='ASL5000 tot vol')
-  # plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal vol')
-  # plt.setp(ax2.get_xticklabels(), visible=False)
-  # plt.ylabel('[cL]')
-  # plt.legend()
-
-  # ax3 = plt.subplot(313, sharex=ax1)
-  # plt.plot(df['dt'], df['total_flow'], label='ASL5000 tot flow')
-  # plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
-  # plt.xlabel('[sec]')
-  # plt.ylabel('[L/min]')
-  # plt.legend()
-
-  # #plt.xlim(10, 60)
-
-  # fig.tight_layout()
   plt.show()
-  # fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(args.output_directory,sett['C'],sett['R'],sett['RR'],sett['P'],sett['PEEP']))

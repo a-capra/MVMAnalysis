@@ -16,18 +16,20 @@ def plot_all(df, dfhd, objname, output_directory, start_times, colors, meta, tag
   fig31,ax31 = plt.subplots(3,1)
   ax31 = ax31.flatten()
 
-  df.plot(ax=ax31[0], x='dt', y='total_flow',    label='total_flow      [l/min]', c=colors['total_flow'])
+  if df is not None:
+    df.plot(ax=ax31[0], x='dt', y='total_flow',    label='total_flow      [l/min]', c=colors['total_flow'])
+    df.plot(ax=ax31[1], x='dt', y='airway_pressure', label='airway_pressure [cmH2O]', c=colors['sim_airway_pressure'])
+    df.plot(ax=ax31[2], x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
+
   if 'flux_2' in dfhd:
     dfhd.plot(ax=ax31[0], x='dt', y='flux_2', label='flux_2', c='r', linestyle="--")
   if 'flux_3' in dfhd:
     dfhd.plot(ax=ax31[0], x='dt', y='flux_3',  label='flux_3', c='r')
   dfhd.plot(ax=ax31[0], x='dt', y='flux',            label='ventilator flux            [l/min]', c=colors['flux'] )
 
-  df.plot(ax=ax31[1], x='dt', y='airway_pressure', label='airway_pressure [cmH2O]', c=colors['sim_airway_pressure'])
   dfhd.plot(ax=ax31[1], x='dt', y='airway_pressure', label='ventilator airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
   #plt.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
 
-  df.plot(ax=ax31[2], x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
   dfhd.plot(ax=ax31[2],  x='dt', y='tidal_volume',    label='MVM tidal volume       [cl]',        c='b')
 
   for ax in ax31:
@@ -95,3 +97,34 @@ def plot_3views(df, dfhd, objname, output_directory, start_times, colors, meta, 
   fig31.tight_layout()
   fig31.savefig(figpath)
   
+
+
+def basic_plotting(df,dfhd,sett,output_directory):
+  fig=plt.figure(figsize=(15,8))
+
+  ax1 = plt.subplot(311)
+  plt.title(' '.join([k+str(sett[k]) for k in sett]))
+  plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway p')
+  plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
+  plt.setp(ax1.get_xticklabels(), visible=False)
+  plt.ylabel('[cmH2O]')
+  plt.legend()
+
+  ax2 = plt.subplot(312, sharex=ax1)
+  plt.plot(df['dt'], df['total_vol'], label='ASL5000 tot vol')
+  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal vol')
+  plt.setp(ax2.get_xticklabels(), visible=False)
+  plt.ylabel('[cL]')
+  plt.legend()
+
+  ax3 = plt.subplot(313, sharex=ax1)
+  plt.plot(df['dt'], df['total_flow'], label='ASL5000 tot flow')
+  plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
+  plt.xlabel('[sec]')
+  plt.ylabel('[L/min]')
+  plt.legend()
+
+  #plt.xlim(10, 60)
+
+  fig.tight_layout()
+  fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(output_directory,sett['C'],sett['R'],sett['RR'],sett['P'],sett['PEEP']))
