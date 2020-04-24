@@ -166,8 +166,8 @@ if __name__ == '__main__':
   correct_sim_df(df)
 
   #add time shift
-  #apply_manual_shift(sim=None, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
-  apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
+  apply_manual_shift(sim=None, mvm=dfhd, manual_offset=manual_offset)   #manual version, -o option from command line
+  #apply_good_shift(sim=df, mvm=dfhd, resp_rate=sett['RR'], manual_offset=manual_offset)
   
   reaction_times = get_reaction_times(df, start_times)
 
