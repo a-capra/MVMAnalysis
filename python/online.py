@@ -5,6 +5,7 @@ import argparse
 from mvmio import *
 from combine import *
 from simple_plots import *
+from simple_histo import *
 
 from sys import exit
 
@@ -89,6 +90,43 @@ def add_some_integer_indexing_fields(sim):
   sim['diindex'] = np.zeros(this_shape[0])
 
 
+def Measurements(df, dfhd):
+  measured_peeps      = []
+  measured_volumes    = []
+  measured_peaks      = []
+  measured_plateaus   = []
+  real_tidal_volumes  = []
+  real_plateaus       = []
+
+  for i,nc in enumerate(dfhd['ncycle'].unique()) :
+
+    this_cycle              = dfhd[ dfhd.ncycle==nc ]
+    this_cycle_insp         = this_cycle[this_cycle.is_inspiration==1]
+
+    if len(this_cycle_insp)<1 : continue
+    cycle_inspiration_end   = this_cycle_insp['dt'].iloc[-1]
+
+    if i > len(dfhd['ncycle'].unique()) -3 : continue
+
+    if df is not None:
+      #compute tidal volume in simulator df
+      subdf             = df[ (df.dt>start_times[i]) & (df.dt<start_times[i+1]) ]
+      real_tidal_volume = ( subdf['total_vol'] - subdf['total_vol'].min() ).max()
+      #compute plateau in simulator
+      subdf             = df[ (df.dt>start_times[i]) & (df.dt<cycle_inspiration_end) ]
+      real_plateau      = subdf[ (subdf.dt > cycle_inspiration_end - 20e-3) ]['airway_pressure'].mean()
+      #this_cycle_insp[(this_cycle_insp['dt'] > start_times[i] + inspiration_duration - 20e-3) & (this_cycle_insp['dt'] < start_times[i] + inspiration_duration - 10e-3)]['airway_pressure'].mean()
+      real_tidal_volumes.append(real_tidal_volume)
+      real_plateaus.append (real_plateau)
+
+    measured_peeps.append(  this_cycle['cycle_PEEP'].iloc[0])
+    measured_volumes.append(this_cycle['cycle_tidal_volume'].iloc[0])
+    measured_peaks.append(   this_cycle['cycle_peak_pressure'].iloc[0])
+    measured_plateaus.append(this_cycle['cycle_plateau_pressure'].iloc[0])
+
+  return measured_peeps, measured_volumes,  measured_peaks, measured_plateaus, real_tidal_volumes, real_plateaus
+
+
 if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='MVM online analysis')
@@ -148,15 +186,19 @@ if __name__ == '__main__':
   else: dfhd = get_mvm_df(fname=input_mvm, sep=mvm_sep, configuration=mvm_columns)
   
   
+  print('add timestamp')
   add_timestamp(dfhd)
    # add PV2 status info
+  print('add PV2 status')
   add_pv2_status(dfhd)
 
   # compute cycle start
   # start_times = get_muscle_start_times(df) # based on muscle pressure
+  print('compute cycle start based on PV2')
   start_times    = get_start_times(dfhd) # based on PV2
 
   # apply corrections
+  print('apply corrections')
   correct_mvm_df(dfhd, pressure_offset)
   if args.skip_sim:
       plot_mvm_only_canvases(dfhd, {'dummy':{'test_name':args.input_mvm}}, 'dummy', start_times, colors)
@@ -174,51 +216,60 @@ if __name__ == '__main__':
   add_some_integer_indexing_fields(sim=df)
 
   # add info
+  print('add other info')
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
   df['dtc'] = df['dt'] - df['start']
   df['diindex'] = df['iindex'] - df['siindex']
 
   # compute tidal volume etc
+  print('add clinical values')
   add_clinical_values(df)
+  print('measure clinical values')
   respiration_rate, inspiration_duration = measure_clinical_values(dfhd, start_times=start_times)
 
   ####################################################
   # plot simple canavas
   ####################################################
-  plot_general_canvases(df, dfhd, fname, args.output_directory, start_times, colors, respiration_rate, inspiration_duration, args.tag)
-
   # 'choose here the name of the MVM flux variable to be shown in arXiv plots
   dfhd['display_flux'] = dfhd['flux_3'] # why???
-  plot_arXiv_style(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
+  plot_all(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.tag)
+  plot_3views(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.breath, args.tag)
 
+  ####################################################
+  # plot analysis histo
+  ####################################################
+  measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes = Measurements(df, dfhd)
+  plot_histo(dfhd, fname, args.output_directory, sett, args.tag, 
+            respiration_rate, inspiration_duration, 
+            measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes)
 
-  fig=plt.figure(figsize=(15,8))
+  # fig=plt.figure(figsize=(15,8))
   
-  ax1 = plt.subplot(311)
-  plt.title(' '.join([k+str(sett[k]) for k in sett]))
-  plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway p')
-  plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
-  plt.setp(ax1.get_xticklabels(), visible=False)
-  plt.ylabel('[cmH2O]')
-  plt.legend()
+  # ax1 = plt.subplot(311)
+  # plt.title(' '.join([k+str(sett[k]) for k in sett]))
+  # plt.plot(df['dt'], df['airway_pressure'], label='ASL5000 airway p')
+  # plt.plot(dfhd['dt'], dfhd['airway_pressure'], label='MVM pressure')
+  # plt.setp(ax1.get_xticklabels(), visible=False)
+  # plt.ylabel('[cmH2O]')
+  # plt.legend()
 
 
-  ax2 = plt.subplot(312, sharex=ax1)
-  plt.plot(df['dt'], df['total_vol'], label='ASL5000 tot vol')
-  plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal vol')
-  plt.setp(ax2.get_xticklabels(), visible=False)
-  plt.ylabel('[cL]')
-  plt.legend()
+  # ax2 = plt.subplot(312, sharex=ax1)
+  # plt.plot(df['dt'], df['total_vol'], label='ASL5000 tot vol')
+  # plt.plot(dfhd['dt'], dfhd['tidal_volume'], label='MVM tidal vol')
+  # plt.setp(ax2.get_xticklabels(), visible=False)
+  # plt.ylabel('[cL]')
+  # plt.legend()
 
-  ax3 = plt.subplot(313, sharex=ax1)
-  plt.plot(df['dt'], df['total_flow'], label='ASL5000 tot flow')
-  plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
-  plt.xlabel('[sec]')
-  plt.ylabel('[L/min]')
-  plt.legend()
+  # ax3 = plt.subplot(313, sharex=ax1)
+  # plt.plot(df['dt'], df['total_flow'], label='ASL5000 tot flow')
+  # plt.plot(dfhd['dt'], dfhd['display_flux'], label='MVM flow')
+  # plt.xlabel('[sec]')
+  # plt.ylabel('[L/min]')
+  # plt.legend()
 
-  #plt.xlim(10, 60)
+  # #plt.xlim(10, 60)
 
-  fig.tight_layout()
+  # fig.tight_layout()
   plt.show()
-  fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(args.output_directory,sett['C'],sett['R'],sett['RR'],sett['P'],sett['PEEP']))
+  # fig.savefig('{:s}/C{:1.0f}R{:1.0f}_RR{:1.0f}_Pins{:1.0f}_PEEP{:1.0f}.png'.format(args.output_directory,sett['C'],sett['R'],sett['RR'],sett['P'],sett['PEEP']))
