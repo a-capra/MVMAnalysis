@@ -21,7 +21,7 @@ def plot_3views(data, run_config, output_directory):
     # Ventilator subset
     first_time_bin = d["sim_sel"]["dt"].iloc[0]
     last_time_bin = d["sim_sel"]["dt"].iloc[-1]
-    d["mvm_sel"] = d["mvm"][(d["mvm"]["dt"] > first_time_bin) & (d["mvm"]["dt"] < last_time_bin)]
+    d["mvm_sel"] = d["mvm"][(d["mvm"]["dt"] > first_time_bin) & (d["mvm"]["dt"] < last_time_bin)].copy()
 
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
@@ -248,6 +248,9 @@ if __name__ == "__main__":
       if not (rc["json"] or rc["fullpath_mvm"].endswith(".txt")):
         print("Adding missing txt extension to MVM path.")
         rc["fullpath_mvm"] += ".txt"
+      if rc["json"] and not rc["fullpath_mvm"].endswith(".json")):
+        print("Adding missing json extension to MVM path.")
+        rc["fullpath_mvm"] += ".json"
       print(f"\nMVM file: {rc['fullpath_mvm']}")
 
       # Build simulations paths
