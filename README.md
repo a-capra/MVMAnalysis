@@ -76,7 +76,7 @@ python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i
 ```
 Or even without the simulation:
 ```
-python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -s
+python python/online.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json dummy -i./data/Napoli/ -s
 ```
 
 ## Repository structure
