@@ -435,9 +435,9 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
 
   if ignore_sim :
     if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname,start_times, colors)
-      print ("Quitting due to ignore_sim")
+      plot_mvm_only_canvases(dfhd, meta, objname, output_directory, start_times, colors)
       plt.show()
+    print ("Quitting due to ignore_sim")
     return #stop here if sim is ignored
 
   reaction_times = get_reaction_times(df, start_times)

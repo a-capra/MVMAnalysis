@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 
-def plot_mvm_only_canvases (dfhd, meta, objname,start_times, colors) :
+def plot_mvm_only_canvases (dfhd, meta, objname, output_directory, start_times, colors) :
 
     ####################################################
     '''general service canavas number 1'''
@@ -35,3 +35,8 @@ def plot_mvm_only_canvases (dfhd, meta, objname,start_times, colors) :
     for i,t in enumerate(start_times) :
       ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='black', fontsize=14)
     ax.legend(loc='upper center', ncol=2)
+
+    ax.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
+    figpath = "%s/%s_mvmonly_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', ''))
+    print(f'Saving figure to {figpath}')
+    plt.savefig(figpath)
