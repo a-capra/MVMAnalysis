@@ -172,7 +172,7 @@ def get_mvm_df(fname, sep=' -> ', configuration='default'):
   return df
 
 
-def get_mvm_df_json(fname, map='mvm_triumf_1') :
+def get_mvm_df_json(fname, map='mvm_control') :
 
   mydict = json.loads(open(fname).read())
   column_names = []

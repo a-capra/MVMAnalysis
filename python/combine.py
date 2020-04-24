@@ -415,7 +415,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
 
   # retrieve MVM data
   if args.json:
-    dfhd = get_mvm_df_json(fname=input_mvm)
+    dfhd = get_mvm_df_json(fname=input_mvm,map=args.mapping)
   else:
     dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
