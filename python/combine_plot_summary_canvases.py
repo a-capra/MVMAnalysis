@@ -36,9 +36,12 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     #dftmp['dtc'] = df['dt'] - df['start']  #HTJI Done in the main program
 
     #make a subset dataframe for ventilator
-    first_time_bin  = dftmp['dt'].iloc[0]
-    last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
-    dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
+    try:
+      first_time_bin  = dftmp['dt'].iloc[0]
+      last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
+      dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
+    except IndexError:
+      dfvent = dfhd
     dfvent['dtc'] = dfvent['dt'] - dfvent['start']
     dfvent = dfvent.sort_values('dtc')
 
@@ -198,34 +201,55 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     axoverlay[5].set_xlabel('Time since start of cycle (s)',fontsize=14)
     axoverlay[5].set_xlim(0,4)
     axoverlay[5].set_ylim(-0.2,0.2)
-    stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
-    stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
-    stats_total_vol['min_minus_median']=  (stats_total_vol['min'] - stats_total_vol['median'])/stats_total_vol['median']
-    stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
-    #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
-    axoverlay[5].get_legend().remove()
+    try:
+      stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
+      stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
+    except KeyError:
+      pass
+
+    try:
+      stats_total_vol['min_minus_median']=  (stats_total_vol['min'] - stats_total_vol['median'])/stats_total_vol['median']
+      stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
+      #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
+      axoverlay[5].get_legend().remove()
+    except KeyError:
+      pass  
 
     axoverlay[0].set_ylabel('Total Flow',fontsize=10)
     axoverlay[0].set_xlim(0,4)
     dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10)
     axoverlay[1].set_xlim(0,4)
     axoverlay[1].set_ylim(-0.2,0.2)
-    stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
-    stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
-    stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
-    stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
-    axoverlay[1].get_legend().remove()
+    try:
+      stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
+      stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
+    except KeyError:
+      pass
+
+    try:
+      stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
+      stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
+      axoverlay[1].get_legend().remove()
+    except KeyError:
+      pass
 
     axoverlay[2].set_ylabel('Pressure',fontsize=10)
     axoverlay[2].set_xlim(0,4)
     dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10)
     axoverlay[3].set_xlim(0,4)
     axoverlay[3].set_ylim(-0.2,0.2)
-    stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
-    stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
-    stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
-    stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
-    axoverlay[3].get_legend().remove()
+    try:
+      stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
+      stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
+    except KeyError:
+      pass
+
+    try:
+      stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
+      stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
+      axoverlay[3].get_legend().remove()
+    except KeyError:
+      pass
 
     figpath = "%s/%s_overlay_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
     figoverlay.savefig(figpath)
