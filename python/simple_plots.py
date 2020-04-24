@@ -34,9 +34,10 @@ def plot_all(df, dfhd, objname, output_directory, start_times, colors, meta, tag
 
   for ax in ax31:
     for i,t in enumerate(start_times) :
-      ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='red', fontsize=14)
+      ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='red', fontsize=8)
     ax.set_xlabel("Time [s]")
-    ax.legend(loc='upper center', ncol=2)
+    ax.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
+    ax.legend(loc='upper right', ncol=2)
   
   fig31.set_size_inches(13,10)
   ttl=' '.join([k+str(meta[k]) for k in meta])
