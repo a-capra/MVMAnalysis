@@ -702,6 +702,10 @@ if __name__ == '__main__':
 
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
+    if not args.json:
+      print("json input file detected, setting args.json = True")
+      args.json = True
+
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
       objname = list ( meta.keys()) [0]
@@ -743,9 +747,26 @@ if __name__ == '__main__':
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
-      if (not args.json and not fname.endswith(".txt")):
-        print ("adding extra .txt to fname")
-        fname = f'{fname}.txt'
+
+      # detect whether input file is txt or json
+      if fname.endswith(".txt"):
+        # here json argument should be False
+        if args.json:
+          print("txt input file detected, setting args.json = False")
+          args.json = False
+      elif fname.endswith(".json"):
+        # here json argument should be True
+        if not args.json:
+          print("json input file detected, setting args.json = True")
+          args.json = True
+      else:
+        # if the file name does not end in .txt or .json, try adding an extension based on argument json
+        if args.json:
+          print ("args.json is True, adding extra .json to fname")
+          fname = f'{fname}.json'
+        else:
+          print ("args.json is False, adding extra .txt to fname")
+          fname = f'{fname}.txt'
 
       print(f'\nFile name {fname}')
       if fname.split('/')[-1] in args.skip_files:
