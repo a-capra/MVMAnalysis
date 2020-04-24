@@ -8,9 +8,9 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 from mvmconstants import *
+from combine_plot_utils import *
 
-
-def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
+def plot_summary_canvases (df, dfhd, meta, objname, sitename, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
 
   for i in range (len(meta)) :
 
@@ -26,8 +26,6 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
     CM = meta[local_objname]["Compliance"]
 
     nom_peep = float(meta[local_objname]["Peep"])
-
-
 
     fig2, ax2 = plt.subplots()
     #make a subset dataframe for simulator
@@ -52,7 +50,6 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
     dfvent.plot(ax=ax2,  x='dtc', y='display_flux',    label='MVM flux            [l/min]', c=colors['flux'],                 marker='o', markersize=0.3, linewidth=0.2)
     dfvent.plot(ax=ax2,  x='dtc', y='airway_pressure', label='MVM airway pressure [cmH2O]', c=colors['vent_airway_pressure'], marker='o', markersize=0.3, linewidth=0.2)
 
-
     ymin, ymax = ax2.get_ylim()
     ax2.set_ylim(ymin*1.4, ymax*1.5)
     ax2.legend(loc='upper center', ncol=2)
@@ -72,12 +69,8 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
     rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
     ax2.add_patch(rect)
 
-    ax2.set_title ("Test n %s"%meta[objname]['test_name'])
-    figpath = "%s/%s_avg_%s.png" % (output_directory, meta[objname]['Campaign'] , objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    if web:
-      figpath = "%s/%s_%s_test%s_run%s_avg.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
-    print(f'Saving figure to {figpath}')
-    fig2.savefig(figpath)
+    set_plot_title(ax2, meta, objname)
+    save_figure(fig2, 'avg', meta, objname, sitename, output_directory, web)
 
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
@@ -104,7 +97,6 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
     ####################################################
 
     figs,axes = plt.subplots(2,2)
-    figs.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     axs = axes.flatten()
 
     ## MVM PEEP compared with set value
@@ -149,11 +141,8 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
-    figpath = "%s/%s_summary_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    if web:
-      figpath = "%s/%s_%s_test%s_run%s_summary.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
-    print(f'Saving figure to {figpath}')
-    figs.savefig(figpath)
+    set_plot_suptitle(figs, meta, objname)
+    save_figure(figs, 'summary', meta, objname, sitename, output_directory, web)
 
     ## Debug output
     #print("measured_peeps:", measured_peeps)
@@ -177,11 +166,10 @@ def plot_summary_canvases (df, dfhd, meta, sitename, objname, output_directory, 
       print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
-def plot_overlay_canvases (dftmp, dfhd, meta, sitename, objname, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
+def plot_overlay_canvases (dftmp, dfhd, meta, objname, sitename, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
     figoverlay, axoverlay = plt.subplots(6)
     figoverlay.set_size_inches(7,9)
-    figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
 
     axoverlay[4].set_ylabel('Total Vol',fontsize=10)
     axoverlay[4].set_xlim(0,4)
@@ -218,7 +206,6 @@ def plot_overlay_canvases (dftmp, dfhd, meta, sitename, objname, output_director
     stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
     axoverlay[3].get_legend().remove()
 
-    figpath = "%s/%s_overlay_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    if web:
-      figpath = "%s/%s_%s_test%s_run%s_overlay.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
-    figoverlay.savefig(figpath)
+    figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
+    #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
+    save_figure(figoverlay, 'overlay', meta, objname, sitename, output_directory, web)

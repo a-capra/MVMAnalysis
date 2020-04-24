@@ -7,8 +7,9 @@ from matplotlib import colors
 from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
+from combine_plot_utils import *
 
-def plot_mvm_only_canvases (dfhd, meta, sitename, objname, output_directory, start_times, colors, web) :
+def plot_mvm_only_canvases (dfhd, meta, objname, sitename, output_directory, start_times, colors, web) :
 
     ####################################################
     '''general service canavas number 1'''
@@ -30,15 +31,9 @@ def plot_mvm_only_canvases (dfhd, meta, sitename, objname, output_directory, sta
     #dfhd.plot(ax=ax, x='dt', y='derivative',  label='derivative', c='gray')
     #df.plot(ax=ax, x='dt', y='deriv_total_vol', label='deriv_total_vol [l/min]')
 
-    ax.set_title ("Filename: %s"%meta[objname]['test_name'], weight='heavy')
-
     for i,t in enumerate(start_times) :
       ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='black', fontsize=14)
     ax.legend(loc='upper center', ncol=2)
 
-    ax.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-    figpath = "%s/%s_mvmonly_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', ''))
-    if web:
-        figpath = "%s/%s_%s_test%s_run%s_mvmonly.png" % (output_directory, sitename, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
-    print(f'Saving figure to {figpath}')
-    plt.savefig(figpath)
+    set_plot_title(ax, meta, objname)
+    save_figure(plt, 'mvmonly', meta, objname, sitename, output_directory, web)
