@@ -384,7 +384,7 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
-def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', mvm_columns='default', mvm_json=False):
+def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, ignore_sim=False, mhracsv=None, pressure_offset=0, mvm_sep=' -> ', output_directory='plots_tmp', site_name='unknownsite', mvm_columns='default', mvm_json=False):
   # retrieve simulator data
 
   if args.plot:
@@ -435,7 +435,7 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
 
   if ignore_sim :
     if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname, output_directory, start_times, colors)
+      plot_mvm_only_canvases(dfhd, meta, objname, output_directory, site_name, start_times, colors, args.web)
       plt.show()
     print ("Quitting due to ignore_sim")
     return #stop here if sim is ignored
@@ -566,12 +566,12 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, args.web, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors)
+    plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, args.web)
 
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
@@ -630,8 +630,8 @@ def process_run(meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rw
       ####################################################
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      plot_summary_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+      plot_overlay_canvases ( dftmp, dfhd, meta, objname, output_directory, site_name, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure )
 
       filepath = "%s/summary_%s_%s.json" % (output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
@@ -657,6 +657,7 @@ if __name__ == '__main__':
   parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
   parser.add_argument("-show", "--show", action='store_true', help="show plots")
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
+  parser.add_argument("-w", "--web", action='store_true', help="enable web display figure path")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
@@ -699,6 +700,13 @@ if __name__ == '__main__':
     'ventilator_flow',
     'ventilator_pressure',
   ]
+
+  # determine site name from spreadsheet tab name
+  sitename = args.db_range_name.split('!')[0]
+  # workaround for Elemaster data, assuming no tab name from another site contains 'ISO'
+  if 'ISO' in sitename:
+    sitename = "Elemaster"
+  print(f'Analyzing data from {sitename}')
 
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
@@ -769,4 +777,4 @@ if __name__ == '__main__':
       print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
       # run
-      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, mvm_columns=args.mvm_col, mvm_json=args.json)
+      process_run(meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta, save=args.save, manual_offset=args.offset,  ignore_sim=args.ignore_sim, mvm_sep=args.mvm_sep, output_directory=args.output_directory, site_name=sitename, mvm_columns=args.mvm_col, mvm_json=args.json)

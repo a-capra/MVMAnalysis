@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 
-def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors) :
+def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, site_name, start_times, colors, web) :
 
 
   ####################################################
@@ -33,10 +33,11 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     fig11,ax11 = plt.subplots()
 
     print (start_times)
+    cycles_to_show = 6
     #make a subset dataframe for simulator
-    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + 6])  ]
+    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
     #the (redundant) line below avoids the annoying warning
-    dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
+    dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
 
     #make a subset dataframe for ventilator
     first_time_bin  = dftmp['dt'].iloc[0]
@@ -78,10 +79,10 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
 
     ax11.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     figpath = "%s/%s_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    if web:
+      figpath = "%s/%s_%s_test%s_run%s_%icycles.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'], cycles_to_show)
     print(f'Saving figure to {figpath}')
     fig11.savefig(figpath)
-
-
 
 
     ####################################################
@@ -105,9 +106,10 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
 
     fig31.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     figpath = "%s/%s_3views_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    if web:
+      figpath = "%s/%s_%s_test%s_run%s_3views.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     fig31.savefig(figpath)
-
 
 
     ####################################################
@@ -156,6 +158,8 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     '''
     #ax30cycles.set_title ("Test n %s"%meta[objname]['test_name'])
     figpath = "%s/%s_30cycles_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    if web:
+      figpath = "%s/%s_%s_test%s_run%s_30cycles.png" % (output_directory, site_name, meta[objname]['Date'], meta[objname]['test_name'], meta[objname]['Run'])
     print(f'Saving figure to {figpath}')
     fig30c.savefig(figpath)
     """
