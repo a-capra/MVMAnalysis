@@ -64,11 +64,13 @@ def get_table(df):
   return output
 
 
-def process_files(files, output_dir):
+def process_files(files, output_dir, save_h5=False):
   dfs = []
   for i, fname in enumerate(files):
     dfs.append(pd.DataFrame(json.loads(open(fname).read()), index=[i]))
   df = pd.concat(dfs)
+  if save_h5:
+    df.to_hdf(f'{output_dir}/summary.h5', 'MVM')
 
   df['Tidal Volume'] = df['Tidal Volume'].astype(int)
   df['simulator_volume_ml'] = df['simulator_volume'] * 10 # TODO patch conversion from ml to cl, remove when appropriate
@@ -171,6 +173,7 @@ if __name__ == '__main__':
   parser.add_argument("input", help="name of the input file (.txt)", nargs='+')
   parser.add_argument("-p", "--plot", action='store_true', help="show plots")
   parser.add_argument("-o", "--output-dir", type=str, help="output folder for images and LaTeX", default='.')
+  parser.add_argument("-5", "--save-h5", action='store_true', help="save h5 file with summary DataFrame")
   args = parser.parse_args()
 
-  process_files(args.input, output_dir=args.output_dir)
+  process_files(args.input, output_dir=args.output_dir, save_h5=args.save_h5)
