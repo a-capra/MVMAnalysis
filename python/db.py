@@ -165,8 +165,9 @@ def validate_meta(meta_value):
   if this_test == StandardTests[this_test_name]:
     print(f"Metadata validation passed for test {this_test_name}")
   else:
-    print(f"\nWARNING: Metadata validation FAILED for test {this_test_name}\nTest parameters from spreadsheet versus standard test:")
+    print("Test parameters from spreadsheet versus standard test:")
     this_test.print_comparison(StandardTests[this_test_name])
+    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
 
 
 if __name__ == "__main__" :
