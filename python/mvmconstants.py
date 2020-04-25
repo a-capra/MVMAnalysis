@@ -71,7 +71,7 @@ class PressureTest:
       abs(self.deltaP - other.deltaP) < epsilon and
       abs(self.PEEP - other.PEEP) < epsilon
     )
-      #self.O2 == other.O2   # excluded from comparison as we don't enforce O2 fraction
+      #abs(self.O2 - other.O2) < epsilon   # excluded from comparison as we don't enforce O2 fraction
 
   def print_comparison(self, other):
     print(f"""
