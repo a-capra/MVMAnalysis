@@ -97,6 +97,11 @@ def read_meta_from_spreadsheet (df, filename) :
       leak=df["leakage"].iloc[idx]
     except KeyError:
       leak=0.0
+    try:
+      cyc_idx=int(df["cycle_index"].iloc[idx])
+    except ValueError:
+      cyc_idx = 0
+      
     meta[ key ] = {
       'Compliance': float ( compliance ) ,
       'Resistance': float ( resistance )  ,
@@ -111,8 +116,9 @@ def read_meta_from_spreadsheet (df, filename) :
       'test_name' : df["N"].iloc[idx],
       'Tidal Volume' : df["TV"].iloc[idx],
       'leakage' : leak,
-      'cycle_index' : int ( df["cycle_index"].iloc[idx]) ,
+      'cycle_index' : cyc_idx ,
     }
+
   return meta
 
 def read_mhra_csv(fname):
