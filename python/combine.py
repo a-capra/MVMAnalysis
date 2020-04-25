@@ -383,7 +383,7 @@ def add_run_info(df, dist=25):
   df['run'] = df['run']*10
 
 
-def process_run(args, meta, objname, sitename, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
+def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
   # retrieve simulator data
 
   if args.plot:
@@ -436,7 +436,7 @@ def process_run(args, meta, objname, sitename, input_mvm, fullpath_rwa, fullpath
 
   if args.ignore_sim :
     if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname, sitename, args.output_directory, start_times, colors, args.web)
+      plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
       print ("Quitting due to ignore_sim")
       if args.show:
         plt.show()
@@ -569,12 +569,12 @@ def process_run(args, meta, objname, sitename, input_mvm, fullpath_rwa, fullpath
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, sitename, args.output_directory, start_times, colors, args.web, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, sitename, args.output_directory, start_times, colors, args.web)
+    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
 
     for i in range (len(meta)) :
       #for the moment only one test per file is supported here
@@ -633,8 +633,8 @@ def process_run(args, meta, objname, sitename, input_mvm, fullpath_rwa, fullpath
       ####################################################
       '''summary plots of measured quantities and avg wfs'''
       ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, sitename, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, sitename, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure )
+      plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+      plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure )
 
       filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
       json.dump( meta[objname], open(filepath , 'w' ) )
@@ -723,12 +723,13 @@ if __name__ == '__main__':
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
       objname = list ( meta.keys()) [0]
+      meta[objname]['SiteName'] = sitename
       basedir = '/'.join ( input.split('/')[0:-1] )
       fullpath_rwa = "%s/%s"%( basedir,meta[objname]['RwaFileName'] )
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
-      process_run(args, meta, objname, sitename, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
 
   else :
     # take only the first input as data folder path
@@ -749,17 +750,15 @@ if __name__ == '__main__':
     if not filenames.size > 0:
       print("No valid file name found in selected metadata spreadsheet range")
 
-    ntests = 0
-
     for filename in filenames:
       # continue if there is no filename
       if not filename: continue
 
       # read the metadata and create a dictionary with relevant info
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
-      ntests += len(meta)
 
       objname = f'{filename}_0'   # at least first element is always there
+      meta[objname]['SiteName'] = sitename
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
@@ -807,4 +806,4 @@ if __name__ == '__main__':
       print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
       # run
-      process_run(args, meta, objname, sitename, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)

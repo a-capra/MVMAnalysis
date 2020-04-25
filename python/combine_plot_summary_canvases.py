@@ -10,7 +10,7 @@ import matplotlib.patches as patches
 from mvmconstants import *
 from combine_plot_utils import *
 
-def plot_summary_canvases (df, dfhd, meta, objname, sitename, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
+def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
 
   for i in range (len(meta)) :
 
@@ -70,7 +70,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, sitename, output_directory, 
     ax2.add_patch(rect)
 
     set_plot_title(ax2, meta, objname)
-    save_figure(fig2, 'avg', meta, objname, sitename, output_directory, web)
+    save_figure(fig2, 'avg', meta, objname, output_directory, web)
 
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
@@ -142,7 +142,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, sitename, output_directory, 
     axs[3].add_patch(aa)
 
     set_plot_suptitle(figs, meta, objname)
-    save_figure(figs, 'summary', meta, objname, sitename, output_directory, web)
+    save_figure(figs, 'summary', meta, objname, output_directory, web)
 
     ## Debug output
     #print("measured_peeps:", measured_peeps)
@@ -166,7 +166,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, sitename, output_directory, 
       print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
-def plot_overlay_canvases (dftmp, dfhd, meta, objname, sitename, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
+def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
     figoverlay, axoverlay = plt.subplots(6)
     figoverlay.set_size_inches(7,9)
@@ -208,4 +208,4 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, sitename, output_director
 
     figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
     #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
-    save_figure(figoverlay, 'overlay', meta, objname, sitename, output_directory, web)
+    save_figure(figoverlay, 'overlay', meta, objname, output_directory, web)
