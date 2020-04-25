@@ -162,7 +162,11 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
       axs[3].hist ( measured_volumes  , bins=100, range=__range, label='MVM')
       axs[3].hist ( real_tidal_volumes , range=__range, bins= 100 , label='SIM', alpha=0.7)
     aa = patches.Rectangle( (simulator_volume_low, axs[0].get_ylim()[0]  ) , simulator_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
+    try:
+      axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
+    except ValueError:
+      axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal \"Unknown\""%(simulator_volume), weight='heavy', fontsize=10)
+
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
