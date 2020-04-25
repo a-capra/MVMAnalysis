@@ -7,8 +7,9 @@ from matplotlib import colors
 from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
+from combine_plot_utils import *
 
-def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, respiration_rate, inspiration_duration) :
+def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web, respiration_rate, inspiration_duration) :
 
   ####################################################
   '''general service canavas number 1'''
@@ -51,10 +52,8 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   ax.set_xlabel("Time [sec]")
   ax.legend(loc='upper center', ncol=2)
 
-  ax.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-  figpath = "%s/%s_service_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', ''))
-  print(f'Saving figure to {figpath}')
-  plt.savefig(figpath)
+  set_plot_title(ax, meta, objname)
+  save_figure(plt, 'service', meta, objname, output_directory, web)
 
 
   ####################################################
@@ -62,7 +61,6 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   ####################################################
 
   figbis = plt.figure()
-  figbis.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
   gs = gridspec.GridSpec(nrows=2, ncols=2, height_ratios=[.7,1.3], width_ratios = [1,1])
 
   axbis0 = figbis.add_subplot(gs[0, 0])
@@ -96,6 +94,5 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   axbis1.hist ( dfhd[( dfhd['resistance']>0)]['resistance'].unique() , bins=50 )
   axbis1.set_xlabel("Measured resistance [cmH2O/l/s]")
 
-  figpath = "%s/%s_service2_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-  print(f'Saving figure to {figpath}')
-  figbis.savefig(figpath)
+  set_plot_suptitle(figbis, meta, objname)
+  save_figure(figbis, 'service2', meta, objname, output_directory, web)
