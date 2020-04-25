@@ -1,4 +1,4 @@
-from __future__ import print_function
+meta_valuefrom __future__ import print_function
 import csv
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -145,22 +145,22 @@ def read_meta_from_spreadsheet_json (filename) :
   return meta
 
 
-def validate_meta(meta_key):
-  this_test_name = meta_key['test_name']
+def validate_meta(meta_value):
+  this_test_name = meta_value['test_name']
   if this_test_name not in StandardTests:
     print("Metadata validation skipped: Not a standard test")
     return
 
   # else we have a StandardTest, perform validation
   this_test = PressureTest(
-    meta_key['Tidal Volume'],
-    meta_key['Compliance'],
-    meta_key['Resistance'],
-    meta_key['leakage'],
-    meta_key['Rate respiratio'],
-    60./meta_key['Rate respiratio'] / (1./meta_key['I:E'] + 1),  # with T = I + E: I = T / (E/I + 1)
-    meta_key['Pinspiratia'] - meta_key['Peep'],
-    meta_key['Peep'],
+    meta_value['Tidal Volume'],
+    meta_value['Compliance'],
+    meta_value['Resistance'],
+    meta_value['leakage'],
+    meta_value['Rate respiratio'],
+    60./meta_value['Rate respiratio'] / (1./meta_value['I:E'] + 1),  # with T = I + E: I = T / (E/I + 1)
+    meta_value['Pinspiratia'] - meta_value['Peep'],
+    meta_value['Peep'],
   )
   if this_test == StandardTests[this_test_name]:
     print(f"Metadata validation passed for test {this_test_name}")
