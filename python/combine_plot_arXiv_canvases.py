@@ -7,10 +7,9 @@ from matplotlib import colors
 from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
+from combine_plot_utils import *
 
-def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors) :
-
-
+def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web) :
   ####################################################
   '''formatted plots for ISO std / arXiv'''
   ####################################################
@@ -33,10 +32,11 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     fig11,ax11 = plt.subplots()
 
     print (start_times)
+    cycles_to_show = 6
     #make a subset dataframe for simulator
-    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + 6])  ]
+    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
     #the (redundant) line below avoids the annoying warning
-    dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 6])  ]
+    dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
 
     #make a subset dataframe for ventilator
     first_time_bin  = dftmp['dt'].iloc[0]
@@ -76,12 +76,8 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     #add / remove PEEP line
     #ax11.add_patch(rect)
 
-    ax11.set_title ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-    figpath = "%s/%s_%s.pdf" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    fig11.savefig(figpath)
-
-
+    set_plot_title(ax11, meta, objname)
+    save_figure(fig11, '%icycles'%(cycles_to_show), meta, objname, output_directory, web)
 
 
     ####################################################
@@ -103,11 +99,8 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     ax31[1].set_xlabel("Time [s]")
     ax31[2].set_xlabel("Time [s]")
 
-    fig31.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
-    figpath = "%s/%s_3views_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    fig31.savefig(figpath)
-
+    set_plot_suptitle(fig31, meta, objname)
+    save_figure(fig31, '3views', meta, objname, output_directory, web)
 
 
     ####################################################
@@ -116,7 +109,6 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     """
     fig30c,ax30cycles = plt.subplots(3,1)
     ax30cycles = ax30cycles.flatten()
-    fig30c.suptitle("Test n %s"%meta[objname]['test_name'], weight='heavy')
     my_selected_cycle = 10
 
     print (len(start_times) )
@@ -154,8 +146,6 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
     ax30cycles.add_patch(rect)
     '''
-    #ax30cycles.set_title ("Test n %s"%meta[objname]['test_name'])
-    figpath = "%s/%s_30cycles_%s.png" % (output_directory, meta[objname]['Campaign'],  objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    fig30c.savefig(figpath)
+    set_plot_suptitle(fig30c, meta, objname)
+    save_figure(fig30c, '30cycles', meta, objname, output_directory, web)
     """

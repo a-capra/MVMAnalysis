@@ -433,7 +433,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
 
   if args.ignore_sim :
     if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname,start_times, colors)
+      plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
       print ("Quitting due to ignore_sim")
       if args.show:
         plt.show()
@@ -566,12 +566,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors)
+    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
 
     ## For the moment only one test per file is supported here
     ## correct for outliers ?  no, we need to see them
@@ -628,12 +628,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     '''summary plots of measured quantities and avg wfs'''
     ####################################################
-    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
 
     ####################################################
     '''overlay the cycles and shows consistency of simulator readings from cycle to cycle'''
     ####################################################
-    plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure )
+    plot_overlay_canvases (dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure)
 
     ####################################################
     '''dump summary data in json file, for get_tables'''
@@ -662,6 +662,7 @@ if __name__ == '__main__':
   parser.add_argument("-p", "--plot", action='store_true', help="make and save plots")
   parser.add_argument("-show", "--show", action='store_true', help="show plots")
   parser.add_argument("-s", "--save", action='store_true', help="save HDF")
+  parser.add_argument("-w", "--web", action='store_true', help="enable web display figure path")
   parser.add_argument("-f", "--filename", type=str, help="single file to be processed", default='.')
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
@@ -706,6 +707,15 @@ if __name__ == '__main__':
     'ventilator_pressure',
   ]
 
+  # determine site name from spreadsheet tab name
+  sitename = args.db_range_name.split('!')[0]
+  #FIXME in spreadsheet: workaround for Elemaster data, assuming no tab name from another site contains 'ISO'
+  if 'ISO' in sitename:
+    sitename = "Elemaster"
+  print(f'Analyzing data from {sitename}')
+  if not sitename:
+    sitename = "UnknownSite"
+
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
     if not args.json:
@@ -715,12 +725,13 @@ if __name__ == '__main__':
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
       objname = list ( meta.keys()) [0]
+      meta[objname]['SiteName'] = sitename
       basedir = '/'.join ( input.split('/')[0:-1] )
       fullpath_rwa = "%s/%s"%( basedir,meta[objname]['RwaFileName'] )
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
-      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
 
   else :
     # take only the first input as data folder path
@@ -741,7 +752,6 @@ if __name__ == '__main__':
     if not filenames.size > 0:
       print("No valid file name found in selected metadata spreadsheet range")
 
-    ntests = 0
     for filename in filenames:
       # continue if there is no filename
       if not filename:
@@ -749,9 +759,9 @@ if __name__ == '__main__':
 
       # read the metadata and create a dictionary with relevant info
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
-      ntests += len(meta)
 
       objname = f'{filename}_0'   # at least first element is always there
+      meta[objname]['SiteName'] = sitename
 
       # compute the file location: local folder to the data repository + compaign folder + filename
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
@@ -799,4 +809,4 @@ if __name__ == '__main__':
       print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
       # run
-      process_run(args, meta, objname=objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
