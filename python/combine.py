@@ -43,6 +43,46 @@ def correct_mvm_df(df, pressure_offset=0, pv2_thr=50):
   #df['flux'] = np.where ( df['out'] > pv2_thr , 0 , df['flux'] )
   #df['flux'] = np.where ( df['flux'] < 0 , 0 , df['flux'] )
 
+def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic_plots=False) :
+  ''' This is an automated system to give a close syncronization between the MVM and the simulator
+  The idea is that the simulator will be at atmosphere until the first time the MVM lets air
+  through. Then it will (at least) go to the PEEP value.
+  As long as the simulator is turned on before the MVM, this will work.
+  Apparently, proper  use of the simulator requires this. 
+  Chris.Jillings 2020-04-24
+  '''
+  # Find the times in the dt column of the simulator DataFrame that the pressure is higher than thershold_sim
+  dftmp = df[ ( df['airway_pressure']>threshold_sim ) ]
+  this_shape = dftmp.shape
+  if this_shape[0] <1 :
+    Warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ") 
+    return 0
+  sim_threshold_row = dftmp.iloc[0]
+  simulator_time = sim_threshold_row['dt']
+  
+  #Now find the MVM time
+  dfhdtmp = dfhd[ ( dfhd['p_patient']>threshold_mvm ) ]
+  this_shape = dfhdtmp.shape
+  if this_shape[0] <1 :
+    Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ") 
+    return 0
+  mvm_threshold_row = dfhdtmp.iloc[0]
+  mvm_time = mvm_threshold_row['dt']
+  print("The auto-calculated synchronization time shift between MVM and simulator is ", (simulator_time - mvm_time))
+  if diagnostic_plots  :
+    dfhd['dtshifted'] = dfhd['dt'] + (simulator_time - mvm_time)
+    figdiag, axdiag = plt.subplots(2)
+    figdiag.set_size_inches(12,6)
+    axdiag[0].set_xlim(-10, simulator_time+20)
+    axdiag[1].set_xlim(-10, simulator_time+20)
+    dfhd.plot(ax=axdiag[0], kind='line', x='dtshifted', y='p_patient', label='MVM pressure', color='red')
+    df.plot(ax=axdiag[1], kind='line', x='dt', y='airway_pressure', label='Sim pressure', color='black')
+    axdiag[0].grid(True,which='major',axis='x')
+    axdiag[1].grid(True,which='major',axis='x')
+    plt.show()
+  return (simulator_time - mvm_time) 
+
+    
 def apply_rough_shift(sim, mvm, manual_offset):
   imax1 = mvm[ ( mvm['dt']<8 ) & (mvm['dt']>2) ] ['flux'].idxmax()
   tmax1 = mvm['dt'].iloc[imax1]
@@ -410,15 +450,22 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
   add_timestamp(dfhd)
-
+    
   # apply corrections
   correct_mvm_df(dfhd, args.pressure_offset)
 
+  auto_sync = True # default to auto-synchronization
   if not args.ignore_sim :
     correct_sim_df(df)
-
-    #add time shift
-    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
+    if( args.offset!=0. ) :
+      auto_sync = False
+      
+    if auto_sync:
+      time_shift = synchronize_first_signals(df, dfhd, 4, 4, args.automatic_sync)
+      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=time_shift)   #manual version, -o option from command line
+    else:
+      #add time shift
+      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
     #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #rough version, based on one pair of local maxima of flux
     #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=args.offset)  #more elaborate alg, based on matching several maxima
 
@@ -446,7 +493,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   # Add some integer indexing fields for convenience in stats summary for
   # overlap plots
   # iindex is an integer index corresponding to a "bin number" for dt
-  # after add_ccylce_index is called siindex will correspond to df.start
+  # after add_cylce_index is called siindex will correspond to df.start
   # diindex will correspond to dtc
   # Chris.Jillings
   this_shape = df.shape
@@ -664,6 +711,7 @@ if __name__ == '__main__':
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='0.')
+  parser.add_argument("-a", "--automatic_sync", action='store_true', help="displays auto-sync diagnostics plot")
   parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
@@ -723,8 +771,8 @@ if __name__ == '__main__':
   else :
     # take only the first input as data folder path
     input = args.input[0]
-
     # else read metadata spreadsheet
+    print("About to read spreadsheet...")
     df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
 
     # if option -n, select only one test
