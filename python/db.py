@@ -8,6 +8,8 @@ import os
 import pandas as pd
 import json
 
+from mvmconstants import *
+
 """ Converts Google sheet data to a Pandas DataFrame.
 Note: This script assumes that your data contains a header file on the first row!
 Also note that the Google API returns 'none' from empty cells - in order for the code
@@ -94,7 +96,7 @@ def read_meta_from_spreadsheet (df, filename) :
     resistance = df["R"].iloc[idx]
     key  = f'{filename}_{idx}'
     try:
-      leak=df["leakage"].iloc[idx]
+      leak=float(df["leakage"].iloc[idx])
     except KeyError:
       leak=0.0
     try:
@@ -181,8 +183,6 @@ def validate_meta(meta_value):
     print("Test parameters from spreadsheet versus standard test:")
     this_test.print_comparison(StandardTests[this_test_name])
     raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
-  return meta
-
 
 if __name__ == "__main__" :
   read_meta_from_spreadsheet_json ('json_example.json')
