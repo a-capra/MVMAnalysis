@@ -66,7 +66,7 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
   simulator_time = sim_threshold_row['dt']
 
   #Now find the MVM time
-  dfhdtmp = dfhd[ ( dfhd['p_patient']>threshold_mvm ) ]
+  dfhdtmp = dfhd[ ( dfhd['airway_pressure']>threshold_mvm ) ]
   this_shape = dfhdtmp.shape
   if this_shape[0] <1 :
     Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ")
@@ -80,7 +80,7 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
     figdiag.set_size_inches(12,6)
     axdiag[0].set_xlim(-10, simulator_time+20)
     axdiag[1].set_xlim(-10, simulator_time+20)
-    dfhd.plot(ax=axdiag[0], kind='line', x='dtshifted', y='p_patient', label='MVM pressure', color='red')
+    dfhd.plot(ax=axdiag[0], kind='line', x='dtshifted', y='airway_pressure', label='MVM pressure', color='red')
     df.plot(ax=axdiag[1], kind='line', x='dt', y='airway_pressure', label='Sim pressure', color='black')
     axdiag[0].grid(True,which='major',axis='x')
     axdiag[1].grid(True,which='major',axis='x')
