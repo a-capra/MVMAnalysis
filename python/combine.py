@@ -19,11 +19,10 @@ from combine_plot_mvm_only_canvases import *
 # usage
 # py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
 
-
 def add_timestamp(df, timecol='dt'):
   ''' add timestamp column assuming constant sampling in time '''
   df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
-  ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a 
+  ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a
   problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
   df['dtcheck'] = df['timestamp']-df['dt']
   max_time_off = df['dtcheck'].max()
@@ -54,23 +53,23 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
   The idea is that the simulator will be at atmosphere until the first time the MVM lets air
   through. Then it will (at least) go to the PEEP value.
   As long as the simulator is turned on before the MVM, this will work.
-  Apparently, proper  use of the simulator requires this. 
+  Apparently, proper  use of the simulator requires this.
   Chris.Jillings 2020-04-24
   '''
   # Find the times in the dt column of the simulator DataFrame that the pressure is higher than thershold_sim
   dftmp = df[ ( df['airway_pressure']>threshold_sim ) ]
   this_shape = dftmp.shape
   if this_shape[0] <1 :
-    Warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ") 
+    Warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ")
     return 0
   sim_threshold_row = dftmp.iloc[0]
   simulator_time = sim_threshold_row['dt']
-  
+
   #Now find the MVM time
   dfhdtmp = dfhd[ ( dfhd['p_patient']>threshold_mvm ) ]
   this_shape = dfhdtmp.shape
   if this_shape[0] <1 :
-    Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ") 
+    Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ")
     return 0
   mvm_threshold_row = dfhdtmp.iloc[0]
   mvm_time = mvm_threshold_row['dt']
@@ -86,10 +85,11 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
     axdiag[0].grid(True,which='major',axis='x')
     axdiag[1].grid(True,which='major',axis='x')
     plt.show()
-  return (simulator_time - mvm_time) 
+  return (simulator_time - mvm_time)
 
-    
+
 def apply_rough_shift(sim, mvm, manual_offset):
+  mvm['dt'] = mvm['timestamp']
   imax1 = mvm[ ( mvm['dt']<8 ) & (mvm['dt']>2) ] ['flux'].idxmax()
   tmax1 = mvm['dt'].iloc[imax1]
   imax2 = sim[  (sim['dt']<8) & (sim['dt']>2)   ] ['total_flow'].idxmax()
@@ -453,7 +453,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
   add_timestamp(dfhd)
-    
+
   # apply corrections
   correct_mvm_df(dfhd, args.pressure_offset)
 
@@ -462,7 +462,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     correct_sim_df(df)
     if( args.offset!=0. ) :
       auto_sync = False
-      
+
     if auto_sync:
       time_shift = synchronize_first_signals(df, dfhd, 4, 4, args.automatic_sync)
       apply_manual_shift(sim=df, mvm=dfhd, manual_offset=time_shift)   #manual version, -o option from command line
@@ -772,9 +772,6 @@ if __name__ == '__main__':
 
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
-    if not args.json:
-      print("json input file detected, setting args.json = True")
-      args.json = True
 
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
