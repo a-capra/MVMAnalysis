@@ -452,6 +452,8 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
         plt.show()
     return #stop here if sim is ignored
 
+  if len(start_times) == 0: return
+
   reaction_times = get_reaction_times(df, start_times)
   # Add some integer indexing fields for convenience in stats summary for
   # overlap plots
