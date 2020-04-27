@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging as log
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import matplotlib.gridspec as gridspec
@@ -170,7 +171,7 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
 
   ## For the moment only one test per file is supported here
   if len(meta) != 1 :
-    print("WARNING: The length of the meta array is not 1. Assumption made in plot_overlay_canvases is invalid.")
+    log.warning("The length of the meta array is not 1. Assumption made in plot_overlay_canvases is invalid.")
 
   local_objname = "%s_%i"% ( objname[:-2] , 0 )  # i = 0
 
