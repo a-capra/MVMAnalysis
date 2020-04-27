@@ -96,19 +96,28 @@ def read_meta_from_spreadsheet (df, filename) :
     resistance = df["R"].iloc[idx]
     key  = f'{filename}_{idx}'
     try:
-      leak=float(df["leakage"].iloc[idx])
+      leak=df["leakage"].iloc[idx]
     except KeyError:
       leak=0.0
     try:
+      float(leak)
+    except ValueError:
+      leak=0.0
+    try:
+      resp_ratio = df["ratio"].iloc[idx]
+      float(resp_ratio)
+    except ValueError:
+      resp_ratio=1.0
+    try:
       cyc_idx=int(df["cycle_index"].iloc[idx])
     except ValueError:
-      cyc_idx = 0
+      cyc_idx = 1
       
     meta[ key ] = {
       'Compliance': float ( compliance ),
       'Resistance': float ( resistance ),
       'Rate respiratio': float ( df["rate"].iloc[idx] ),
-      'I:E': float ( df["ratio"].iloc[idx] ),
+      'I:E': float ( resp_ratio ),
       'Peep': float ( df["PEEP"].iloc[idx] ),
       'Date' : df['date'].iloc[idx] ,
       'Run' : df['run'].iloc[idx],
@@ -118,7 +127,7 @@ def read_meta_from_spreadsheet (df, filename) :
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
       'Tidal Volume' : float ( df["TV"].iloc[idx] ),
-      'leakage' : leak,
+      'leakage' : float(leak),
       'cycle_index' : cyc_idx,
     }
     validate_meta(meta[key])
