@@ -8,11 +8,14 @@ import os
 import pandas as pd
 import json
 
+from mvmconstants import *
+
 """ Converts Google sheet data to a Pandas DataFrame.
 Note: This script assumes that your data contains a header file on the first row!
 Also note that the Google API returns 'none' from empty cells - in order for the code
 below to work, you'll need to make sure your sheet doesn't contain empty cells,
 or update the code to account for such instances.
+Also performs a sanity check of the metadata read for standard tests.
 """
 def gsheet2df(gsheet):
   header = gsheet[1]   # Assumes first line is header!
@@ -89,23 +92,25 @@ def read_meta_from_spreadsheet (df, filename) :
     resistance = df["R"].iloc[idx]
     key  = f'{filename}_{idx}'
     meta[ key ] = {
-      'Compliance': float ( compliance ) ,
-      'Resistance': float ( resistance )  ,
-      'Rate respiratio':  float ( df["rate"].iloc[idx] )   ,
-      'I:E': df["ratio"].iloc[idx],
-      'Peep':   float (df["PEEP"].iloc[idx] ) ,
+      'Compliance': float ( compliance ),
+      'Resistance': float ( resistance ),
+      'Rate respiratio': float ( df["rate"].iloc[idx] ),
+      'I:E': float ( df["ratio"].iloc[idx] ),
+      'Peep': float ( df["PEEP"].iloc[idx] ),
       'Date' : df['date'].iloc[idx] ,
-      'Run' : df['run'].iloc[idx] ,
-      'Pinspiratia': float ( df["plateau"].iloc[idx] ) ,
-      'SimulatorFileName': df["simulator_filename"].iloc[idx] ,
-      'Campaign': df["campaign"].iloc[idx] ,
+      'Run' : df['run'].iloc[idx],
+      'Pinspiratia': float ( df["plateau"].iloc[idx] ),
+      'SimulatorFileName': df["simulator_filename"].iloc[idx],
+      'Campaign': df["campaign"].iloc[idx],
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
-      'Tidal Volume' : df["TV"].iloc[idx],
-      'leakage' : df["leakage"].iloc[idx],
-      'cycle_index' : int ( df["cycle_index"].iloc[idx]) ,
+      'Tidal Volume' : float ( df["TV"].iloc[idx] ),
+      'leakage' : float ( df["leakage"].iloc[idx] ),
+      'cycle_index' : int ( df["cycle_index"].iloc[idx]),
     }
+    validate_meta(meta[key])
   return meta
+
 
 def read_mhra_csv(fname):
   dfmhra = pd.read_csv(fname, sep=',')
@@ -113,34 +118,58 @@ def read_mhra_csv(fname):
   return dfmhra
 
 
-
 def read_meta_from_spreadsheet_json (filename) :
   meta = {}
   mydict0 = json.loads(open(filename).read())
-  key =  "%s_%i"%('.'.join( mydict0['MVM_file'].split('.')[0:-1]),0)   
+  key =  "%s_%i"%('.'.join( mydict0['MVM_file'].split('.')[0:-1]),0)
   mydict = mydict0['conditions']
   meta[ key ] = {
-    'Compliance': float ( mydict['C'] ) ,
-    'Resistance': float ( mydict['R'] )  ,
-    'Rate respiratio':  float ( mydict['rate'] )   ,
-    'I:E': mydict['ratio'],
-    'Peep':   float (mydict['PEEP'] ) ,
+    'Compliance': float ( mydict['C'] ),
+    'Resistance': float ( mydict['R'] ),
+    'Rate respiratio': float ( mydict['rate'] ),
+    'I:E': float ( mydict['ratio'] ),
+    'Peep': float ( mydict['PEEP'] ),
     'Date' : mydict['date'],
     'Run' : mydict['run'],
-    'Pinspiratia': float (mydict['plateau'] ) ,
-    'SimulatorFileName': '.'.join( mydict0['simulator_RWA_file'].split('.')[0:-1]) ,
-    'RwaFileName': mydict0['simulator_RWA_file'] ,
-    'DtaFileName': mydict0['simulator_DTA_file'] ,
-    'Campaign': mydict0['campaign'] ,
+    'Pinspiratia': float ( mydict['plateau'] ),
+    'SimulatorFileName': '.'.join( mydict0['simulator_RWA_file'].split('.')[0:-1]),
+    'RwaFileName': mydict0['simulator_RWA_file'],
+    'DtaFileName': mydict0['simulator_DTA_file'],
+    'Campaign': mydict0['campaign'],
     'MVM_filename' : mydict0['MVM_file'],
     'test_name' : mydict0['testID'],
-    'Tidal Volume' : mydict['TV'],
-    'leakage' : mydict['leakage'],
-    'cycle_index' : int ( mydict['cycle_index'] ) ,
+    'Tidal Volume' : float ( mydict['TV'] ),
+    'leakage' : float ( mydict['leakage'] ),
+    'cycle_index' : int ( mydict['cycle_index'] ),
   }
   print (meta)
-
+  validate_meta(meta[key])
   return meta
+
+
+def validate_meta(meta_value):
+  this_test_name = meta_value['test_name']
+  if this_test_name not in StandardTests:
+    print("Metadata validation skipped: Not a standard test")
+    return
+
+  # else we have a StandardTest, perform validation
+  this_test = PressureTest(
+    meta_value['Tidal Volume'],
+    meta_value['Compliance'],
+    meta_value['Resistance'],
+    meta_value['leakage'],
+    meta_value['Rate respiratio'],
+    60./meta_value['Rate respiratio'] / (1./meta_value['I:E'] + 1),  # with T = I + E: I = T / (E/I + 1)
+    meta_value['Pinspiratia'] - meta_value['Peep'],
+    meta_value['Peep'],
+  )
+  if this_test == StandardTests[this_test_name]:
+    print(f"Metadata validation passed for test {this_test_name}")
+  else:
+    print("Test parameters from spreadsheet versus standard test:")
+    this_test.print_comparison(StandardTests[this_test_name])
+    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
 
 
 if __name__ == "__main__" :
