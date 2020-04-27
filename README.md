@@ -7,43 +7,52 @@ Checkout the package via
   git clone https://github.com/MechanicalVentilatorMilano/MVMAnalysis.git
 ```
 
-On a linux PC, run:
+Add upstream repo if forking
 ```
-  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-  bash Miniconda3-latest-Linux-x86_64.sh
+git remote add upstream https://github.com/MechanicalVentilatorMilano/MVMAnalysis.git
 ```
-while on a Mac:
+and verify
 ```
-  curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-  bash Miniconda3-latest-MacOSX-x86_64.sh
+git remote -v
+```
+Syncing with upstream
+
+```
+git fetch upstream
+git checkout master
+git merge upstream/master
 ```
 
-Then, create the conda environment:
+Create the conda environment:
 ```
   conda config --add channels conda-forge
-  conda create --name piton3 root=6 python=3 mkl jupyter numpy scipy matplotlib scikit-learn h5py pandas pytables root_pandas pytables google-auth-oauthlib google-api-python-client lmfit
+  conda create --name mvm python=3.8
+  conda activate mvm
+  conda install mkl jupyter numpy scipy matplotlib scikit-learn h5py pandas pytables google-auth-oauthlib google-api-python-client lmfit
 ```
 
-and activate it:
+## To run "Batch Analysis"
+For example on data from TRIUMF testing site
 ```
-  source activate piton3
-```
-
-In order to deactivate the environment and unsetup all packages (thus restoring your standard environment), simply do:
-
-```
-  source deactivate
+python python/combine.py ../data -d ../plots_26Apr -c triumf-mvm4 --db-range-name=TRIUMF!A2:AZ -json -p -w
 ```
 
-If you use distributed computing resources, you may have access to CMVFS, where you can use
+## To run "Online Analysis"
+The goal is to have a quick plotting script, without recording the run in the google spreasheet
+Example:
 ```
-source /cvmfs/sft.cern.ch/lcg/views/LCG_96python3/x86_64-centos7-gcc8-opt/setup.sh
-pip install --user pytables
+python python/simple.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -C 25 -R 20 -r 10 -P 15 -Q 5 -f 0.5 -> Napoli -b 3
+```
+Or even without the simulation:
+```
+python python/simple.py run035_MVM_NA_Arxiv6a_O2_wSIM_C25R20.json run_035.rwa -i./data/Napoli/ -s
 ```
 
-## To run
+
+## To run "standard workflow"
 For example, the standard workflow is:
 ```
+
 python combine.py ../Data -p --mvm-col='mvm_col_arduino' -d plotsdir_tmp
 python latexify.py ../Plots/Run\ 9\ Apr\ 3\ 2020/*txt*pdf > ../Plots/Run\ 9\ Apr\ 3\ 2020/summary.tex
 python get_tables.py plots_iso/*json --output-dir=plots_iso
@@ -65,11 +74,25 @@ py combine.py path_to_the_Napoli_folder -f run051_MVM_NA_O2_wSIM_Spain_C50R05.js
 python combine.py path_to_the_Napoli_folder  -f run021_MVM_NA_2001_O2_wSIM_C30R05.json  --db-range-name "Napoli\!A2:AZ"  -json  -p -show  -o 79.5  
 ```
 
+## Time Synchronisation
 The time synchronisation between datasets is a critical step to compare MVM and ASL datasets. By default, there is currently no time shift between the time axes. The ```-o``` option can be used manually set an offset (units of seconds) between the two datasets. Two more refined algorithms are implemented for automatic calculation of the shift: ```apply_rough_shift``` and ```apply_good_shift```. These functions need to be manually activated in ```combine.py```.
 
-## Repository structure
 
-Folders:
-  * `python`: python code
-  * `cpp`: C++ code
-  * `scripts`: scripts (plotting, etc)
+## Data location
+
+[metadata](https://docs.google.com/spreadsheets/d/1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM)
+
+CERN
+```
+/eos/experiment/re37/mvm
+```
+or
+```
+https://cernbox.cern.ch/index.php/s/H4zAeFiyrDvFjzN
+```
+
+TRIUMF
+```
+mvm@dsvslice.triumf.ca
+```
+
