@@ -23,6 +23,12 @@ from combine_plot_mvm_only_canvases import *
 def add_timestamp(df, timecol='dt'):
   ''' add timestamp column assuming constant sampling in time '''
   df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
+  ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a 
+  problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
+  df['dtcheck'] = df['timestamp']-df['dt']
+  max_time_off = df['dtcheck'].max()
+  min_time_off = df['dtcheck'].min()
+  print("The maximum  shifts in timestamp are... ", max_time_off, min_time_off)
   return df
 
 def get_deltat(df, timestampcol='timestamp', timecol='dt'):
