@@ -233,7 +233,6 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
       stats_total_vol['min_minus_median']=  (stats_total_vol['min'] - stats_total_vol['median'])/stats_total_vol['median']
       stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
       #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
-
     except KeyError:
       pass  
 
@@ -247,13 +246,12 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10,marker='+',s=4.0)
     axoverlay[1].set_xlim(0,5)
     axoverlay[1].set_ylim(-0.2,0.2)
+
     try:
       stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
       stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
     except KeyError:
       pass
-
-
 
     axoverlay[1].get_legend().remove()
     axoverlay[1].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
@@ -263,7 +261,6 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     try:
       stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
       stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
-
     except KeyError:
       pass
 
@@ -288,9 +285,6 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
 
     except KeyError:
       pass
-
-
-
 
     axoverlay[3].get_legend().remove()
     axoverlay[3].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
