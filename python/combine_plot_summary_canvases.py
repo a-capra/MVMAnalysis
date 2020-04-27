@@ -168,14 +168,37 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
 def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
+  ## For the moment only one test per file is supported here
+  if len(meta) != 1 :
+    print("WARNING: The length of the meta array is not 1. Assumption made in plot_overlay_canvases is invalid.")
+
+  local_objname = "%s_%i"% ( objname[:-2] , 0 )  # i = 0
+
+  PE = meta[local_objname]["Peep"]
+  PI = meta[local_objname]["Pinspiratia"]
+  RR = meta[local_objname]["Rate respiratio"]
+  RT = meta[local_objname]["Resistance"]
+  CM = meta[local_objname]["Compliance"]
+
+  n_cycles = 0
+  temp_shape = stats_total_vol.shape
+  if temp_shape[0] > 0:
+    this_series = stats_total_vol.iloc[0]
+    n_cycles = this_series['N']
+
     figoverlay, axoverlay = plt.subplots(6)
     figoverlay.set_size_inches(7,9)
 
+    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]         PEEP = %s [cmH2O]"%(RT,CM,PE )
+    title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
+    figoverlay.text(0.5, 0.93, title1, color='#7697c4', fontsize=10, ha='center')
+    figoverlay.text(0.5, 0.90, title2, color='#7697c4', fontsize=10, ha='center')
+
     axoverlay[4].set_ylabel('Total Vol',fontsize=10)
-    axoverlay[4].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[4], kind='scatter', x='dtc', y='total_vol', color = colors['total_vol'],fontsize=10)
+    axoverlay[4].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[4], kind='scatter', x='dtc', y='total_vol', color = colors['total_vol'],fontsize=10,marker='+', s=2.0)
     axoverlay[5].set_xlabel('Time since start of cycle (s)',fontsize=14)
-    axoverlay[5].set_xlim(0,4)
+    axoverlay[5].set_xlim(0,5)
     axoverlay[5].set_ylim(-0.2,0.2)
     stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
     stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
@@ -183,29 +206,40 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
     #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
     axoverlay[5].get_legend().remove()
+    axoverlay[5].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[5].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[5].text(4.95,-0.1, "from median", ha='right', fontsize=8)
+    axoverlay[5].set_xlabel('Time from start of cycle [s]', fontsize=10)
 
     axoverlay[0].set_ylabel('Total Flow',fontsize=10)
-    axoverlay[0].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10)
-    axoverlay[1].set_xlim(0,4)
+    axoverlay[0].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10,marker='+',s=4.0)
+    axoverlay[1].set_xlim(0,5)
     axoverlay[1].set_ylim(-0.2,0.2)
     stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
     stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
     stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
     stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
     axoverlay[1].get_legend().remove()
+    axoverlay[1].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[1].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[1].text(4.95,-0.1, "from median", ha='right', fontsize=8)
+
 
     axoverlay[2].set_ylabel('Pressure',fontsize=10)
-    axoverlay[2].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10)
-    axoverlay[3].set_xlim(0,4)
+    axoverlay[2].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10,marker='+',s=4.0)
+    axoverlay[3].set_xlim(0,5)
     axoverlay[3].set_ylim(-0.2,0.2)
     stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
     stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
     stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
     stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
     axoverlay[3].get_legend().remove()
+    axoverlay[3].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[3].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[3].text(4.95,-0.1, "from median", ha='right', fontsize=8)
 
-    figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
+    figoverlay.suptitle ("Test n %s Consistency of %s Cycles"%(meta[objname]['test_name'],n_cycles), weight='heavy', fontsize=12)
     #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
     save_figure(figoverlay, 'overlay', meta, objname, output_directory, web)

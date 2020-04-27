@@ -272,7 +272,7 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     ---
     Chris.Jillings@snolab.ca 2020-04-19
     '''
-    nstats = 7
+    nstats = 8
     di_series = adf['diindex']
     length = di_series.max() - di_series.min()
     local_stats_array = np.zeros((int(length), nstats),dtype='float64')
@@ -283,12 +283,9 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
         if ( (dtcmax-dtcmin)>0.1 ) :
-            print("Something realy bad happened preparing stats for repeated breaths.")
-            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
-            print("Error!")
-            print(dtcmin, dtcmax)
-        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
-    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+            print("WARNING: In stats_for_repeated_cycles() the integer step counting and floating-point times are out of sync. Overlay plots may be affected.")
+        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std(), this_series.count()]
+    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std', 'N'] )
     return answer
 
 
@@ -629,68 +626,73 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
 
-    for i in range (len(meta)) :
-      #for the moment only one test per file is supported here
+    ## For the moment only one test per file is supported here
+    ## correct for outliers ?  no, we need to see them
+    measured_peeps      = measured_peeps[3:-3]
+    measured_plateaus   = measured_plateaus[3:-3]
+    measured_peaks      = measured_peaks[3:-3]
+    measured_volumes    = measured_volumes[3:-3]
 
-      #correct for outliers ?  no, we need to see them
-      measured_peeps      = measured_peeps[3:-3]
-      measured_plateaus   = measured_plateaus[3:-3]
-      measured_peaks      = measured_peaks[3:-3]
-      measured_volumes    = measured_volumes[3:-3]
+    mean_peep    = np.mean(measured_peeps)
+    mean_plateau = np.mean(measured_plateaus)
+    mean_peak    = np.mean(measured_peaks)
+    mean_volume  = np.mean(measured_volumes)
+    rms_peep     = np.std(measured_peeps)
+    rms_plateau  = np.std(measured_plateaus)
+    rms_peak     = np.std(measured_peaks)
+    rms_volume   = np.std(measured_volumes)
+    max_peep     = np.max(measured_peeps)
+    max_plateau  = np.max(measured_plateaus)
+    max_peak     = np.max(measured_peaks)
+    max_volume   = np.max(measured_volumes)
+    min_peep     = np.min(measured_peeps)
+    min_plateau  = np.min(measured_plateaus)
+    min_peak     = np.min(measured_peaks)
+    min_volume   = np.min(measured_volumes)
 
-      mean_peep    = np.mean(measured_peeps)
-      mean_plateau = np.mean(measured_plateaus)
-      mean_peak    = np.mean(measured_peaks)
-      mean_volume  = np.mean(measured_volumes)
-      rms_peep     = np.std(measured_peeps)
-      rms_plateau  = np.std(measured_plateaus)
-      rms_peak     = np.std(measured_peaks)
-      rms_volume   = np.std(measured_volumes)
-      max_peep     = np.max(measured_peeps)
-      max_plateau  = np.max(measured_plateaus)
-      max_peak     = np.max(measured_peaks)
-      max_volume   = np.max(measured_volumes)
-      min_peep     = np.min(measured_peeps)
-      min_plateau  = np.min(measured_plateaus)
-      min_peak     = np.min(measured_peaks)
-      min_volume   = np.min(measured_volumes)
+    #simulator values
+    simulator_plateaus = np.array(real_plateaus)
+    simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
+    simulator_plateau  = np.mean(simulator_plateaus)
 
-      #simulator values
-      simulator_plateaus = np.array(real_plateaus)
-      simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
-      simulator_plateau  = np.mean(simulator_plateaus)
+    simulator_volumes = np.array(real_tidal_volumes)
+    simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
+    simulator_volume  = np.mean(simulator_volumes)
 
-      simulator_volumes = np.array(real_tidal_volumes)
-      simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
-      simulator_volume  = np.mean(simulator_volumes)
+    meta[objname]["mean_peep"]         =  mean_peep
+    meta[objname]["rms_peep"]          =  rms_peep
+    meta[objname]["max_peep"]          =  max_peep
+    meta[objname]["min_peep"]          =  min_peep
+    meta[objname]["mean_plateau"]      =  mean_plateau
+    meta[objname]["rms_plateau"]       =  rms_plateau
+    meta[objname]["max_plateau"]       =  max_plateau
+    meta[objname]["min_plateau"]       =  min_plateau
+    meta[objname]["mean_peak"]         =  mean_peak
+    meta[objname]["rms_peak"]          =  rms_peak
+    meta[objname]["max_peak"]          =  max_peak
+    meta[objname]["min_peak"]          =  min_peak
+    meta[objname]["mean_volume"]       =  mean_volume
+    meta[objname]["rms_volume"]        =  rms_volume
+    meta[objname]["max_volume"]        =  max_volume
+    meta[objname]["min_volume"]        =  min_volume
+    meta[objname]["simulator_volume"]  =  simulator_volume
+    meta[objname]["simulator_plateau"] =  simulator_plateau
 
-      meta[objname]["mean_peep"]         =  mean_peep
-      meta[objname]["rms_peep"]          =  rms_peep
-      meta[objname]["max_peep"]          =  max_peep
-      meta[objname]["min_peep"]          =  min_peep
-      meta[objname]["mean_plateau"]      =  mean_plateau
-      meta[objname]["rms_plateau"]       =  rms_plateau
-      meta[objname]["max_plateau"]       =  max_plateau
-      meta[objname]["min_plateau"]       =  min_plateau
-      meta[objname]["mean_peak"]         =  mean_peak
-      meta[objname]["rms_peak"]          =  rms_peak
-      meta[objname]["max_peak"]          =  max_peak
-      meta[objname]["min_peak"]          =  min_peak
-      meta[objname]["mean_volume"]       =  mean_volume
-      meta[objname]["rms_volume"]        =  rms_volume
-      meta[objname]["max_volume"]        =  max_volume
-      meta[objname]["min_volume"]        =  min_volume
-      meta[objname]["simulator_volume"]  =  simulator_volume
-      meta[objname]["simulator_plateau"] =  simulator_plateau
+    ####################################################
+    '''summary plots of measured quantities and avg wfs'''
+    ####################################################
+    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
 
-      ####################################################
-      '''summary plots of measured quantities and avg wfs'''
-      ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure )
+    ####################################################
+    '''overlay the cycles and shows consistency of simulator readings from cycle to cycle'''
+    ####################################################
+    plot_overlay_canvases (dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure)
 
-      filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      json.dump( meta[objname], open(filepath , 'w' ) )
+    ####################################################
+    '''dump summary data in json file, for get_tables'''
+    ####################################################
+    filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
     '''show then close figures for this run'''
@@ -806,7 +808,8 @@ if __name__ == '__main__':
 
     for filename in filenames:
       # continue if there is no filename
-      if not filename: continue
+      if not filename:
+        continue
 
       # read the metadata and create a dictionary with relevant info
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
