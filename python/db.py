@@ -103,23 +103,23 @@ def read_meta_from_spreadsheet (df, filename) :
       cyc_idx = 0
       
     meta[ key ] = {
-      'Compliance': float ( compliance ) ,
-      'Resistance': float ( resistance )  ,
-      'Rate respiratio':  float ( df["rate"].iloc[idx] )   ,
-      'I:E': df["ratio"].iloc[idx],
-      'Peep':   float (df["PEEP"].iloc[idx] ) ,
+      'Compliance': float ( compliance ),
+      'Resistance': float ( resistance ),
+      'Rate respiratio': float ( df["rate"].iloc[idx] ),
+      'I:E': float ( df["ratio"].iloc[idx] ),
+      'Peep': float ( df["PEEP"].iloc[idx] ),
       'Date' : df['date'].iloc[idx] ,
-      'Run' : df['run'].iloc[idx] ,
-      'Pinspiratia': float ( df["plateau"].iloc[idx] ) ,
-      'SimulatorFileName': df["simulator_filename"].iloc[idx] ,
-      'Campaign': df["campaign"].iloc[idx] ,
+      'Run' : df['run'].iloc[idx],
+      'Pinspiratia': float ( df["plateau"].iloc[idx] ),
+      'SimulatorFileName': df["simulator_filename"].iloc[idx],
+      'Campaign': df["campaign"].iloc[idx],
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
-      'Tidal Volume' : df["TV"].iloc[idx],
+      'Tidal Volume' : float ( df["TV"].iloc[idx] ),
       'leakage' : leak,
-      'cycle_index' : cyc_idx ,
+      'cycle_index' : cyc_idx,
     }
-
+    validate_meta(meta[key])
   return meta
 
 def read_mhra_csv(fname):
@@ -132,29 +132,55 @@ def read_mhra_csv(fname):
 def read_meta_from_spreadsheet_json (filename) :
   meta = {}
   mydict0 = json.loads(open(filename).read())
-  key =  "%s_%i"%('.'.join( mydict0['MVM_file'].split('.')[0:-1]),0)   
+  key =  "%s_%i"%('.'.join( mydict0['MVM_file'].split('.')[0:-1]),0)
   mydict = mydict0['conditions']
   meta[ key ] = {
-    'Compliance': float ( mydict['C'] ) ,
-    'Resistance': float ( mydict['R'] )  ,
-    'Rate respiratio':  float ( mydict['rate'] )   ,
-    'I:E': mydict['ratio'],
-    'Peep':   float (mydict['PEEP'] ) ,
+    'Compliance': float ( mydict['C'] ),
+    'Resistance': float ( mydict['R'] ),
+    'Rate respiratio': float ( mydict['rate'] ),
+    'I:E': float ( mydict['ratio'] ),
+    'Peep': float ( mydict['PEEP'] ),
     'Date' : mydict['date'],
     'Run' : mydict['run'],
-    'Pinspiratia': float (mydict['plateau'] ) ,
-    'SimulatorFileName': '.'.join( mydict0['simulator_RWA_file'].split('.')[0:-1]) ,
-    'RwaFileName': mydict0['simulator_RWA_file'] ,
-    'DtaFileName': mydict0['simulator_DTA_file'] ,
-    'Campaign': mydict0['campaign'] ,
+    'Pinspiratia': float ( mydict['plateau'] ),
+    'SimulatorFileName': '.'.join( mydict0['simulator_RWA_file'].split('.')[0:-1]),
+    'RwaFileName': mydict0['simulator_RWA_file'],
+    'DtaFileName': mydict0['simulator_DTA_file'],
+    'Campaign': mydict0['campaign'],
     'MVM_filename' : mydict0['MVM_file'],
     'test_name' : mydict0['testID'],
-    'Tidal Volume' : mydict['TV'],
-    'leakage' : mydict['leakage'],
-    'cycle_index' : int ( mydict['cycle_index'] ) ,
+    'Tidal Volume' : float ( mydict['TV'] ),
+    'leakage' : float ( mydict['leakage'] ),
+    'cycle_index' : int ( mydict['cycle_index'] ),
   }
   print (meta)
+  validate_meta(meta[key])
+  return meta
 
+
+def validate_meta(meta_value):
+  this_test_name = meta_value['test_name']
+  if this_test_name not in StandardTests:
+    print("Metadata validation skipped: Not a standard test")
+    return
+
+  # else we have a StandardTest, perform validation
+  this_test = PressureTest(
+    meta_value['Tidal Volume'],
+    meta_value['Compliance'],
+    meta_value['Resistance'],
+    meta_value['leakage'],
+    meta_value['Rate respiratio'],
+    60./meta_value['Rate respiratio'] / (1./meta_value['I:E'] + 1),  # with T = I + E: I = T / (E/I + 1)
+    meta_value['Pinspiratia'] - meta_value['Peep'],
+    meta_value['Peep'],
+  )
+  if this_test == StandardTests[this_test_name]:
+    print(f"Metadata validation passed for test {this_test_name}")
+  else:
+    print("Test parameters from spreadsheet versus standard test:")
+    this_test.print_comparison(StandardTests[this_test_name])
+    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
   return meta
 
 

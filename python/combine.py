@@ -23,6 +23,12 @@ from combine_plot_mvm_only_canvases import *
 def add_timestamp(df, timecol='dt'):
   ''' add timestamp column assuming constant sampling in time '''
   df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
+  ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a 
+  problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
+  df['dtcheck'] = df['timestamp']-df['dt']
+  max_time_off = df['dtcheck'].max()
+  min_time_off = df['dtcheck'].min()
+  print("The maximum  shifts in timestamp are... ", max_time_off, min_time_off)
   return df
 
 def get_deltat(df, timestampcol='timestamp', timecol='dt'):
@@ -44,6 +50,46 @@ def correct_mvm_df(df, pressure_offset=0, pv2_thr=50):
   #df['flux'] = np.where ( df['out'] > pv2_thr , 0 , df['flux'] )
   #df['flux'] = np.where ( df['flux'] < 0 , 0 , df['flux'] )
 
+def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic_plots=False) :
+  ''' This is an automated system to give a close syncronization between the MVM and the simulator
+  The idea is that the simulator will be at atmosphere until the first time the MVM lets air
+  through. Then it will (at least) go to the PEEP value.
+  As long as the simulator is turned on before the MVM, this will work.
+  Apparently, proper  use of the simulator requires this. 
+  Chris.Jillings 2020-04-24
+  '''
+  # Find the times in the dt column of the simulator DataFrame that the pressure is higher than thershold_sim
+  dftmp = df[ ( df['airway_pressure']>threshold_sim ) ]
+  this_shape = dftmp.shape
+  if this_shape[0] <1 :
+    Warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ") 
+    return 0
+  sim_threshold_row = dftmp.iloc[0]
+  simulator_time = sim_threshold_row['dt']
+  
+  #Now find the MVM time
+  dfhdtmp = dfhd[ ( dfhd['p_patient']>threshold_mvm ) ]
+  this_shape = dfhdtmp.shape
+  if this_shape[0] <1 :
+    Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ") 
+    return 0
+  mvm_threshold_row = dfhdtmp.iloc[0]
+  mvm_time = mvm_threshold_row['dt']
+  print("The auto-calculated synchronization time shift between MVM and simulator is ", (simulator_time - mvm_time))
+  if diagnostic_plots  :
+    dfhd['dtshifted'] = dfhd['dt'] + (simulator_time - mvm_time)
+    figdiag, axdiag = plt.subplots(2)
+    figdiag.set_size_inches(12,6)
+    axdiag[0].set_xlim(-10, simulator_time+20)
+    axdiag[1].set_xlim(-10, simulator_time+20)
+    dfhd.plot(ax=axdiag[0], kind='line', x='dtshifted', y='p_patient', label='MVM pressure', color='red')
+    df.plot(ax=axdiag[1], kind='line', x='dt', y='airway_pressure', label='Sim pressure', color='black')
+    axdiag[0].grid(True,which='major',axis='x')
+    axdiag[1].grid(True,which='major',axis='x')
+    plt.show()
+  return (simulator_time - mvm_time) 
+
+    
 def apply_rough_shift(sim, mvm, manual_offset):
   imax1 = mvm[ ( mvm['dt']<8 ) & (mvm['dt']>2) ] ['flux'].idxmax()
   tmax1 = mvm['dt'].iloc[imax1]
@@ -236,7 +282,7 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     '''
     # protect against empty df and nan
     if adf.empty: return adf 
-    nstats = 7
+    nstats = 8
     di_series = adf['diindex']
     length = di_series.max() - di_series.min()
     local_stats_array = np.zeros((int(length), nstats),dtype='float64')
@@ -247,12 +293,9 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
         if ( (dtcmax-dtcmin)>0.1 ) :
-            print("Something realy bad happened preparing stats for repeated breaths.")
-            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
-            print("Error!")
-            print(dtcmin, dtcmax)
-        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
-    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
+            print("WARNING: In stats_for_repeated_cycles() the integer step counting and floating-point times are out of sync. Overlay plots may be affected.")
+        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std(), this_series.count()]
+    answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std', 'N'] )
     return answer
 
 
@@ -420,15 +463,22 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
 
   add_timestamp(dfhd)
-
+    
   # apply corrections
   correct_mvm_df(dfhd, args.pressure_offset)
 
+  auto_sync = True # default to auto-synchronization
   if not args.ignore_sim :
     correct_sim_df(df)
-
-    #add time shift
-    apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
+    if( args.offset!=0. ) :
+      auto_sync = False
+      
+    if auto_sync:
+      time_shift = synchronize_first_signals(df, dfhd, 4, 4, args.automatic_sync)
+      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=time_shift)   #manual version, -o option from command line
+    else:
+      #add time shift
+      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
     #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #rough version, based on one pair of local maxima of flux
     #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=args.offset)  #more elaborate alg, based on matching several maxima
 
@@ -458,7 +508,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   # Add some integer indexing fields for convenience in stats summary for
   # overlap plots
   # iindex is an integer index corresponding to a "bin number" for dt
-  # after add_ccylce_index is called siindex will correspond to df.start
+  # after add_cylce_index is called siindex will correspond to df.start
   # diindex will correspond to dtc
   # Chris.Jillings
   this_shape = df.shape
@@ -583,72 +633,77 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
 
-    for i in range (len(meta)) :
-      #for the moment only one test per file is supported here
+    ## For the moment only one test per file is supported here
+    #correct for outliers ?  no, we need to see them
+    measured_peeps      = measured_peeps[3:-3]
+    if len(measured_peeps) == 0: measured_peeps=[0.0]
+    measured_plateaus   = measured_plateaus[3:-3]
+    if len(measured_plateaus) == 0: measured_plateaus=[0.0]
+    measured_peaks      = measured_peaks[3:-3]
+    if len(measured_peaks) == 0: measured_peaks=[0.0]
+    measured_volumes    = measured_volumes[3:-3]
+    if len(measured_volumes) == 0: measured_volumes=[0.0]
 
-      #correct for outliers ?  no, we need to see them
-      measured_peeps      = measured_peeps[3:-3]
-      if len(measured_peeps) == 0: measured_peeps=[0.0]
-      measured_plateaus   = measured_plateaus[3:-3]
-      if len(measured_plateaus) == 0: measured_plateaus=[0.0]
-      measured_peaks      = measured_peaks[3:-3]
-      if len(measured_peaks) == 0: measured_peaks=[0.0]
-      measured_volumes    = measured_volumes[3:-3]
-      if len(measured_volumes) == 0: measured_volumes=[0.0]
+    mean_peep    = np.mean(measured_peeps)
+    mean_plateau = np.mean(measured_plateaus)
+    mean_peak    = np.mean(measured_peaks)
+    mean_volume  = np.mean(measured_volumes)
+    rms_peep     = np.std(measured_peeps)
+    rms_plateau  = np.std(measured_plateaus)
+    rms_peak     = np.std(measured_peaks)
+    rms_volume   = np.std(measured_volumes)
+    max_peep     = np.max(measured_peeps)
+    max_plateau  = np.max(measured_plateaus)
+    max_peak     = np.max(measured_peaks)
+    max_volume   = np.max(measured_volumes)
+    min_peep     = np.min(measured_peeps)
+    min_plateau  = np.min(measured_plateaus)
+    min_peak     = np.min(measured_peaks)
+    min_volume   = np.min(measured_volumes)
 
-      mean_peep    = np.mean(measured_peeps)
-      mean_plateau = np.mean(measured_plateaus)
-      mean_peak    = np.mean(measured_peaks)
-      mean_volume  = np.mean(measured_volumes)
-      rms_peep     = np.std(measured_peeps)
-      rms_plateau  = np.std(measured_plateaus)
-      rms_peak     = np.std(measured_peaks)
-      rms_volume   = np.std(measured_volumes)
-      max_peep     = np.max(measured_peeps)
-      max_plateau  = np.max(measured_plateaus)
-      max_peak     = np.max(measured_peaks)
-      max_volume   = np.max(measured_volumes)
-      min_peep     = np.min(measured_peeps)
-      min_plateau  = np.min(measured_plateaus)
-      min_peak     = np.min(measured_peaks)
-      min_volume   = np.min(measured_volumes)
+    #simulator values
+    simulator_plateaus = np.array(real_plateaus)
+    simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
+    simulator_plateau  = np.mean(simulator_plateaus)
 
-      #simulator values
-      simulator_plateaus = np.array(real_plateaus)
-      simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
-      simulator_plateau  = np.mean(simulator_plateaus)
+    simulator_volumes = np.array(real_tidal_volumes)
+    simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
+    simulator_volume  = np.mean(simulator_volumes)
 
-      simulator_volumes = np.array(real_tidal_volumes)
-      simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
-      simulator_volume  = np.mean(simulator_volumes)
+    meta[objname]["mean_peep"]         =  mean_peep
+    meta[objname]["rms_peep"]          =  rms_peep
+    meta[objname]["max_peep"]          =  max_peep
+    meta[objname]["min_peep"]          =  min_peep
+    meta[objname]["mean_plateau"]      =  mean_plateau
+    meta[objname]["rms_plateau"]       =  rms_plateau
+    meta[objname]["max_plateau"]       =  max_plateau
+    meta[objname]["min_plateau"]       =  min_plateau
+    meta[objname]["mean_peak"]         =  mean_peak
+    meta[objname]["rms_peak"]          =  rms_peak
+    meta[objname]["max_peak"]          =  max_peak
+    meta[objname]["min_peak"]          =  min_peak
+    meta[objname]["mean_volume"]       =  mean_volume
+    meta[objname]["rms_volume"]        =  rms_volume
+    meta[objname]["max_volume"]        =  max_volume
+    meta[objname]["min_volume"]        =  min_volume
+    meta[objname]["simulator_volume"]  =  simulator_volume
+    meta[objname]["simulator_plateau"] =  simulator_plateau
 
-      meta[objname]["mean_peep"]         =  mean_peep
-      meta[objname]["rms_peep"]          =  rms_peep
-      meta[objname]["max_peep"]          =  max_peep
-      meta[objname]["min_peep"]          =  min_peep
-      meta[objname]["mean_plateau"]      =  mean_plateau
-      meta[objname]["rms_plateau"]       =  rms_plateau
-      meta[objname]["max_plateau"]       =  max_plateau
-      meta[objname]["min_plateau"]       =  min_plateau
-      meta[objname]["mean_peak"]         =  mean_peak
-      meta[objname]["rms_peak"]          =  rms_peak
-      meta[objname]["max_peak"]          =  max_peak
-      meta[objname]["min_peak"]          =  min_peak
-      meta[objname]["mean_volume"]       =  mean_volume
-      meta[objname]["rms_volume"]        =  rms_volume
-      meta[objname]["max_volume"]        =  max_volume
-      meta[objname]["min_volume"]        =  min_volume
-      meta[objname]["simulator_volume"]  =  simulator_volume
-      meta[objname]["simulator_plateau"] =  simulator_plateau
+    ####################################################
+    '''summary plots of measured quantities and avg wfs'''
+    ####################################################
+    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
 
-      ####################################################
-      '''summary plots of measured quantities and avg wfs'''
-      ####################################################
-      plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
-      plot_overlay_canvases ( dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure )
+    ####################################################
+    '''overlay the cycles and shows consistency of simulator readings from cycle to cycle'''
+    ####################################################
+    plot_overlay_canvases (dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure)
 
-      filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-      json.dump( meta[objname], open(filepath , 'w' ) )
+    ####################################################
+    '''dump summary data in json file, for get_tables'''
+    ####################################################
+    filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
     '''show then close figures for this run'''
@@ -677,6 +732,7 @@ if __name__ == '__main__':
   parser.add_argument("-c", "--campaign", type=str, help="single campaign to be processed", default="")
   parser.add_argument("-json", action='store_true', help="read json instead of csv")
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='0.')
+  parser.add_argument("-a", "--automatic_sync", action='store_true', help="displays auto-sync diagnostics plot")
   parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
@@ -747,8 +803,8 @@ if __name__ == '__main__':
   else :
     # take only the first input as data folder path
     input = args.input[0]
-
     # else read metadata spreadsheet
+    print("About to read spreadsheet...")
     df_spreadsheet = read_online_spreadsheet(spreadsheet_id=args.db_google_id, range_name=args.db_range_name)
 
     # if option -n, select only one test
@@ -765,7 +821,8 @@ if __name__ == '__main__':
 
     for filename in filenames:
       # continue if there is no filename
-      if not filename: continue
+      if not filename:
+        continue
 
       # read the metadata and create a dictionary with relevant info
       meta  = read_meta_from_spreadsheet (df_spreadsheet, filename)
