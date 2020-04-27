@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging as log
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import matplotlib.gridspec as gridspec
@@ -61,7 +62,7 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
   dftmp = df[ ( df['airway_pressure']>threshold_sim ) ]
   this_shape = dftmp.shape
   if this_shape[0] <1 :
-    Warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ")
+    log.warning("In synchronize_first_signals no threshold cross was found for simulator. Returning 0. ")
     return 0
   sim_threshold_row = dftmp.iloc[0]
   simulator_time = sim_threshold_row['dt']
@@ -70,7 +71,7 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
   dfhdtmp = dfhd[ ( dfhd['airway_pressure']>threshold_mvm ) ]
   this_shape = dfhdtmp.shape
   if this_shape[0] <1 :
-    Warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ")
+    log.warning("In synchronize_first_signals no threshold cross was found for MVM. Returning 0. ")
     return 0
   mvm_threshold_row = dfhdtmp.iloc[0]
   mvm_time = mvm_threshold_row['dt']
@@ -288,13 +289,13 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     local_stats_array = np.zeros((int(length), nstats),dtype='float64')
     di_arr = np.arange(di_series.min(), di_series.max())
     for i in di_arr:
-        this_series = adf.loc[adf.diindex==i, variable]
-        # Do some sanity checking here that diindex and dtc track perfectly
-        dtcmin = adf[adf.diindex==i]['dtc'].min()
-        dtcmax = adf[adf.diindex==i]['dtc'].max()
-        if ( (dtcmax-dtcmin)>0.1 ) :
-            print("WARNING: In stats_for_repeated_cycles() the integer step counting and floating-point times are out of sync. Overlay plots may be affected.")
-        local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std(), this_series.count()]
+      this_series = adf.loc[adf.diindex==i, variable]
+      # Do some sanity checking here that diindex and dtc track perfectly
+      dtcmin = adf[adf.diindex==i]['dtc'].min()
+      dtcmax = adf[adf.diindex==i]['dtc'].max()
+      if ( (dtcmax-dtcmin)>0.1 ) :
+        log.warning("In stats_for_repeated_cycles() the integer step counting and floating-point times are out of sync. Overlay plots may be affected.")
+      local_stats_array[int(i-di_series.min())] = [1.0*i, (dtcmax+dtcmin)/2.0, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std(), this_series.count()]
     answer = pd.DataFrame(local_stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std', 'N'] )
     return answer
 
