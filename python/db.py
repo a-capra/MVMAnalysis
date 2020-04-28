@@ -29,7 +29,12 @@ def gsheet2df(gsheet):
     for col_id, col_name in enumerate(header):
       column_data = []
       for irow, row in enumerate(values):
-        column_data.append(row[col_id])
+        try:
+          entry=row[col_id]
+        except IndexError as index_out_of_range:
+          #print('Spreadsheet column ',col_id,header[col_id],'out of range?',index_out_of_range)
+          break        
+        column_data.append(entry)
       ds = pd.Series(data=column_data, name=col_name)
       all_data.append(ds)
     df = pd.concat(all_data, axis=1)
