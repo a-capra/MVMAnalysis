@@ -681,7 +681,7 @@ def plot_run(data, conf, args):
   measured_peaks = data["measured_peaks"],
   measured_plateaus = data["measured_plateaus"],
   real_tidal_volumes = data["real_tidal_volumes"],
-  real_plateaus:" real_plateaus"],
+  real_plateaus = data["real_plateaus"],
   stats_total_vol = data["stats_total_vol"],
   stats_total_flow = data["stats_total_flow"],
   stats_airway_pressure = data["stats_airway_pressure"]
