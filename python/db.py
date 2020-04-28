@@ -109,7 +109,6 @@ def read_meta_from_spreadsheet (df, filename) :
       'leakage' : float ( df["leakage"].iloc[idx] ),
       'cycle_index' : int ( df["cycle_index"].iloc[idx]),
     }
-    validate_meta(meta[key])
   return meta
 
 
@@ -144,7 +143,6 @@ def read_meta_from_spreadsheet_json (filename) :
     'cycle_index' : int ( mydict['cycle_index'] ),
   }
   print (meta)
-  validate_meta(meta[key])
   return meta
 
 
