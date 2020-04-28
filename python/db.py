@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os
 import pandas as pd
+import logging as log
 import json
 
 from mvmconstants import *
@@ -108,7 +109,6 @@ def read_meta_from_spreadsheet (df, filename) :
       'leakage' : float ( df["leakage"].iloc[idx] ),
       'cycle_index' : int ( df["cycle_index"].iloc[idx]),
     }
-    validate_meta(meta[key])
   return meta
 
 
@@ -143,7 +143,6 @@ def read_meta_from_spreadsheet_json (filename) :
     'cycle_index' : int ( mydict['cycle_index'] ),
   }
   print (meta)
-  validate_meta(meta[key])
   return meta
 
 
@@ -169,7 +168,7 @@ def validate_meta(meta_value):
   else:
     print("Test parameters from spreadsheet versus standard test:")
     this_test.print_comparison(StandardTests[this_test_name])
-    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
+    log.warning(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
 
 
 if __name__ == "__main__" :
