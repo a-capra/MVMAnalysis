@@ -669,21 +669,21 @@ def plot_run(data, conf, args):
     return
 
   # keep the following in sync with the dict returned by process_run
-  df = data["sim"],
-  dftmp = data["sim_trunc"],
-  dfhd = data["mvm"],
-  start_times = data["start_times"],
-  reaction_times = data["reaction_times"],
-  respiration_rate = data["respiration_rate"],
-  inspiration_duration = data["inspiration_duration"],
-  measured_peeps = data["measured_peeps"],
-  measured_volumes = data["measured_volumes"],
-  measured_peaks = data["measured_peaks"],
-  measured_plateaus = data["measured_plateaus"],
-  real_tidal_volumes = data["real_tidal_volumes"],
-  real_plateaus = data["real_plateaus"],
-  stats_total_vol = data["stats_total_vol"],
-  stats_total_flow = data["stats_total_flow"],
+  df = data["sim"]
+  dftmp = data["sim_trunc"]
+  dfhd = data["mvm"]
+  start_times = data["start_times"]
+  reaction_times = data["reaction_times"]
+  respiration_rate = data["respiration_rate"]
+  inspiration_duration = data["inspiration_duration"]
+  measured_peeps = data["measured_peeps"]
+  measured_volumes = data["measured_volumes"]
+  measured_peaks = data["measured_peaks"]
+  measured_plateaus = data["measured_plateaus"]
+  real_tidal_volumes = data["real_tidal_volumes"]
+  real_plateaus = data["real_plateaus"]
+  stats_total_vol = data["stats_total_vol"]
+  stats_total_flow = data["stats_total_flow"]
   stats_airway_pressure = data["stats_airway_pressure"]
 
   ##################################
