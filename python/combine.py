@@ -636,7 +636,7 @@ def process_run(conf, ignore_sim, auto_sync_debug):
       "measured_peaks" : measured_peaks,
       "measured_plateaus" : measured_plateaus,
       "real_tidal_volumes" : real_tidal_volumes,
-      "real_plateaus:" real_plateaus,
+      "real_plateaus" : real_plateaus,
       "stats_total_vol" : stats_total_vol,
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
