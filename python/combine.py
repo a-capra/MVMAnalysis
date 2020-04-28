@@ -495,6 +495,11 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   start_times    = get_start_times(dfhd) # based on PV2
   #  start_times    = get_start_times(df, thr=8, quantity='total_flow', timecol='dt') 
 
+  if len(start_times) == 0: 
+    print(f'''LENGTH of start_times IS {len(start_times)}
+    CHECK file {fname}''')
+    return
+
   if args.ignore_sim :
     if args.plot :
       plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
@@ -502,8 +507,6 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
       if args.show:
         plt.show()
     return #stop here if sim is ignored
-
-  if len(start_times) == 0: return
 
   reaction_times = get_reaction_times(df, start_times)
   # Add some integer indexing fields for convenience in stats summary for
