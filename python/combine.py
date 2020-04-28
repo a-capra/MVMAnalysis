@@ -819,7 +819,7 @@ if __name__ == '__main__':
       "offset" : args.offset,
       "pressure_offset" : args.pressure_offset,
       "mvm_sep" : args.mvm_sep,
-      "mvm_col" : mvm_col
+      "mvm_col" : args.mvm_col
       }
 
   # determine site name from spreadsheet tab name
