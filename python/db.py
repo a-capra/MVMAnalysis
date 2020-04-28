@@ -130,7 +130,7 @@ def read_meta_from_spreadsheet (df, filename) :
       'leakage' : float(leak),
       'cycle_index' : cyc_idx,
     }
-    validate_meta(meta[key])
+    #validate_meta(meta[key])
   return meta
 
 def read_mhra_csv(fname):

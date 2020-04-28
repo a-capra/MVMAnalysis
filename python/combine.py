@@ -880,5 +880,7 @@ if __name__ == '__main__':
         print(f"SKIP over {filename}: {fullpath_rwa} and {fullpath_dta} don't exist?")
         continue
 
+      validate_meta(meta[objname])
+
       # run
       process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
