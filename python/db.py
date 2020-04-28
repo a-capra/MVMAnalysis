@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os
 import pandas as pd
+import logging as log
 import json
 
 from mvmconstants import *
@@ -15,6 +16,7 @@ Note: This script assumes that your data contains a header file on the first row
 Also note that the Google API returns 'none' from empty cells - in order for the code
 below to work, you'll need to make sure your sheet doesn't contain empty cells,
 or update the code to account for such instances.
+Also performs a sanity check of the metadata read for standard tests.
 """
 def gsheet2df(gsheet):
   header = gsheet[1]   # Assumes first line is header!
@@ -27,12 +29,7 @@ def gsheet2df(gsheet):
     for col_id, col_name in enumerate(header):
       column_data = []
       for irow, row in enumerate(values):
-        try:
-          entry=row[col_id]
-        except IndexError as index_out_of_range:
-          #print('Spreadsheet column ',col_id,header[col_id],'out of range?',index_out_of_range)
-          break        
-        column_data.append(entry)
+        column_data.append(row[col_id])
       ds = pd.Series(data=column_data, name=col_name)
       all_data.append(ds)
     df = pd.concat(all_data, axis=1)
@@ -95,29 +92,11 @@ def read_meta_from_spreadsheet (df, filename) :
     compliance = df["C"].iloc[idx]
     resistance = df["R"].iloc[idx]
     key  = f'{filename}_{idx}'
-    try:
-      leak=df["leakage"].iloc[idx]
-    except KeyError:
-      leak=0.0
-    try:
-      float(leak)
-    except ValueError:
-      leak=0.0
-    try:
-      resp_ratio = df["ratio"].iloc[idx]
-      float(resp_ratio)
-    except ValueError:
-      resp_ratio=1.0
-    try:
-      cyc_idx=int(df["cycle_index"].iloc[idx])
-    except ValueError:
-      cyc_idx = 1
-      
     meta[ key ] = {
       'Compliance': float ( compliance ),
       'Resistance': float ( resistance ),
       'Rate respiratio': float ( df["rate"].iloc[idx] ),
-      'I:E': float ( resp_ratio ),
+      'I:E': float ( df["ratio"].iloc[idx] ),
       'Peep': float ( df["PEEP"].iloc[idx] ),
       'Date' : df['date'].iloc[idx] ,
       'Run' : df['run'].iloc[idx],
@@ -127,17 +106,16 @@ def read_meta_from_spreadsheet (df, filename) :
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
       'Tidal Volume' : float ( df["TV"].iloc[idx] ),
-      'leakage' : float(leak),
-      'cycle_index' : cyc_idx,
+      'leakage' : float ( df["leakage"].iloc[idx] ),
+      'cycle_index' : int ( df["cycle_index"].iloc[idx]),
     }
-    #validate_meta(meta[key])
   return meta
+
 
 def read_mhra_csv(fname):
   dfmhra = pd.read_csv(fname, sep=',')
   dfmhra['plot'] = 0
   return dfmhra
-
 
 
 def read_meta_from_spreadsheet_json (filename) :
@@ -165,7 +143,6 @@ def read_meta_from_spreadsheet_json (filename) :
     'cycle_index' : int ( mydict['cycle_index'] ),
   }
   print (meta)
-  validate_meta(meta[key])
   return meta
 
 
@@ -191,7 +168,8 @@ def validate_meta(meta_value):
   else:
     print("Test parameters from spreadsheet versus standard test:")
     this_test.print_comparison(StandardTests[this_test_name])
-    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
+    log.warning(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
+
 
 if __name__ == "__main__" :
   read_meta_from_spreadsheet_json ('json_example.json')

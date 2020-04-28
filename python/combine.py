@@ -793,6 +793,7 @@ if __name__ == '__main__':
     for input in args.input :
       meta  = read_meta_from_spreadsheet_json (input)
       objname = list ( meta.keys()) [0]
+      validate_meta(meta[objname])
       meta[objname]['SiteName'] = sitename
       basedir = '/'.join ( input.split('/')[0:-1] )
       fullpath_rwa = "%s/%s"%( basedir,meta[objname]['RwaFileName'] )
@@ -864,6 +865,9 @@ if __name__ == '__main__':
         if args.campaign not in fname:
           print(f'    ... not in selected campaign {args.campaign}')
           continue
+
+      # validate metadata for this run
+      validate_meta(meta[objname])
 
       # determine RWA and DTA data locations
       fullpath_rwa = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["SimulatorFileName"]}'
