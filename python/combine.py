@@ -487,7 +487,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
 
   if args.ignore_sim :
     if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
+      plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.figure_format, args.web)
       print ("Quitting due to ignore_sim")
       if args.show:
         plt.show()
@@ -620,12 +620,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     '''general service canavas'''
     ####################################################
-    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, respiration_rate, inspiration_duration)
+    plot_service_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.figure_format, args.web, respiration_rate, inspiration_duration)
 
     ####################################################
     '''formatted plots for ISO std / arXiv. Includes 3 view plot and 30 cycles view'''
     ####################################################
-    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
+    plot_arXiv_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.figure_format, args.web)
 
     ## For the moment only one test per file is supported here
     ## correct for outliers ?  no, we need to see them
@@ -682,12 +682,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     '''summary plots of measured quantities and avg wfs'''
     ####################################################
-    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.figure_format, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
 
     ####################################################
     '''overlay the cycles and shows consistency of simulator readings from cycle to cycle'''
     ####################################################
-    plot_overlay_canvases (dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure)
+    plot_overlay_canvases (dftmp, dfhd, meta, objname, args.output_directory, start_times, colors, args.figure_format, args.web, stats_total_vol, stats_total_flow, stats_airway_pressure)
 
     ####################################################
     '''dump summary data in json file, for get_tables'''
@@ -723,6 +723,7 @@ if __name__ == '__main__':
   parser.add_argument("-o", "--offset", type=float, help="offset between vent/sim", default='0.')
   parser.add_argument("-a", "--automatic_sync", action='store_true', help="displays auto-sync diagnostics plot")
   parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
+  parser.add_argument("--figure-format", type=str, help="format for output figures", default='png')
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
