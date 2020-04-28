@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 import pickle
 import os
 import pandas as pd
+import logging as log
 import json
 
 from mvmconstants import *
@@ -169,7 +170,7 @@ def validate_meta(meta_value):
   else:
     print("Test parameters from spreadsheet versus standard test:")
     this_test.print_comparison(StandardTests[this_test_name])
-    raise AssertionError(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
+    log.warning(f"Metadata validation FAILED for test {this_test_name}, please see comparison above")
 
 
 if __name__ == "__main__" :
