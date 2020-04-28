@@ -427,51 +427,75 @@ def add_run_info(df, dist=25):
   df['run'] = df['run']*10
 
 
-def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
+def process_run(conf, ignore_sim, auto_sync_debug):
+  columns_rwa = ['dt',
+    'airway_pressure',
+    'muscle_pressure',
+    'tracheal_pressure',
+    'chamber1_vol',
+    'chamber2_vol',
+    'total_vol',
+    'chamber1_pressure',
+    'chamber2_pressure',
+    'breath_fileno',
+    'aux1',
+    'aux2',
+    'oxygen'
+  ]
+  columns_dta = [#'dt',
+    'breath_no',
+    'compressed_vol',
+    'airway_pressure',
+    'muscle_pressure',
+    'total_vol',
+    'total_flow',
+    'chamber1_pressure',
+    'chamber2_pressure',
+    'chamber1_vol',
+    'chamber2_vol',
+    'chamber1_flow',
+    'chamber2_flow',
+    'tracheal_pressure',
+    'ventilator_vol',
+    'ventilator_flow',
+    'ventilator_pressure',
+  ]
+
+  objname = conf["objname"]
+  meta = conf["meta"]
+
   # retrieve simulator data
 
-  if args.plot:
-    colors = {  "muscle_pressure": "#009933"  , #green
-      "sim_airway_pressure": "#cc3300" ,# red
-      "total_flow":"#ffb84d" , #
-      "tidal_volume":"#ddccff" , #purple
-      "total_vol":"pink" , #
-      "reaction_time" : "#999999", #
-      "pressure" : "black" , #  blue
-      "vent_airway_pressure": "#003399" ,# blue
-      "flux" : "#3399ff" #light blue
-    }
-
-  if not args.ignore_sim:
-    df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
+  if not ignore_sim:
+    df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"], columns_rwa, columns_dta)
   else:
     print ("I am ignoring the simulator")
 
   # retrieve MVM data
-  if args.json:
-    dfhd = get_mvm_df_json(fname=input_mvm)
+  if conf["json"]:
+    dfhd = get_mvm_df_json(fname=conf["fullpath_mvm"])
   else:
-    dfhd = get_mvm_df(fname=input_mvm, sep=args.mvm_sep, configuration=args.mvm_col)
+    dfhd = get_mvm_df(fname=conf["fullpath_mvm"], sep=conf["mvm_sep"], configuration=conf["mvm_col"])
 
   add_timestamp(dfhd)
 
   # apply corrections
-  correct_mvm_df(dfhd, args.pressure_offset)
+  correct_mvm_df(dfhd, conf["pressure_offset"])
 
   auto_sync = True # default to auto-synchronization
-  if not args.ignore_sim :
+  if not ignore_sim :
     correct_sim_df(df)
-    if( args.offset!=0. ) :
+    if( conf["offset"]!=0. ) :
       auto_sync = False
 
     if auto_sync:
-      time_shift = synchronize_first_signals(df, dfhd, 4, 4, args.automatic_sync)
+      time_shift = synchronize_first_signals(df, dfhd, 4, 4, auto_sync_debug)
       apply_manual_shift(sim=df, mvm=dfhd, manual_offset=time_shift)   #manual version, -o option from command line
     else:
       #add time shift
-      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #manual version, -o option from command line
-    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=args.offset)   #rough version, based on one pair of local maxima of flux
-    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=args.offset)  #more elaborate alg, based on matching several maxima
+      apply_manual_shift(sim=df, mvm=dfhd, manual_offset=conf["offset"])   #manual version, -o option from command line
+    #apply_rough_shift(sim=df, mvm=dfhd, manual_offset=conf["offset"])   #rough version, based on one pair of local maxima of flux
+    #apply_good_shift(sim=df, mvm=dfhd, resp_rate=meta[objname]["Rate respiratio"], manual_offset=conf["offset"])  #more elaborate alg, based on matching several maxima
 
   ##################################
   # cycles
@@ -485,13 +509,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   start_times    = get_start_times(dfhd) # based on PV2
   #  start_times    = get_start_times(df, thr=8, quantity='total_flow', timecol='dt')
 
-  if args.ignore_sim :
-    if args.plot :
-      plot_mvm_only_canvases(dfhd, meta, objname, args.output_directory, start_times, colors, args.web)
-      print ("Quitting due to ignore_sim")
-      if args.show:
-        plt.show()
-    return #stop here if sim is ignored
+  if ignore_sim :
+    # stop here if sim is ignored
+    return {
+        "mvm" : dfhd,
+        "start_times" : start_times
+        }
 
   reaction_times = get_reaction_times(df, start_times)
   # Add some integer indexing fields for convenience in stats summary for
@@ -599,6 +622,69 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
 
+  # keep the following in sync wiht the data dict read by plot_run
+  return {
+      "sim" : df,
+      "sim_trunc" : dftmp,
+      "mvm" : dfhd,
+      "start_times" : start_times,
+      "reaction_times" : reaction_times,
+      "respiration_rate" : respiration_rate,
+      "inspiration_duration" : inspiration_duration,
+      "measured_peeps" : measured_peeps,
+      "measured_volumes" : measured_volumes,
+      "measured_peaks" : measured_peaks,
+      "measured_plateaus" : measured_plateaus,
+      "real_tidal_volumes" : real_tidal_volumes,
+      "real_plateaus:" real_plateaus,
+      "stats_total_vol" : stats_total_vol,
+      "stats_total_flow" : stats_total_flow,
+      "stats_airway_pressure" : stats_airway_pressure
+      }
+      
+
+
+def plot_run(data, conf, args):
+  colors = {  "muscle_pressure": "#009933"  , #green
+    "sim_airway_pressure": "#cc3300" ,# red
+    "total_flow":"#ffb84d" , #
+    "tidal_volume":"#ddccff" , #purple
+    "total_vol":"pink" , #
+    "reaction_time" : "#999999", #
+    "pressure" : "black" , #  blue
+    "vent_airway_pressure": "#003399" ,# blue
+    "flux" : "#3399ff" #light blue
+  }
+
+  meta = conf["meta"]
+  objname = conf["objname"]
+
+  # stop here if sim is ignored
+  if args.ignore_sim :
+    if args.plot :
+      plot_mvm_only_canvases(data["mvm"], meta, objname, args.output_directory, data["start_times"], colors, args.web)
+      print ("Quitting due to ignore_sim")
+      if args.show:
+        plt.show()
+    return
+
+  # keep the following in sync with the dict returned by process_run
+  df = data["sim"],
+  dftmp = data["sim_trunc"],
+  dfhd = data["mvm"],
+  start_times = data["start_times"],
+  reaction_times = data["reaction_times"],
+  respiration_rate = data["respiration_rate"],
+  inspiration_duration = data["inspiration_duration"],
+  measured_peeps = data["measured_peeps"],
+  measured_volumes = data["measured_volumes"],
+  measured_peaks = data["measured_peaks"],
+  measured_plateaus = data["measured_plateaus"],
+  real_tidal_volumes = data["real_tidal_volumes"],
+  real_plateaus:" real_plateaus"],
+  stats_total_vol = data["stats_total_vol"],
+  stats_total_flow = data["stats_total_flow"],
+  stats_airway_pressure = data["stats_airway_pressure"]
 
   ##################################
   # saving and plotting
@@ -728,39 +814,13 @@ if __name__ == '__main__':
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
   parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
-
-  columns_rwa = ['dt',
-    'airway_pressure',
-    'muscle_pressure',
-    'tracheal_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'total_vol',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'breath_fileno',
-    'aux1',
-    'aux2',
-    'oxygen'
-  ]
-  columns_dta = [#'dt',
-    'breath_no',
-    'compressed_vol',
-    'airway_pressure',
-    'muscle_pressure',
-    'total_vol',
-    'total_flow',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'chamber1_flow',
-    'chamber2_flow',
-    'tracheal_pressure',
-    'ventilator_vol',
-    'ventilator_flow',
-    'ventilator_pressure',
-  ]
+  conf = {
+      "json" : args.json,
+      "offset" : args.offset,
+      "pressure_offset" : args.pressure_offset,
+      "mvm_sep" : args.mvm_sep,
+      "mvm_col" : mvm_col
+      }
 
   # determine site name from spreadsheet tab name
   sitename = args.db_range_name.split('!')[0]
@@ -784,7 +844,14 @@ if __name__ == '__main__':
       fullpath_dta = "%s/%s"%( basedir,meta[objname]['DtaFileName'] )
       fname        = "%s/%s"%( basedir,meta[objname]['MVM_filename'] )
       filenames.append(fname)
-      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      conf["meta"] = meta
+      conf["objname"] = objname
+      conf["fullpath_mvm"] = fname
+      conf["fullpath_rwa"] = fullpath_rwa
+      conf["fullpath_dta"] = fullpath_dta
+      data = process_run(conf=conf, ignore_sim=args.ignore_sim, auto_sync_debug=args.automatic_sync)
+      plot_run(data, config, args)
+
 
   else :
     # take only the first input as data folder path
@@ -865,4 +932,10 @@ if __name__ == '__main__':
       print(f'will retrieve RWA and DTA simulator data from {fullpath_rwa} and {fullpath_dta}')
 
       # run
-      process_run(args, meta, objname, input_mvm=fname, fullpath_rwa=fullpath_rwa, fullpath_dta=fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta)
+      conf["meta"] = meta
+      conf["objname"] = objname
+      conf["fullpath_mvm"] = fname
+      conf["fullpath_rwa"] = fullpath_rwa
+      conf["fullpath_dta"] = fullpath_dta
+      data = process_run(conf=conf, ignore_sim=args.ignore_sim, auto_sync_debug=args.automatic_sync)
+      plot_run(data, config, args)
