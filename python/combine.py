@@ -427,7 +427,7 @@ def add_run_info(df, dist=25):
   df['run'] = df['run']*10
 
 
-def process_run(conf, ignore_sim, auto_sync_debug):
+def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   columns_rwa = ['dt',
     'airway_pressure',
     'muscle_pressure',
