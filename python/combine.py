@@ -850,7 +850,7 @@ if __name__ == '__main__':
       conf["fullpath_rwa"] = fullpath_rwa
       conf["fullpath_dta"] = fullpath_dta
       data = process_run(conf=conf, ignore_sim=args.ignore_sim, auto_sync_debug=args.automatic_sync)
-      plot_run(data, config, args)
+      plot_run(data, conf, args)
 
 
   else :
@@ -938,4 +938,4 @@ if __name__ == '__main__':
       conf["fullpath_rwa"] = fullpath_rwa
       conf["fullpath_dta"] = fullpath_dta
       data = process_run(conf=conf, ignore_sim=args.ignore_sim, auto_sync_debug=args.automatic_sync)
-      plot_run(data, config, args)
+      plot_run(data, conf, args)
