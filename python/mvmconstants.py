@@ -60,7 +60,7 @@ class PressureTest:
     self.O2 = O2
 
   def __eq__(self, other):
-    epsilon = 1e-3
+    epsilon = 5e-3
     return (
       abs(self.TV - other.TV) < epsilon and
       abs(self.C - other.C) < epsilon and
