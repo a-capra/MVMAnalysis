@@ -56,7 +56,7 @@ def plot_3view_comparison(data, run_config, output_directory):
   ax31[2].set_ylabel("TV [cl]")
 
   fig31.suptitle(f"{title[0]} (1) vs {title[1]} (2)", weight="heavy")
-  figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_'}.png"
+  figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_')}.png"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
 
