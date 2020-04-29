@@ -4,6 +4,7 @@ import combine as cb
 import mvmio as io
 import matplotlib.pyplot as plt
 import style
+import combine_plot_utils as cbpu
 
 
 # Adapted from plot_arxXiv_canvases
@@ -16,14 +17,16 @@ def plot_3view_comparison(data, run_config, output_directory):
   run_config[0]["linestyle"] = "--"
   run_config[1]["linestyle"] = ":"
 
+  title = []
   for idx, rc, m, d in zip(range(1, (len(run_config) + 1)), run_config, meta, data):
     # Select MVM flux to plot
     d["mvm"]["display_flux"] = d["mvm"]["flux"]
 
     my_selected_cycle = m["cycle_index"]
+    cycles_to_display = 6
 
     # Simulator subset
-    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle + 6]))].copy()
+    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle + cycles_to_display]))].copy()
 
     # Ventilator subset
     first_time_bin = d["sim_sel"]["dt"].iloc[0]
@@ -43,6 +46,8 @@ def plot_3view_comparison(data, run_config, output_directory):
     d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
     d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
 
+    title.append(cbpu.form_title(rc["meta"], rc["objname"])
+
   ax31[0].set_xlabel("")
   ax31[0].set_ylabel("F [l/min]")
   ax31[1].set_xlabel("")
@@ -50,9 +55,8 @@ def plot_3view_comparison(data, run_config, output_directory):
   ax31[2].set_xlabel("Time [s]")
   ax31[2].set_ylabel("TV [cl]")
 
-  title = f"{run_config[0]['dataset_name']} test {meta[0]['test_name']} (1) vs {run_config[1]['dataset_name']} test {meta[1]['test_name']} (2)"
-  fig31.suptitle(title, weight="heavy")
-  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{meta[0]['test_name']}_vs_{run_config[1]['dataset_name']}_{meta[1]['test_name']}.png"
+  fig31.suptitle(f"{title[0]} (1) vs {title[1]} (2)", weight="heavy")
+  figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_'}.png"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
 
