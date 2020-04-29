@@ -6,14 +6,17 @@ import matplotlib.pyplot as plt
 
 
 # Adapted from plot_arxXiv_canvases
-def plot_3views(data, run_config, output_directory):
+def plot_3view_comparison(data, run_config, output_directory):
+  # We handle duplicates in the main function, and only use the first element here
+  meta = [rc["meta"][rc["objname"]] for rc in run_config]
+
   fig31, ax31 = plt.subplots(3, 1)
   ax31 = ax31.flatten()
   run_config[0]["linestyle"] = "--"
   run_config[1]["linestyle"] = ":"
 
-  for idx, rc, d in zip(range(1, (len(run_config) + 1)), run_config, data):
-    my_selected_cycle = rc["meta"]["cycle_index"]
+  for idx, rc, m, d in zip(range(1, (len(run_config) + 1)), run_config, meta, data):
+    my_selected_cycle = m["cycle_index"]
 
     # Simulator subset
     d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle + 6]))].copy()
@@ -43,68 +46,11 @@ def plot_3views(data, run_config, output_directory):
   ax31[2].set_xlabel("Time [s]")
   ax31[2].set_ylabel("TV [cl]")
 
-  title = f"{run_config[0]['dataset_name']} test {run_config[0]['meta']['test_name']} (1) vs {run_config[1]['dataset_name']} test {run_config[1]['meta']['test_name']} (2)"
+  title = f"{run_config[0]['dataset_name']} test {meta[0]['test_name']} (1) vs {run_config[1]['dataset_name']} test {meta[1]['test_name']} (2)"
   fig31.suptitle(title, weight="heavy")
-  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{run_config[0]['meta']['test_name']}_vs_{run_config[1]['dataset_name']}_{run_config[1]['meta']['test_name']}.png"
+  figpath = f"{output_directory}/{run_config[0]['dataset_name']}_{meta[0]['test_name']}_vs_{run_config[1]['dataset_name']}_{meta[1]['test_name']}.png"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
-
-
-def process_run(run_config, output_directory):
-  colors = {
-    "muscle_pressure": "#009933"  , #green
-    "sim_airway_pressure": "#cc3300" ,# red
-    "total_flow":"#ffb84d" , #
-    "tidal_volume":"#ddccff" , #purple
-    "total_vol":"pink" , #
-    "reaction_time" : "#999999", #
-    "pressure" : "black" , #  blue
-    "vent_airway_pressure": "#003399" ,# blue
-    "flux" : "#3399ff" #light blue
-  }
-
-  data = [{}, {}]
-  for rc, d in zip(run_config, data):
-    # Simulator data
-    d["sim"] = io.get_simulator_df(rc["fullpath_rwa"], rc["fullpath_dta"], columns_rwa, columns_dta)
-
-    # MVM data
-    d["mvm"] = io.get_mvm_df_json(rc["fullpath_mvm"]) if rc["json"] else io.get_mvm_df(fname=rc["fullpath_mvm"], sep=rc["mvm_sep"], configuration=rc["mvm_col"])
-
-    cb.add_timestamp(d["mvm"])
-
-    cb.correct_sim_df(d["sim"])
-    # Add time shift
-    cb.apply_manual_shift(sim=d["sim"], mvm=d["mvm"], manual_offset=rc["offset"])
-
-    cb.add_pv2_status(d["mvm"])
-
-    # Compute cycle start based on PV2
-    d["start_times"] = cb.get_start_times(d["mvm"])
-
-    d["reaction_times"] = cb.get_reaction_times(d["sim"], d["start_times"])
-
-    this_shape = d["sim"].shape
-    d["sim"]["iindex"] = np.arange(this_shape[0])
-    d["sim"]["siindex"] = np.zeros(this_shape[0])
-    d["sim"]["diindex"] = np.zeros(this_shape[0])
-
-    cb.add_cycle_info(sim=d["sim"], mvm=d["mvm"], start_times=d["start_times"], reaction_times=d["reaction_times"])
-    d["sim"]["dtc"] = d["sim"]["dt"] - d["sim"]["start"]
-    d["sim"]["diindex"] = d["sim"]["iindex"] - d["sim"]["siindex"]
-
-    cb.add_chunk_info(d["sim"])
-
-    # Compute tidal volume etc.
-    cb.add_clinical_values(d["sim"])
-    d["respiration_rate"], d["inspiration_duration"] = cb.measure_clinical_values(d["mvm"], start_times=d["start_times"])
-
-    cb.add_run_info(d["sim"])
-
-    # Choose the flux to plot
-    d["mvm"]["display_flux"] = d["mvm"]["flux"]
-
-  plot_3views(data, run_config, output_directory)
 
 
 if __name__ == "__main__":
@@ -156,41 +102,6 @@ if __name__ == "__main__":
       }
   ]
 
-  columns_rwa = [
-    'dt',
-    'airway_pressure',
-    'muscle_pressure',
-    'tracheal_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'total_vol',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'breath_fileno',
-    'aux1',
-    'aux2',
-    'oxygen'
-  ]
-  columns_dta = [
-    #'dt',
-    'breath_no',
-    'compressed_vol',
-    'airway_pressure',
-    'muscle_pressure',
-    'total_vol',
-    'total_flow',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'chamber1_flow',
-    'chamber2_flow',
-    'tracheal_pressure',
-    'ventilator_vol',
-    'ventilator_flow',
-    'ventilator_pressure',
-  ]
-
   for idx, rc in enumerate(run_config):
     print(f"Meta data {idx}: {rc['db_range_name']} Data location {idx}: {rc['data_location']}")
 
@@ -218,6 +129,7 @@ if __name__ == "__main__":
 
   for test_pair in test_names:
     success = True
+    data = []
     for tn, rc, ss in zip(test_pair, run_config, df_spreadsheet):
       print(f"Looking for {tn} in {rc['db_range_name']}...")
       if rc["single_campaign"]:
@@ -239,12 +151,12 @@ if __name__ == "__main__":
         break
       rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
 
-      # Only use first element
+      # We've already checked and warned about duplicate tests above, so we just use the first element here
       rc["objname"] = f"{filename}_0"
-      rc["meta"] = rc["meta"][rc["objname"]]
+      meta = rc["meta"][rc["objname"]]
 
       # Build MVM paths and skip user requested files
-      rc["fullpath_mvm"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['MVM_filename']}"
+      rc["fullpath_mvm"] = f"{rc['data_location']}/{meta['Campaign']}/{meta['MVM_filename']}"
       if not (rc["json"] or rc["fullpath_mvm"].endswith(".txt")):
         print("Adding missing txt extension to MVM path.")
         rc["fullpath_mvm"] += ".txt"
@@ -254,7 +166,7 @@ if __name__ == "__main__":
       print(f"\nMVM file: {rc['fullpath_mvm']}")
 
       # Build simulations paths
-      rc["fullpath_rwa"] = f"{rc['data_location']}/{rc['meta']['Campaign']}/{rc['meta']['SimulatorFileName']}"
+      rc["fullpath_rwa"] = f"{rc['data_location']}/{meta['Campaign']}/{meta['SimulatorFileName']}"
       # Fix extensions
       if rc["fullpath_rwa"].endswith(".dta"):
         rc["fullpath_rwa"] = rc["fullpath_rwa"][:-4]
@@ -263,8 +175,9 @@ if __name__ == "__main__":
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
       print(f"Files of simulation: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
-      rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{rc['meta']['Campaign']}"
+      rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{meta['Campaign']}"
+      print(f"Processing {tn} in {rc['dataset_name']}...")
+      data.append(cb.process_run(rc))
 
     if success:
-      print(f"Processing {test_pair[0]} in {run_config[0]['dataset_name']} and {test_pair[1]} in {run_config[1]['dataset_name']}...")
-      process_run(run_config, args.output_directory)
+      plot_3view_comparison(data, run_config, args.output_directory)
