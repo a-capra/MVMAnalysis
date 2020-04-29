@@ -8,7 +8,9 @@ import combine_plot_utils as cbpu
 
 
 # Adapted from plot_arxXiv_canvases
-def plot_3view_comparison(data, run_config, output_directory):
+def plot_3view_comparison(data, run_config, output_directory, figure_format):
+  cycles_to_show = 6
+
   # We handle duplicates in the main function, and only use the first element here
   meta = [rc["meta"][rc["objname"]] for rc in run_config]
 
@@ -23,10 +25,9 @@ def plot_3view_comparison(data, run_config, output_directory):
     d["mvm"]["display_flux"] = d["mvm"]["flux"]
 
     my_selected_cycle = m["cycle_index"]
-    cycles_to_display = 6
 
     # Simulator subset
-    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < d["start_times"][my_selected_cycle + cycles_to_display])].copy()
+    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < d["start_times"][my_selected_cycle + cycles_to_show])].copy()
 
     # Ventilator subset
     first_time_bin = d["sim_sel"]["dt"].iloc[0]
@@ -35,7 +36,7 @@ def plot_3view_comparison(data, run_config, output_directory):
 
     d["sim_sel"].loc[:, "total_vol"] = d["sim_sel"]["total_vol"] - d["sim_sel"]["total_vol"].min()
 
-    # Align timestamps
+    # Align all timestamps at 0
     d["mvm_sel"].loc[:, "dt"] = d["mvm_sel"]["dt"] - d["mvm_sel"]["dt"].iloc[0]
     d["sim_sel"].loc[:, "dt"] = d["sim_sel"]["dt"] - d["sim_sel"]["dt"].iloc[0]
 
@@ -55,8 +56,8 @@ def plot_3view_comparison(data, run_config, output_directory):
   ax31[2].set_xlabel("Time [s]")
   ax31[2].set_ylabel("TV [cl]")
 
-  fig31.suptitle(f"{title[0]} (1) vs {title[1]} (2)", weight="heavy")
-  figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_')}.png"
+  fig31.suptitle(f"{title[0]} (1)\n{title[1]} (2)", weight="heavy")
+  figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_')}.{figure_format}"
   print(f"Saving figure to {figpath}...")
   fig31.savefig(figpath)
 
@@ -72,8 +73,9 @@ if __name__ == "__main__":
   parser.add_argument("data_location_2", help="Path to the second dataset.")
   parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="comparison_plots")
   parser.add_argument("-t", "--test-names", type=str, help="Only process listed test pair.", nargs=2, default="")
-  parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.", default="")
-  parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.", default="")
+  parser.add_argument("--figure-format", type=str, help="Format for output figures.", default='png')
+  parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.")
+  parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.")
   parser.add_argument("--j1", action="store_true", help="Try to read first dataste as JSON instead of CSV.")
   parser.add_argument("--j2", action="store_true", help="Try to read second dataste as JSON instead of CSV.")
   parser.add_argument("--offset-1", type=float, help="Time offset between first vent and sim datasets.", default=0.)
@@ -82,8 +84,8 @@ if __name__ == "__main__":
   parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
   parser.add_argument("--db-google-id-1", type=str, help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-google-id-2", type=str, help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
-  parser.add_argument("--mvm-sep-1", type=str, help="Separator between datetime and the rest in the first MVM file", default=" -> ")
-  parser.add_argument("--mvm-sep-2", type=str, help="Separator between datetime and the rest in the second MVM file", default=" -> ")
+  parser.add_argument("--mvm-sep-1", type=str, help="Separator between datetime and the rest in the first MVM file", default="->")
+  parser.add_argument("--mvm-sep-2", type=str, help="Separator between datetime and the rest in the second MVM file", default="->")
   parser.add_argument("--mvm-col-1", type=str, help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   parser.add_argument("--mvm-col-2", type=str, help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
@@ -200,4 +202,4 @@ if __name__ == "__main__":
 
     if success:
       print(f"\nPlotting {test_pair[0]} from {run_config[0]['sitename']} versus {test_pair[1]} from {run_config[1]['sitename']}...")
-      plot_3view_comparison(data, run_config, args.output_directory)
+      plot_3view_comparison(data, run_config, args.output_directory, args.figure_format)
