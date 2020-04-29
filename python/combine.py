@@ -595,11 +595,12 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   ##################################
   # Make data frames for statistics on overlayed cycles
   ##################################
-  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-2] )  ])]
+  my_selected_cycle = meta[objname]['cycle_index']
+  cycles_to_show = 30
+  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-2] )  ])]
   stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
-
 
   ##################################
   # saving and plotting
