@@ -592,8 +592,6 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
 
-<<<<<<< HEAD
-=======
   # keep the following in sync wiht the data dict read by plot_run
   return {
       "sim" : df,
@@ -613,7 +611,6 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
       }
-
 
 
 def plot_run(data, conf, args):
@@ -658,7 +655,6 @@ def plot_run(data, conf, args):
   stats_total_flow = data["stats_total_flow"]
   stats_airway_pressure = data["stats_airway_pressure"]
 
->>>>>>> master
   ##################################
   # saving and plotting
   ##################################
