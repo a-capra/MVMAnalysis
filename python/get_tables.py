@@ -15,6 +15,7 @@ def get_table(df):
   for i, row in df.iterrows():
     what = [
       # ISO test details
+      ('','TEST','ID', f'{row["test_name"]}'),
       ('','$V_{tidal}$','[ml]', f'${float(row["Tidal Volume"]):.0f}$'),
       ('','$C$','[ml/cmH2O]', f'${float(row["Compliance"]):.0f}$'),
       ('','$R$','[cmH2O/l/s]', f'${float(row["Resistance"]):.0f}$'),
@@ -44,7 +45,7 @@ def get_table(df):
         \usepackage[table]{xcolor}
         \title{ISO test table}
         \begin{document}
-        \maketitle
+        #\maketitle
         \begin{sidewaystable}
         \small
         \begin{tabular}{''')
