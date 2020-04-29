@@ -428,46 +428,13 @@ def add_run_info(df, dist=25):
 
 
 def process_run(conf, ignore_sim=False, auto_sync_debug=False):
-  columns_rwa = ['dt',
-    'airway_pressure',
-    'muscle_pressure',
-    'tracheal_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'total_vol',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'breath_fileno',
-    'aux1',
-    'aux2',
-    'oxygen'
-  ]
-  columns_dta = [#'dt',
-    'breath_no',
-    'compressed_vol',
-    'airway_pressure',
-    'muscle_pressure',
-    'total_vol',
-    'total_flow',
-    'chamber1_pressure',
-    'chamber2_pressure',
-    'chamber1_vol',
-    'chamber2_vol',
-    'chamber1_flow',
-    'chamber2_flow',
-    'tracheal_pressure',
-    'ventilator_vol',
-    'ventilator_flow',
-    'ventilator_pressure',
-  ]
-
   objname = conf["objname"]
   meta = conf["meta"]
 
   # retrieve simulator data
 
   if not ignore_sim:
-    df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"], columns_rwa, columns_dta)
+    df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"])
   else:
     print ("I am ignoring the simulator")
 
@@ -641,7 +608,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
       }
-      
+
 
 
 def plot_run(data, conf, args):
