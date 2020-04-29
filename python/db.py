@@ -97,11 +97,34 @@ def read_meta_from_spreadsheet (df, filename) :
     compliance = df["C"].iloc[idx]
     resistance = df["R"].iloc[idx]
     key  = f'{filename}_{idx}'
+    try:
+      leak=df["leakage"].iloc[idx]
+    except KeyError:
+      leak=0.0
+    try:
+      float(leak)
+    except ValueError:
+      leak=0.0
+    try:
+      resp_ratio = df["ratio"].iloc[idx]
+      float(resp_ratio)
+    except ValueError:
+      resp_ratio=1.0
+    try:
+      cyc_idx=int(df["cycle_index"].iloc[idx])
+    except ValueError:
+      cyc_idx = 1
+    try:
+      vol=df["TV"].iloc[idx]
+      float(vol)
+    except ValueError:
+      vol=-1.0
+
     meta[ key ] = {
       'Compliance': float ( compliance ),
       'Resistance': float ( resistance ),
       'Rate respiratio': float ( df["rate"].iloc[idx] ),
-      'I:E': float ( df["ratio"].iloc[idx] ),
+      'I:E': float ( resp_ratio ),
       'Peep': float ( df["PEEP"].iloc[idx] ),
       'Date' : df['date'].iloc[idx] ,
       'Run' : df['run'].iloc[idx],
@@ -110,9 +133,9 @@ def read_meta_from_spreadsheet (df, filename) :
       'Campaign': df["campaign"].iloc[idx],
       'MVM_filename' : df["MVM_filename"].iloc[idx],
       'test_name' : df["N"].iloc[idx],
-      'Tidal Volume' : float ( df["TV"].iloc[idx] ),
-      'leakage' : float ( df["leakage"].iloc[idx] ),
-      'cycle_index' : int ( df["cycle_index"].iloc[idx]),
+      'Tidal Volume' : float ( vol ),
+      'leakage' : float(leak),
+      'cycle_index' : cyc_idx,
     }
   return meta
 
