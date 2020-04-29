@@ -9,7 +9,7 @@ import matplotlib.patches as patches
 
 from combine_plot_utils import *
 
-def plot_mvm_only_canvases (dfhd, meta, objname, output_directory, start_times, colors, web) :
+def plot_mvm_only_canvases (dfhd, meta, objname, output_directory, start_times, colors, figure_format, web) :
 
     ####################################################
     '''general service canavas number 1'''
@@ -36,4 +36,4 @@ def plot_mvm_only_canvases (dfhd, meta, objname, output_directory, start_times, 
     ax.legend(loc='upper center', ncol=2)
 
     set_plot_title(ax, meta, objname)
-    save_figure(plt, 'mvmonly', meta, objname, output_directory, web)
+    save_figure(plt, 'mvmonly', meta, objname, output_directory, figure_format, web)

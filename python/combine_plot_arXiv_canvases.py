@@ -9,7 +9,7 @@ import matplotlib.patches as patches
 
 from combine_plot_utils import *
 
-def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web) :
+def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web) :
   ####################################################
   '''formatted plots for ISO std / arXiv'''
   ####################################################
@@ -72,7 +72,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     #ax11.add_patch(rect)
 
     set_plot_title(ax11, meta, objname)
-    save_figure(fig11, '%icycles'%(cycles_to_show), meta, objname, output_directory, web)
+    save_figure(fig11, '%icycles'%(cycles_to_show), meta, objname, output_directory, figure_format, web)
 
 
     ####################################################
@@ -95,7 +95,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     ax31[2].set_xlabel("Time [s]")
 
     set_plot_suptitle(fig31, meta, objname)
-    save_figure(fig31, '3views', meta, objname, output_directory, web)
+    save_figure(fig31, '3views', meta, objname, output_directory, figure_format, web)
 
 
     ####################################################
@@ -140,5 +140,5 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     ax30cycles.add_patch(rect)
     '''
     set_plot_suptitle(fig30c, meta, objname)
-    save_figure(fig30c, '30cycles', meta, objname, output_directory, web)
+    save_figure(fig30c, '30cycles', meta, objname, output_directory, figure_format, web)
     """
