@@ -199,5 +199,5 @@ if __name__ == "__main__":
       data.append(cb.process_run(rc))
 
     if success:
-      print(f"i\nPlotting {test_pair[0]} from {run_config[0]['sitename']} versus {test_pair[1]} from {run_config[1]['sitename']}...")
+      print(f"\nPlotting {test_pair[0]} from {run_config[0]['sitename']} versus {test_pair[1]} from {run_config[1]['sitename']}...")
       plot_3view_comparison(data, run_config, args.output_directory)
