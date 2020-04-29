@@ -15,45 +15,60 @@ def get_table(df):
   for i, row in df.iterrows():
     what = [
       # ISO test details
-      ('$V_{tidal}$ [ml]', f'${float(row["Tidal Volume"]):.0f}$'),
-      ('$C$ [ml/cmH2O]', f'${float(row["Compliance"]):.0f}$'),
-      ('$R$ [cmH2O/l/s]', f'${float(row["Resistance"]):.0f}$'),
-      ('rate [breaths/min]', f'${float(row["Rate respiratio"]):.0f}$'),
-      ('I:E', f'${float(row["I:E"]):.2f}$'),
-      ('$P_{insp}$ [cmH2O]', f'${float(row["Pinspiratia"]):.0f}$'),
-      ('$O_{2}$', f'$21\%$'), # TODO add oxygen to json
-      ('BAP [cmH2O]', f'${float(row["Peep"]):.0f}$'),
+      ('','$V_{tidal}$','[ml]', f'${float(row["Tidal Volume"]):.0f}$'),
+      ('','$C$','[ml/cmH2O]', f'${float(row["Compliance"]):.0f}$'),
+      ('','$R$','[cmH2O/l/s]', f'${float(row["Resistance"]):.0f}$'),
+      ('','rate','[breaths/min]', f'${float(row["Rate respiratio"]):.0f}$'),
+      ('','I:E', '',f'${float(row["I:E"]):.2f}$'),
+      ('','$P_{insp}$','[cmH2O]', f'${float(row["Pinspiratia"]):.0f}$'),
+      ('','$O_{2}$','',f'$21\%$'), # TODO add oxygen to json
+      ('','BAP','[cmH2O]', f'${float(row["Peep"]):.0f}$'),
       # SIM measurements
-      ('simulator $V_{tidal}$ [ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
-      ('simulator $P_{plateau}$ [cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
+      ('simulator','$V_{tidal}$','[ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
+      ('simulator',' $P_{plateau}$','[cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
       # MVM measurements
-      ('measured $V_{tidal}$ [ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
-      ('measured $P_{plateau}$ [cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.0f}$'),
-      ('measured $P_{peak}$ [cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.0f}$'),
-      ('measured PEEP [cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.0f}$'),
+      ('measured','$V_{tidal}$','[ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
+      ('measured','$P_{plateau}$','[cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.1f}$'),
+      ('measured','$P_{peak}$','[cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.1f}$'),
+      ('measured','PEEP','[cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.2f}$'),
     ]
 
     if i == 0:
-      columns = [ title for title, _ in what ]
+      columns = [ title for title, _, _, _ in what ]
+      var = [ title for  _, title, _, _ in what ]
+      units = [ title for _, _, title,_ in what ]
       toprint.append(r'''
         \documentclass[a4paper]{article}
         \usepackage[margin=1.0cm]{geometry}
         \usepackage{rotating}
+        \usepackage[table]{xcolor}
         \title{ISO test table}
         \begin{document}
         \maketitle
         \begin{sidewaystable}
-        \tiny
+        \small
         \begin{tabular}{''')
-      cstring = 'c'*(len(what)+1)
+      cstring='|'
+      cstring += 'c'*(len(what))
+      cstring+='|'
       toprint[-1] = f'{toprint[-1]}{cstring}}}'
+      toprint[-1] = f'{toprint[-1]}\\hline'# horizontal bar and new line in LaTeX
+      toprint.append('\\rowcolor{lightgray}')
       toprint.append(' & '.join(columns))
+      toprint[-1] = f'{toprint[-1]}\\\\'# new line in LaTeX
+      toprint.append('\\rowcolor{lightgray}')
+      toprint.append(' & '.join(var))
+      toprint[-1] = f'{toprint[-1]}\\\\'# new line in LaTeX
+      toprint.append('\\rowcolor{lightgray}')
+      toprint.append('$\phantom{.}$')
+      toprint.append(' & '.join(units))
       toprint[-1] = f'{toprint[-1]}\\\\\\hline'# horizontal bar and new line in LaTeX
 
-    content = [ cont for _, cont in what ]
+    content = [ cont for _, _, _, cont in what ]
     toprint.append(' & '.join(content))
     toprint[-1] = f'{toprint[-1]}\\\\' # new line in LaTeX
 
+  toprint[-1] = f'{toprint[-1]}\\\\\\hline'# horizontal bar and new line in LaTeX
   toprint.append(r'''
     \end{tabular}
     \end{sidewaystable}
