@@ -26,7 +26,7 @@ def plot_3view_comparison(data, run_config, output_directory):
     cycles_to_display = 6
 
     # Simulator subset
-    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < (d["start_times"][my_selected_cycle + cycles_to_display]))].copy()
+    d["sim_sel"] = d["sim"][(d["sim"]["start"] >= d["start_times"][my_selected_cycle]) & (d["sim"]["start"] < d["start_times"][my_selected_cycle + cycles_to_display])].copy()
 
     # Ventilator subset
     first_time_bin = d["sim_sel"]["dt"].iloc[0]
@@ -84,8 +84,8 @@ if __name__ == "__main__":
   parser.add_argument("--db-google-id-2", type=str, help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--mvm-sep-1", type=str, help="Separator between datetime and the rest in the first MVM file", default=" -> ")
   parser.add_argument("--mvm-sep-2", type=str, help="Separator between datetime and the rest in the second MVM file", default=" -> ")
-  parser.add_argument("--mvm-col-1", type=str, help="Columns configuration for first MVM acquisition, see mvmio.py", default="default")
-  parser.add_argument("--mvm-col-2", type=str, help="Columns configuration for second MVM acquisition, see mvmio.py", default="default")
+  parser.add_argument("--mvm-col-1", type=str, help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
+  parser.add_argument("--mvm-col-2", type=str, help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
 
   run_config = [
