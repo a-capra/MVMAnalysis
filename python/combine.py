@@ -794,9 +794,9 @@ if __name__ == '__main__':
   #FIXME in spreadsheet: workaround for Elemaster data, assuming no tab name from another site contains 'ISO'
   if 'ISO' in sitename:
     sitename = "Elemaster"
-  print(f'Analyzing data from {sitename}')
   if not sitename:
     sitename = "UnknownSite"
+  print(f'Analyzing data from {sitename}')
 
   filenames = []  #if the main argument is a json, skip the direct spreadsheet reader
   if args.input[0].split('.')[-1]== 'json' :
