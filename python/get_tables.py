@@ -8,6 +8,49 @@ import lmfit
 
 from mvmconstants import *
 
+def Evaluate(row):
+  bad=0
+  testid=row["test_name"]
+
+  ## MVM PEEP compared with set value
+  nom_peep = float(row["Peep"])
+  nom_peep_low = nom_peep - MVM.maximum_bias_error_peep - MVM.maximum_linearity_error_peep * nom_peep
+  nom_peep_wid = 2 * (MVM.maximum_bias_error_peep + MVM.maximum_linearity_error_peep * nom_peep)
+  min_peep = float(row['min_peep'])
+  max_peep = float(row['max_peep'])
+  if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
+    print(f"SUCCESS in {testid}: PEEP all values within maximum errors")
+  else:
+    print(f"FAILURE in {testid}: PEEP outside maximum errors")
+    bad+=1
+
+  ## MVM Pinsp compared with set value
+  nominal_plateau = float(row["Pinspiratia"])
+  nominal_plateau_low = nominal_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * nominal_plateau
+  nominal_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * nominal_plateau)
+  min_plateau = float(row["min_plateau"])
+  max_plateau = float(row["max_plateau"])
+  if min_plateau > nominal_plateau_low and max_plateau < nominal_plateau_low + nominal_plateau_wid:
+    print(f"SUCCESS {testid}: Pinsp all values within maximum errors")
+  else:
+    print(f"FAILURE {testid}: Pinsp outside maximum errors")
+    bad+=1
+
+  ## MVM tidal volumes compared with simulator values
+  MVM_maximum_bias_error_volume_cl = MVM.maximum_bias_error_volume * 0.1   # ml to cl
+  simulator_volume = float(row["simulator_volume"])
+  simulator_volume_low = simulator_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * simulator_volume
+  simulator_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * simulator_volume)
+  min_volume = float(row["min_volume"])
+  max_volume = float(row["max_volume"])
+  if min_volume > simulator_volume_low and max_volume < simulator_volume_low + simulator_volume_wid:
+      print(f"SUCCESS {testid}: Volume all values within maximum errors wrt simulator")
+  else:
+      print(f"FAILURE {testid}: Volume outside maximum errors wrt simulator")
+      bad+=3
+
+  return bad
+
 
 def get_table(df):
   toprint = []
@@ -42,10 +85,10 @@ def get_table(df):
         \documentclass[a4paper]{article}
         \usepackage[margin=1.0cm]{geometry}
         \usepackage{rotating}
-        \usepackage[table]{xcolor}
+        \usepackage[table,dvipsnames]{xcolor}
         \title{ISO test table}
         \begin{document}
-        #\maketitle
+        %\maketitle
         \begin{sidewaystable}
         \small
         \begin{tabular}{''')
@@ -66,10 +109,17 @@ def get_table(df):
       toprint[-1] = f'{toprint[-1]}\\\\\\hline'# horizontal bar and new line in LaTeX
 
     content = [ cont for _, _, _, cont in what ]
+    stat=Evaluate(row)
+    if stat >0 and stat < 3: # pressure error
+      toprint.append('\\rowcolor{YellowOrange}')
+    elif stat == 3: # volume error
+      toprint.append('\\rowcolor{DarkOrchid}')
+    elif stat > 3: # pressure and volume error
+      toprint.append('\\rowcolor{OrangeRed}')
     toprint.append(' & '.join(content))
     toprint[-1] = f'{toprint[-1]}\\\\' # new line in LaTeX
 
-  toprint[-1] = f'{toprint[-1]}\\\\\\hline'# horizontal bar and new line in LaTeX
+  toprint[-1] = f'{toprint[-1]}\\hline'# horizontal bar  in LaTeX
   toprint.append(r'''
     \end{tabular}
     \end{sidewaystable}
