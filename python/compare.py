@@ -17,6 +17,9 @@ def plot_3view_comparison(data, run_config, output_directory):
   run_config[1]["linestyle"] = ":"
 
   for idx, rc, m, d in zip(range(1, (len(run_config) + 1)), run_config, meta, data):
+    # Select MVM flux to plot
+    d["mvm"]["display_flux"] = d["mvm"]["flux"]
+
     my_selected_cycle = m["cycle_index"]
 
     # Simulator subset
