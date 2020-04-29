@@ -53,7 +53,12 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     ymin, ymax = ax2.get_ylim()
     ax2.set_ylim(ymin*1.4, ymax*1.5)
-    ax2.legend(loc='upper center', ncol=2)
+    ax2legend = ax2.legend(loc='upper center', ncol=2)
+    ## hack to set larger marker size in legend only, one line per data series
+    legmarkersize = 10
+    for iplot in range(6):
+      ax2legend.legendHandles[iplot]._legmarker.set_markersize(legmarkersize)
+
     title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
     title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
