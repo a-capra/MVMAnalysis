@@ -93,9 +93,9 @@ def get_raw_df(fname, columns, columns_to_deriv, timecol='dt'):
     df[f'deriv_{column}'] = df[column].diff() / df[timecol].diff() * 60. # TODO
   return df
 
-def get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa=columns_rwa, columns_dta=columns_dta):
-  df_rwa = get_raw_df(fullpath_rwa, columns=columns_rwa, columns_to_deriv=['total_vol'])
-  df_dta = get_raw_df(fullpath_dta, columns=columns_dta, columns_to_deriv=[])
+def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_columns_dta=columns_dta):
+  df_rwa = get_raw_df(fullpath_rwa, columns=df_columns_rwa, columns_to_deriv=['total_vol'])
+  df_dta = get_raw_df(fullpath_dta, columns=df_columns_dta, columns_to_deriv=[])
   df0 = df_dta.join(df_rwa['dt'])
   df_rwa['oxygen'] = df_rwa['oxygen']  /  df_rwa['airway_pressure']
   df  = df0.join(df_rwa['oxygen'] )
