@@ -46,7 +46,7 @@ def plot_3view_comparison(data, run_config, output_directory):
     d["mvm_sel"].plot(ax=ax31[1], x="dt", y="airway_pressure", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
     d["mvm_sel"].plot(ax=ax31[2], x="dt", y="tidal_volume", label=f"MVM {idx}", c="b", linestyle=rc["linestyle"])
 
-    title.append(cbpu.form_title(rc["meta"], rc["objname"])
+    title.append(cbpu.form_title(rc["meta"], rc["objname"]))
 
   ax31[0].set_xlabel("")
   ax31[0].set_ylabel("F [l/min]")
