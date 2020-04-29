@@ -25,23 +25,20 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     RR = meta[local_objname]["Rate respiratio"]
     RT = meta[local_objname]["Resistance"]
     CM = meta[local_objname]["Compliance"]
-
     nom_peep = float(meta[local_objname]["Peep"])
 
     fig2, ax2 = plt.subplots()
-    #make a subset dataframe for simulator
-    # This is hardcoded - should it be?
-    dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])]
-    #dftmp['dtc'] = df['dt'] - df['start']  #HTJI Done in the main program
 
-    #make a subset dataframe for ventilator
+    # Make a subset dataframe for simulator
+    #FIXME This is hardcoded - should it be?
+    dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])].copy()
+    dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
+
+    # Make a subset dataframe for ventilator
     first_time_bin  = dftmp['dt'].iloc[0]
     last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
     dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
-    dfvent['dtc'] = dfvent['dt'] - dfvent['start']
     dfvent = dfvent.sort_values('dtc')
-
-    dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
     dftmp.plot(ax=ax2, x='dtc', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] ,          marker='o', markersize=0.3, linewidth=0)
     dftmp.plot(ax=ax2, x='dtc', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'],          marker='o', markersize=0.3, linewidth=0)

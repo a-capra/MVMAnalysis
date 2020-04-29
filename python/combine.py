@@ -508,6 +508,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
 
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  dfhd['dtc'] = dfhd['dt'] - dfhd['start']
   df['dtc'] = df['dt'] - df['start']
   df['diindex'] = df['iindex'] - df['siindex']
 
