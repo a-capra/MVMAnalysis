@@ -63,7 +63,7 @@ if __name__ == "__main__":
   parser.add_argument("data_location_1", help="Path to the first dataset.")
   parser.add_argument("db_range_name_2", help="Name and range of the metadata spreadsheet for the second dataset")
   parser.add_argument("data_location_2", help="Path to the second dataset.")
-  parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="plots_iso")
+  parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="comparison_plots")
   parser.add_argument("-t", "--test-names", type=str, help="Only process listed test pair.", nargs=2, default="")
   parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.", default="")
   parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.", default="")
@@ -71,6 +71,8 @@ if __name__ == "__main__":
   parser.add_argument("--j2", action="store_true", help="Try to read second dataste as JSON instead of CSV.")
   parser.add_argument("--offset-1", type=float, help="Time offset between first vent and sim datasets.", default=0.)
   parser.add_argument("--offset-2", type=float, help="Time offset between second vent and sim datasets.", default=0.)
+  parser.add_argument("--pressure-offset-1", type=float, help="Pressure offset for first MVM dataset.", default=0.)
+  parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
   parser.add_argument("--db-google-id-1", type=str, help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-google-id-2", type=str, help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--mvm-sep-1", type=str, help="Separator between datetime and the rest in the first MVM file", default=" -> ")
@@ -86,6 +88,7 @@ if __name__ == "__main__":
         "single_campaign" : args.campaign_1,
         "json" : args.j1,
         "offset" : args.offset_1,
+        "pressure_offset" : args.pressure_offset_1,
         "db_google_id" : args.db_google_id_1,
         "mvm_sep" : args.mvm_sep_1,
         "mvm_col" : args.mvm_col_1
@@ -96,6 +99,7 @@ if __name__ == "__main__":
         "single_campaign" : args.campaign_2,
         "json" : args.j2,
         "offset" : args.offset_2,
+        "pressure_offset" : args.pressure_offset_2,
         "db_google_id" : args.db_google_id_2,
         "mvm_sep" : args.mvm_sep_2,
         "mvm_col" : args.mvm_col_2
