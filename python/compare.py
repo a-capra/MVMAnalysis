@@ -114,6 +114,13 @@ if __name__ == "__main__":
   ]
 
   for idx, rc in enumerate(run_config):
+    # determine site name from spreadsheet tab name
+    rc["sitename"] = rc["db_range_name"].split('!')[0]
+    if not rc["sitename"]:
+      rc["sitename"] = "UnknownSite"
+    #FIXME in spreadsheet: workaround for Elemaster data, assuming no tab name from another site contains 'ISO'
+    elif 'ISO' in rc["sitename"]:
+      rc["sitename"] = "Elemaster"
     print(f"Meta data {idx}: {rc['db_range_name']} Data location {idx}: {rc['data_location']}")
 
   # read metadata spreadsheet
@@ -142,7 +149,7 @@ if __name__ == "__main__":
     success = True
     data = []
     for tn, rc, ss in zip(test_pair, run_config, df_spreadsheet):
-      print(f"Looking for {tn} in {rc['db_range_name']}...")
+      print(f"\nLooking for {tn} in {rc['db_range_name']}...")
       if rc["single_campaign"]:
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
         if cur_test.empty:
@@ -165,6 +172,8 @@ if __name__ == "__main__":
       # We've already checked and warned about duplicate tests above, so we just use the first element here
       rc["objname"] = f"{filename}_0"
       meta = rc["meta"][rc["objname"]]
+      db.validate_meta(meta)
+      meta["SiteName"] = rc["sitename"]
 
       # Build MVM paths and skip user requested files
       rc["fullpath_mvm"] = f"{rc['data_location']}/{meta['Campaign']}/{meta['MVM_filename']}"
@@ -174,7 +183,7 @@ if __name__ == "__main__":
       if rc["json"] and not rc["fullpath_mvm"].endswith(".json"):
         print("Adding missing json extension to MVM path.")
         rc["fullpath_mvm"] += ".json"
-      print(f"\nMVM file: {rc['fullpath_mvm']}")
+      print(f"MVM file: {rc['fullpath_mvm']}")
 
       # Build simulations paths
       rc["fullpath_rwa"] = f"{rc['data_location']}/{meta['Campaign']}/{meta['SimulatorFileName']}"
@@ -184,11 +193,11 @@ if __name__ == "__main__":
       if not rc["fullpath_rwa"].endswith(".rwa"):
         rc["fullpath_rwa"] += ".rwa"
       rc["fullpath_dta"] = rc["fullpath_rwa"].replace("rwa", "dta")
-      print(f"Files of simulation: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
+      print(f"Simulation files: {rc['fullpath_rwa']}, {rc['fullpath_dta']}")
 
-      rc["dataset_name"] = f"{rc['db_range_name'].split('!')[0]}_{meta['Campaign']}"
-      print(f"Processing {tn} in {rc['dataset_name']}...")
+      print(f"Processing {tn} from {meta['SiteName']}...")
       data.append(cb.process_run(rc))
 
     if success:
+      print(f"i\nPlotting {test_pair[0]} from {run_config[0]['sitename']} versus {test_pair[1]} from {run_config[1]['sitename']}...")
       plot_3view_comparison(data, run_config, args.output_directory)
