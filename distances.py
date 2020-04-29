@@ -26,8 +26,11 @@ def show_distances(df):
   fig1.set_size_inches(13,10)
   ax1=ax1.flatten()
 
+  testname=df['test_name'][0]
+  testseries=testname[0:2]+'xx'
+
   df.plot(kind='scatter', ax=ax1[0], x='test_name', y='peep_diff', yerr='rms_peep', c='r', grid=True)
-  ax1[0].set_title('Set PEEP - Mean PEEP')
+  ax1[0].set_title(f'Set PEEP - Mean PEEP for Series {testseries}')
   ax1[0].set_ylabel('Pressure [cmH2O]')
   df.plot(kind='scatter', ax=ax1[1], x='test_name', y='p_diff', yerr='rms_plateau', c='g', grid=True)
   ax1[1].set_title('Target Pressure - Mean Plateau* Pressure')
@@ -41,16 +44,22 @@ def show_distances(df):
   ax1[3].set_xlabel('TEST ID')
 
   fig1.tight_layout()
+  testname=df['test_name'][0]
+  fig1.savefig(f'diff_Series{testseries}.png')
+
 
 def show_range(df):
   fig2,ax2=plt.subplots(3,1,sharex=True)
   fig2.set_size_inches(13,10)
   ax2=ax2.flatten()
 
+  testname=df['test_name'][0]
+  testseries=testname[0:2]+'xx'
+
   df.plot(kind='scatter', ax=ax2[0], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
   df.plot(kind='scatter', ax=ax2[0], x='test_name', y='min_plateau', label='MVM Range', c='b', grid=True)
   df.plot(kind='scatter', ax=ax2[0], x='test_name', y='max_plateau', c='b', grid=True)
-  ax2[0].set_title('Plateau* Pressure Range')
+  ax2[0].set_title(f'Plateau* Pressure Range for Series {testseries}')
   ax2[0].set_ylabel('Pressure [cmH2O]')
 
   df.plot(kind='scatter', ax=ax2[1], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
@@ -66,6 +75,8 @@ def show_range(df):
   ax2[2].set_ylabel('Volume [cl]')
   ax2[2].set_xlabel('TEST ID')
 
+  fig2.tight_layout()
+  fig2.savefig(f'range_Series{testseries}.png')
 
 
 if __name__=='__main__':
