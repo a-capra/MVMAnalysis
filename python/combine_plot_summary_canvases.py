@@ -112,7 +112,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[0].set_title("PEEP [cmH2O], nominal: %2.1f [cmH2O]"%nom_peep, weight='heavy', fontsize=10)
 
     ## MVM Pinsp compared with set value
-    nominal_plateau = meta[objname]["Pinspiratia"]
+    nominal_plateau = float(meta[objname]["Pinspiratia"])
     nominal_plateau_low = nominal_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * nominal_plateau
     nominal_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * nominal_plateau)
     _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
@@ -126,15 +126,20 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     simulator_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * simulator_plateau)
     #print (measured_plateaus, mean_plateau, simulator_plateau )
     _range = ( min([ mean_plateau,simulator_plateau] )*0.7 , max( [mean_plateau,simulator_plateau] ) *1.4    )
-    axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
-    axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
+    axs[2].hist ( measured_plateaus, bins=100, range=_range, label='MVM')
+    axs[2].hist ( real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
     aa = patches.Rectangle( (simulator_plateau_low, axs[0].get_ylim()[0]  ) , simulator_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(simulator_plateau), weight='heavy', fontsize=10 )
     axs[2].legend(loc='upper left')
     axs[2].add_patch(aa)
 
-    ## MVM tidal volumes compared with simulator values
+    ## MVM tidal volumes compared with set value
+    nominal_volume = float(meta[objname]["Tidal Volume"]) * 0.1              # ml to cl
     MVM_maximum_bias_error_volume_cl = MVM.maximum_bias_error_volume * 0.1   # ml to cl
+    nominal_volume_low = nominal_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * nominal_volume
+    nominal_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * nominal_volume)
+
+    ## MVM tidal volumes compared with simulator values
     simulator_volume_low = simulator_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * simulator_volume
     simulator_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * simulator_volume)
     _range = ( min([ mean_volume,simulator_volume] )*0.7 , max( [mean_volume,simulator_volume] ) *1.4    )
@@ -157,13 +162,25 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     ## Print test results, based on comparisons with maximum errors
     if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
-      print("SUCCESS: PEEP all values within maximum errors")
+      print("SUCCESS: PEEP all values within maximum errors wrt set value")
     else:
-      print("FAILURE: PEEP outside maximum errors")
+      print("FAILURE: PEEP outside maximum errors wrt set value")
+
     if min_plateau > nominal_plateau_low and max_plateau < nominal_plateau_low + nominal_plateau_wid:
-      print("SUCCESS: Pinsp all values within maximum errors")
+      print("SUCCESS: Pinsp all values within maximum errors wrt set value")
     else:
-      print("FAILURE: Pinsp outside maximum errors")
+      print("FAILURE: Pinsp outside maximum errors wrt set value")
+
+    if min_plateau > simulator_plateau_low and max_plateau < simulator_plateau_low + simulator_plateau_wid:
+      print("SUCCESS: Pinsp all values within maximum errors wrt simulator")
+    else:
+      print("FAILURE: Pinsp outside maximum errors wrt simulator")
+
+    if min_volume > nominal_volume_low and max_volume < nominal_volume_low + nominal_volume_wid:
+      print("SUCCESS: Volume all values within maximum errors wrt set value")
+    else:
+      print("FAILURE: Volume outside maximum errors wrt set value")
+
     if min_volume > simulator_volume_low and max_volume < simulator_volume_low + simulator_volume_wid:
       print("SUCCESS: Volume all values within maximum errors wrt simulator")
     else:
