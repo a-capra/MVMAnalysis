@@ -706,7 +706,13 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     ####################################################
     '''dump summary data in json file, for get_tables'''
     ####################################################
-    filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    if 'txt' in objname:
+      sumname=objname.replace('.txt', '')
+    elif 'json':
+      sumname=objname.replace('.json', '')
+    else:
+      sumname=objname
+    filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],sumname) # TODO: make sure it is correct, or will overwrite!
     json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
