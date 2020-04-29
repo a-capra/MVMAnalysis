@@ -26,15 +26,16 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     RT = meta[local_objname]["Resistance"]
     CM = meta[local_objname]["Compliance"]
     nom_peep = float(meta[local_objname]["Peep"])
+    my_selected_cycle = meta[local_objname]["cycle_index"]
 
     fig2, ax2 = plt.subplots()
 
-    # Make a subset dataframe for simulator
-    #FIXME This is hardcoded - should it be?
-    dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])].copy()
+    #make a subset dataframe for simulator
+    cycles_to_show = 30
+    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-1] )  ])].copy()
     dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
-    # Make a subset dataframe for ventilator
+    #make a subset dataframe for ventilator
     first_time_bin  = dftmp['dt'].iloc[0]
     last_time_bin   = dftmp['dt'].iloc[len(dftmp)-1]
     dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
