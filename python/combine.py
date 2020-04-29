@@ -21,18 +21,18 @@ from combine_plot_mvm_only_canvases import *
 # py combine.py ../Data -p -f VENTILATOR_12042020_CONTROLLED_FR20_PEEP5_PINSP30_C50_R5_RATIO050.txt  --mvm-col='mvm_col_arduino' -d plots_iso_12Apr
 
 def add_timestamp(df, timecol='dt'):
-  ''' add timestamp column assuming constant sampling in time '''
+  ''' Add timestamp column assuming constant sampling in time '''
   df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
   ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a
   problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
   df['dtcheck'] = df['timestamp']-df['dt']
   max_time_off = df['dtcheck'].max()
   min_time_off = df['dtcheck'].min()
-  print("The maximum  shifts in timestamp are... ", max_time_off, min_time_off)
+  print("The maximum shifts in timestamp are... ", max_time_off, min_time_off)
   return df
 
 def get_deltat(df, timestampcol='timestamp', timecol='dt'):
-  ''' retrieve sampling time '''
+  ''' Retrieve sampling time '''
   return df[timestampcol].iloc[2] - df[timestampcol].iloc[1]
 
 def correct_sim_df(df):
@@ -74,7 +74,7 @@ def synchronize_first_signals(df, dfhd, threshold_sim, threshold_mvm, diagnostic
     return 0
   mvm_threshold_row = dfhdtmp.iloc[0]
   mvm_time = mvm_threshold_row['dt']
-  print("The auto-calculated synchronization time shift between MVM and simulator is ", (simulator_time - mvm_time))
+  print("The auto-calculated synchronization time shift between MVM and simulator is %.3f seconds"%(simulator_time - mvm_time))
   if diagnostic_plots  :
     dfhd['dtshifted'] = dfhd['dt'] + (simulator_time - mvm_time)
     figdiag, axdiag = plt.subplots(2)
