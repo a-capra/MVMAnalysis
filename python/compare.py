@@ -3,6 +3,7 @@ import db
 import combine as cb
 import mvmio as io
 import matplotlib.pyplot as plt
+import style
 
 
 # Adapted from plot_arxXiv_canvases
@@ -55,7 +56,6 @@ def plot_3view_comparison(data, run_config, output_directory):
 
 if __name__ == "__main__":
   import argparse
-  import style
   import sys
 
   parser = argparse.ArgumentParser(description="Compare two datasets.")
