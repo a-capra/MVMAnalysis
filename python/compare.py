@@ -16,8 +16,6 @@ def plot_3view_comparison(data, run_config, output_directory, figure_format):
 
   fig31, ax31 = plt.subplots(3, 1)
   ax31 = ax31.flatten()
-  for ax in ax31:
-    ax.legend(loc="upper right")
   run_config[0]["linestyle"] = "--"
   run_config[1]["linestyle"] = ":"
 
@@ -57,6 +55,8 @@ def plot_3view_comparison(data, run_config, output_directory, figure_format):
   ax31[1].set_ylabel("AWP [cmH2O]")
   ax31[2].set_xlabel("Time [s]")
   ax31[2].set_ylabel("TV [cl]")
+  for ax in ax31:
+    ax.legend(loc="upper right", frameon=True, shadow=True)
 
   fig31.suptitle(f"{title[0]} (1)\n{title[1]} (2)", weight="heavy")
   figpath = f"{output_directory}/{title[0].replace(' ', '_')}_vs_{title[1].replace(' ', '_')}.{figure_format}"
