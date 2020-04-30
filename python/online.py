@@ -232,7 +232,7 @@ if __name__ == '__main__':
   # plot simple canavas
   ####################################################
   # 'choose here the name of the MVM flux variable to be shown
-  dfhd['display_flux'] = dfhd['flux_3']
+  dfhd['display_flux'] = dfhd['flux']
   plot_all(df, dfhd, fname, args.output_directory, start_times, colors, sett, args.tag)
 
   ####################################################
