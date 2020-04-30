@@ -73,23 +73,23 @@ if __name__ == "__main__":
   parser.add_argument("data_location_1", help="Path to the first dataset.")
   parser.add_argument("db_range_name_2", help="Name and range of the metadata spreadsheet for the second dataset")
   parser.add_argument("data_location_2", help="Path to the second dataset.")
-  parser.add_argument("-d", "--output-directory", type=str, help="Plot output directory.", default="comparison_plots")
-  parser.add_argument("-t", "--test-names", type=str, help="Only process listed test pair.", nargs=2, default="")
-  parser.add_argument("--figure-format", type=str, help="Format for output figures.", default='png')
-  parser.add_argument("--campaign-1", type=str, help="Process only a single campaign of first dataset.")
-  parser.add_argument("--campaign-2", type=str, help="Process only a single campaign of second dataset.")
+  parser.add_argument("-d", "--output-directory", help="Plot output directory.", default="comparison_plots")
+  parser.add_argument("-t", "--test-names", help="Only process listed test pair.", nargs=2)
+  parser.add_argument("--figure-format", help="Format for output figures.", default='png')
+  parser.add_argument("--campaign-1", help="Process only a single campaign of first dataset.")
+  parser.add_argument("--campaign-2", help="Process only a single campaign of second dataset.")
   parser.add_argument("--j1", action="store_true", help="Try to read first dataste as JSON instead of CSV.")
   parser.add_argument("--j2", action="store_true", help="Try to read second dataste as JSON instead of CSV.")
   parser.add_argument("--offset-1", type=float, help="Time offset between first vent and sim datasets.", default=0.)
   parser.add_argument("--offset-2", type=float, help="Time offset between second vent and sim datasets.", default=0.)
   parser.add_argument("--pressure-offset-1", type=float, help="Pressure offset for first MVM dataset.", default=0.)
   parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
-  parser.add_argument("--db-google-id-1", type=str, help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
-  parser.add_argument("--db-google-id-2", type=str, help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
-  parser.add_argument("--mvm-sep-1", type=str, help="Separator between datetime and the rest in the first MVM file", default="->")
-  parser.add_argument("--mvm-sep-2", type=str, help="Separator between datetime and the rest in the second MVM file", default="->")
-  parser.add_argument("--mvm-col-1", type=str, help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
-  parser.add_argument("--mvm-col-2", type=str, help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
+  parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
+  parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
+  parser.add_argument("--mvm-sep-1", help="Separator between datetime and the rest in the first MVM file", default="->")
+  parser.add_argument("--mvm-sep-2", help="Separator between datetime and the rest in the second MVM file", default="->")
+  parser.add_argument("--mvm-col-1", help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
+  parser.add_argument("--mvm-col-2", help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
 
   run_config = [
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     if not df_spreadsheet_1_only.empty:
       print(f"WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
-    # Just duplicate the test names
+    # In this mode we're comparing equal tests, so just duplicate the names
     test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"]]
 
   for test_pair in test_names:
