@@ -140,11 +140,11 @@ if __name__ == "__main__":
     # Check for tests only present in one of the spreadsheets
     df_spreadsheet_0_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
     if not df_spreadsheet_0_only.empty:
-      print("WARNING: The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
+      print(f"WARNING: The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
       print(df_spreadsheet_0_only)
     df_spreadsheet_1_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
     if not df_spreadsheet_1_only.empty:
-      print("WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
+      print(f"WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
     # Just duplicate the test names
     test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"]]
