@@ -406,6 +406,59 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
+def get_IoverEAndFrequency (dftest, quantity, inhalateTr, exhalateTr):
+  '''
+  Computer I:E and 1/periode for every breath cycle, for summary plot
+  We should look for
+  1) First up-going, positive flow record, start of inhalation
+  2) First down going, negative flow, end of inhalation, start of exhalation
+  3) Flow getting back to zero
+
+  I am not sure if that is better to work on the flow itself or its derivative. Let's try with the flow, we will used the derivative if it does not work.
+  '''
+  tFlow =  dftest[quantity]
+  time = dftest['dt']
+
+  startIn = 0.0
+  stopIn = 0.0
+  startEx = 0.0
+  stopEx = 0.0
+
+  dtInhalate = 0.0
+  dtExhalate = 0.0
+  frequency = 0.0
+  IoverE = 0.0
+
+  mIoverE = []
+  mFrequency = []
+
+  inInhalate = False
+  inExhalate = False
+
+  for i,(f,t) in enumerate(zip(tFlow, time)):
+    if inInhalate == False: # if we are not inhaling, we look for the start
+      if f > inhalateTr:    # Passed the threshold, we are now inhaling
+        if inExhalate == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
+          stopEx = t
+          inExhalate = False
+          # We can calculate the variables
+          dtInhalate = stopIn - startIn
+          dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
+          frequency = 1./(dtInhalate + dtExhalate)*60. # We want breath/min and the units are in seconds
+          IoverE= dtInhalate/dtExhalate
+ #         print (startIn, stopIn, startEx, stopEx, IoverE, frequency)
+          mIoverE.append(IoverE)
+          mFrequency.append(frequency)
+
+        inInhalate = True
+        startIn = t
+    else:
+      if f< exhalateTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
+        inInhalate = False
+        stopIn = t
+        inExhalate = True
+        startEx = t
+  return mIoverE, mFrequency
 
 def add_run_info(df, dist=25):
   ''' Add run info based on max pressure '''
@@ -526,8 +579,18 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
   measured_volumes    = []
   measured_peaks      = []
   measured_plateaus   = []
+  measured_IoverE     = []
+  measured_Frequency  = []
   real_tidal_volumes  = []
   real_plateaus       = []
+  real_IoverE         = []
+  real_Frequency      = []
+ 
+  # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
+  # first for the MVM
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 10, 5) # the threshold is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
+  # second for the simulator
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -5) # the threshold is +5 for the total flow in inhalation, -5 in exhalation
 
   for i,nc in enumerate(dfhd['ncycle'].unique()) :
 
@@ -660,6 +723,15 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     simulator_volumes = simulator_volumes[~np.isnan(simulator_volumes)]
     simulator_volume  = np.mean(simulator_volumes)
 
+    simulator_ioveres = np.array(real_IoverE)
+    simulator_ioveres = simulator_ioveres[~np.isnan(simulator_ioveres)]
+    simulator_iovere  = np.mean(simulator_ioveres)
+
+    simulator_frequencys = np.array(real_Frequency)
+    simulator_frequencys = simulator_frequencys[~np.isnan(simulator_frequencys)]
+    simulator_frequency = np.mean(simulator_frequencys)
+
+
     meta[objname]["mean_peep"]         =  mean_peep
     meta[objname]["rms_peep"]          =  rms_peep
     meta[objname]["max_peep"]          =  max_peep
@@ -678,11 +750,13 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     meta[objname]["min_volume"]        =  min_volume
     meta[objname]["simulator_volume"]  =  simulator_volume
     meta[objname]["simulator_plateau"] =  simulator_plateau
+    meta[objname]["simulator_iovere"]  =  simulator_iovere
+    meta[objname]["simulator_frequency"]  =  simulator_frequency
 
     ####################################################
     '''summary plots of measured quantities and avg wfs'''
     ####################################################
-    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes)
+    plot_summary_canvases (df, dfhd, meta, objname, args.output_directory, start_times, colors, args.web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, measured_IoverE, measured_Frequency, real_tidal_volumes, real_IoverE, real_Frequency)
 
     ####################################################
     '''overlay the cycles and shows consistency of simulator readings from cycle to cycle'''
