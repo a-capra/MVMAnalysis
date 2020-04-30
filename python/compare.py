@@ -16,7 +16,8 @@ def plot_3view_comparison(data, run_config, output_directory, figure_format):
 
   fig31, ax31 = plt.subplots(3, 1)
   ax31 = ax31.flatten()
-  ax31.legend(loc="upper right")
+  for ax in ax31:
+    ax.legend(loc="upper right")
   run_config[0]["linestyle"] = "--"
   run_config[1]["linestyle"] = ":"
 
