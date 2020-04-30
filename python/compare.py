@@ -147,7 +147,7 @@ if __name__ == "__main__":
       print(f"WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
     # In this mode we're comparing equal tests, so just duplicate the names
-    test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"]]
+    test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"].unique()]
 
   for test_pair in test_names:
     success = True
