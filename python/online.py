@@ -203,6 +203,17 @@ if __name__ == '__main__':
   print('compute cycle start based on PV2')
   start_times    = get_start_times(dfhd) # based on PV2
 
+  if len(start_times) == 0: 
+    print(f'''
+    LENGTH of start_times IS {len(start_times)}
+    CHECK file {fname}''')
+    #df['out_diff']
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+      #print(dfhd[['dt','out','out_diff','out_status']])
+      print(dfhd[['dt','out_status']])
+    exit(123)
+
+  
   dfhd['start'] = 0
   dfhd['ncycle']= 0
   for i,s in enumerate(start_times) :
