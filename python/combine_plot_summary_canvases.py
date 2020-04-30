@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging as log
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import matplotlib.gridspec as gridspec
@@ -8,9 +9,9 @@ from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
 from mvmconstants import *
+from combine_plot_utils import *
 
-
-def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors,  measured_peeps, measured_plateaus, real_plateaus, measured_peak, measured_volumes, real_tidal_volumes) :
+def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
 
   for i in range (len(meta)) :
 
@@ -26,8 +27,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     CM = meta[local_objname]["Compliance"]
 
     nom_peep = float(meta[local_objname]["Peep"])
-
-
 
     fig2, ax2 = plt.subplots()
     #make a subset dataframe for simulator
@@ -52,10 +51,14 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     dfvent.plot(ax=ax2,  x='dtc', y='display_flux',    label='MVM flux            [l/min]', c=colors['flux'],                 marker='o', markersize=0.3, linewidth=0.2)
     dfvent.plot(ax=ax2,  x='dtc', y='airway_pressure', label='MVM airway pressure [cmH2O]', c=colors['vent_airway_pressure'], marker='o', markersize=0.3, linewidth=0.2)
 
-
     ymin, ymax = ax2.get_ylim()
     ax2.set_ylim(ymin*1.4, ymax*1.5)
-    ax2.legend(loc='upper center', ncol=2)
+    ax2legend = ax2.legend(loc='upper center', ncol=2)
+    ## hack to set larger marker size in legend only, one line per data series
+    legmarkersize = 10
+    for iplot in range(6):
+      ax2legend.legendHandles[iplot]._legmarker.set_markersize(legmarkersize)
+
     title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
     title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
@@ -72,10 +75,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
     ax2.add_patch(rect)
 
-    ax2.set_title ("Test n %s"%meta[objname]['test_name'])
-    figpath = "%s/%s_avg_%s.png" % (output_directory, meta[objname]['Campaign'] , objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    fig2.savefig(figpath)
+    set_plot_title(ax2, meta, objname)
+    save_figure(fig2, 'avg', meta, objname, output_directory, figure_format, web)
 
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
@@ -102,7 +103,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     ####################################################
 
     figs,axes = plt.subplots(2,2)
-    figs.suptitle ("Test n %s"%meta[objname]['test_name'], weight='heavy')
     axs = axes.flatten()
 
     ## MVM PEEP compared with set value
@@ -162,9 +162,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
-    figpath = "%s/%s_summary_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    print(f'Saving figure to {figpath}')
-    figs.savefig(figpath)
+    set_plot_suptitle(figs, meta, objname)
+    save_figure(figs, 'summary', meta, objname, output_directory, figure_format, web)
 
     ## Debug output
     #print("measured_peeps:", measured_peeps)
@@ -173,7 +172,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     #print("measured_volumes:", measured_volumes)
     #print("real_tidal_volumes:", real_tidal_volumes)
 
-    ## Print test result, based on comparisons with maximum errors
+    ## Print test results, based on comparisons with maximum errors
     if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
       print("SUCCESS: PEEP all values within maximum errors")
     else:
@@ -182,20 +181,45 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
       print("SUCCESS: Pinsp all values within maximum errors")
     else:
       print("FAILURE: Pinsp outside maximum errors")
+    if min_volume > simulator_volume_low and max_volume < simulator_volume_low + simulator_volume_wid:
+      print("SUCCESS: Volume all values within maximum errors wrt simulator")
+    else:
+      print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
+def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
-def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
+  ## For the moment only one test per file is supported here
+  if len(meta) != 1 :
+    log.warning("The length of the meta array is not 1. Assumption made in plot_overlay_canvases is invalid.")
+
+  local_objname = "%s_%i"% ( objname[:-2] , 0 )  # i = 0
+
+  PE = meta[local_objname]["Peep"]
+  PI = meta[local_objname]["Pinspiratia"]
+  RR = meta[local_objname]["Rate respiratio"]
+  RT = meta[local_objname]["Resistance"]
+  CM = meta[local_objname]["Compliance"]
+
+  n_cycles = 0
+  temp_shape = stats_total_vol.shape
+  if temp_shape[0] > 0:
+    this_series = stats_total_vol.iloc[0]
+    n_cycles = this_series['N']
 
     figoverlay, axoverlay = plt.subplots(6)
     figoverlay.set_size_inches(7,9)
-    figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
+
+    title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]         PEEP = %s [cmH2O]"%(RT,CM,PE )
+    title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
+    figoverlay.text(0.5, 0.93, title1, color='#7697c4', fontsize=10, ha='center')
+    figoverlay.text(0.5, 0.90, title2, color='#7697c4', fontsize=10, ha='center')
 
     axoverlay[4].set_ylabel('Total Vol',fontsize=10)
-    axoverlay[4].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[4], kind='scatter', x='dtc', y='total_vol', color = colors['total_vol'],fontsize=10)
+    axoverlay[4].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[4], kind='scatter', x='dtc', y='total_vol', color = colors['total_vol'],fontsize=10,marker='+', s=2.0)
     axoverlay[5].set_xlabel('Time since start of cycle (s)',fontsize=14)
-    axoverlay[5].set_xlim(0,4)
+    axoverlay[5].set_xlim(0,5)
     axoverlay[5].set_ylim(-0.2,0.2)
     stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
     stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
@@ -203,28 +227,40 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
     #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
     axoverlay[5].get_legend().remove()
+    axoverlay[5].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[5].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[5].text(4.95,-0.1, "from median", ha='right', fontsize=8)
+    axoverlay[5].set_xlabel('Time from start of cycle [s]', fontsize=10)
 
     axoverlay[0].set_ylabel('Total Flow',fontsize=10)
-    axoverlay[0].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10)
-    axoverlay[1].set_xlim(0,4)
+    axoverlay[0].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10,marker='+',s=4.0)
+    axoverlay[1].set_xlim(0,5)
     axoverlay[1].set_ylim(-0.2,0.2)
     stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
     stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
     stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
     stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
     axoverlay[1].get_legend().remove()
+    axoverlay[1].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[1].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[1].text(4.95,-0.1, "from median", ha='right', fontsize=8)
+
 
     axoverlay[2].set_ylabel('Pressure',fontsize=10)
-    axoverlay[2].set_xlim(0,4)
-    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10)
-    axoverlay[3].set_xlim(0,4)
+    axoverlay[2].set_xlim(0,5)
+    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10,marker='+',s=4.0)
+    axoverlay[3].set_xlim(0,5)
     axoverlay[3].set_ylim(-0.2,0.2)
     stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
     stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
     stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
     stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
     axoverlay[3].get_legend().remove()
+    axoverlay[3].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
+    axoverlay[3].text(4.95,0.0, "deviation", ha='right', fontsize=8)
+    axoverlay[3].text(4.95,-0.1, "from median", ha='right', fontsize=8)
 
-    figpath = "%s/%s_overlay_%s.png" % (output_directory, meta[objname]['Campaign'], objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
-    figoverlay.savefig(figpath)
+    figoverlay.suptitle ("Test n %s Consistency of %s Cycles"%(meta[objname]['test_name'],n_cycles), weight='heavy', fontsize=12)
+    #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
+    save_figure(figoverlay, 'overlay', meta, objname, output_directory, figure_format, web)
