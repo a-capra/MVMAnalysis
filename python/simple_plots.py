@@ -22,10 +22,10 @@ def plot_all(df, dfhd, objname, output_directory, start_times, colors, meta, tag
     df.plot(ax=ax31[2], x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
 
   if 'flux_2' in dfhd:
-    dfhd.plot(ax=ax31[0], x='dt', y='flux_2', label='flux_2', c='r', linestyle="--")
+    dfhd.plot(ax=ax31[0], x='dt', y='flux_2', label='Venturi', c='r', linestyle="--")
   if 'flux_3' in dfhd:
-    dfhd.plot(ax=ax31[0], x='dt', y='flux_3',  label='flux_3', c='r')
-  dfhd.plot(ax=ax31[0], x='dt', y='flux',            label='ventilator flux            [l/min]', c=colors['flux'] )
+    dfhd.plot(ax=ax31[0], x='dt', y='flux_3',  label='SP2?', c='r')
+  dfhd.plot(ax=ax31[0], x='dt', y='flux',            label='SP1 [l/min]', c=colors['flux'] )
 
   dfhd.plot(ax=ax31[1], x='dt', y='airway_pressure', label='ventilator airway pressure [cmH2O]', c=colors['vent_airway_pressure'])
   #plt.plot(start_times, [0]*len(start_times), 'bo', label='real cycle start time')
