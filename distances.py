@@ -18,7 +18,12 @@ def calculate_distances(df):
   df['peep_diff'] = df['Peep'] - df['mean_peep']
   df['p_diff']    = df['Pinspiratia'] - df['mean_plateau']
   df['pk_diff']   = df['Pinspiratia'] - df['mean_peak']
-  df['v_diff']    = (df['Tidal Volume'] - df['mean_volume'])*10.0
+  df['v_diff']    = df['Tidal Volume'] - df['mean_volume']*10.0
+
+  df['peep_maxdiff'] = df['Peep'] - df['max_peep']
+  df['p_maxdiff']    = df['Pinspiratia'] - df['max_plateau']
+  df['pk_maxdiff']   = df['Pinspiratia'] - df['max_peak']
+  df['v_maxdiff']    = df['Tidal Volume'] - df['max_volume']*10.0
   return df
 
 def show_distances(df):
@@ -72,11 +77,38 @@ def show_range(df):
   df.plot(kind='scatter', ax=ax2[2], x='test_name', y='min_volume', label='MVM Range', c='b', grid=True)
   df.plot(kind='scatter', ax=ax2[2], x='test_name', y='max_volume', c='b', grid=True)
   ax2[2].set_title('Tidal Volume Range')
-  ax2[2].set_ylabel('Volume [cl]')
+  ax2[2].set_ylabel('Volume [ml]')
   ax2[2].set_xlabel('TEST ID')
 
   fig2.tight_layout()
   fig2.savefig(f'range_Series{testseries}.png')
+
+
+def show_maxdeviation(df):
+  fig3,ax3=plt.subplots(4,1,sharex=True)
+  fig3.set_size_inches(13,10)
+  ax3=ax3.flatten()
+
+  testname=df['test_name'][0]
+  testseries=testname[0:2]+'xx'
+
+  df.plot(kind='scatter', ax=ax3[0], x='test_name', y='peep_maxdiff', c='r', grid=True)
+  ax3[0].set_title(f'Set PEEP - Max PEEP for Series {testseries}')
+  ax3[0].set_ylabel('Pressure [cmH2O]')
+  df.plot(kind='scatter', ax=ax3[1], x='test_name', y='p_maxdiff', c='g', grid=True)
+  ax3[1].set_title('Target Pressure - Max Plateau* Pressure')
+  ax3[1].set_ylabel('Pressure [cmH2O]')
+  df.plot(kind='scatter', ax=ax3[2], x='test_name', y='pk_maxdiff', c='k', grid=True)
+  ax3[2].set_title('Target Pressure - Max Peak Pressure')
+  ax3[2].set_ylabel('Pressure [cmH2O]')
+  df.plot(kind='scatter', ax=ax3[3], x='test_name', y='v_maxdiff', c='b', grid=True)
+  ax3[3].set_title('Intended Tidal Volume - Max Tidal Volume')
+  ax3[3].set_ylabel('vol [ml]')
+  ax3[3].set_xlabel('TEST ID')
+
+  fig3.tight_layout()
+  testname=df['test_name'][0]
+  fig3.savefig(f'maxdiff_Series{testseries}.png')
 
 
 if __name__=='__main__':
@@ -89,5 +121,6 @@ if __name__=='__main__':
   calculate_distances(dataframe)
   show_distances(dataframe)
   show_range(dataframe)
+  show_maxdeviation(dataframe)
   plt.show()
   
