@@ -16,25 +16,34 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
+    # Run a single command using the runners shell
     - name: Run a one-line echo test
       run: echo Starting continuous integration script
 
-    # Runs a set of commands using the runners shell (multi-line syntax example)
+    # Setup python version
+    # https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#specifying-a-python-version
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.x' # Semantic version range syntax or exact version of a Python version
+        architecture: 'x64' # Optional - x64 or x86, defaults to x64
+
+    # Print the current Python version
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+
+    # Run a set of commands using the runners shell (multi-line syntax example)
     - name: Make the output directory
       run: |
         CMD='mkdir -p $GITHUB_WORKSPACE/combine_test_output'
         echo $CMD; $CMD
 
-    # Runs the actual test
+    # Run the actual test
     - name: Run combine.py on test data
       run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
