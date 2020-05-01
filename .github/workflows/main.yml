@@ -34,5 +34,5 @@ jobs:
 
     - name: Run combine.py on test data
       run: |
-        CMD='python $GITHUB_WORKSPACE/python/combine.py $GITHUB_WORKSPACE/test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d $GITHUB_WORKSPACE/combine_test_output'
+        CMD='python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output'
         echo $CMD; $CMD
