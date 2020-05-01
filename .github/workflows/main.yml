@@ -26,13 +26,12 @@ jobs:
     - name: Run a one-line echo test
       run: echo Starting continuous integration script
 
-    # Runs a set of commands using the runners shell
+    # Runs a set of commands using the runners shell (multi-line syntax example)
     - name: Make the output directory
       run: |
         CMD='mkdir -p $GITHUB_WORKSPACE/combine_test_output'
         echo $CMD; $CMD
 
+    # Runs the actual test
     - name: Run combine.py on test data
-      run: |
-        CMD='python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output'
-        echo $CMD; $CMD
+      run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
