@@ -23,11 +23,16 @@ jobs:
     - uses: actions/checkout@v2
 
     # Runs a single command using the runners shell
-    - name: Run a one-line script
+    - name: Run a one-line echo test
       run: echo Starting continuous integration script
 
     # Runs a set of commands using the runners shell
-    - name: Run a multi-line script
+    - name: Make the output directory
       run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+        CMD='mkdir -p $GITHUB_WORKSPACE/combine_test_output'
+        echo $CMD; $CMD
+
+    - name: Run combine.py on test data
+      run: |
+        CMD='python $GITHUB_WORKSPACE/python/combine.py $GITHUB_WORKSPACE/test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d $GITHUB_WORKSPACE/combine_test_output'
+        echo $CMD; $CMD
