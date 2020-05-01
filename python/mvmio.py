@@ -2,6 +2,40 @@ import numpy as np
 import pandas as pd
 import json
 
+columns_rwa = ['dt',
+  'airway_pressure',
+  'muscle_pressure',
+  'tracheal_pressure',
+  'chamber1_vol',
+  'chamber2_vol',
+  'total_vol',
+  'chamber1_pressure',
+  'chamber2_pressure',
+  'breath_fileno',
+  'aux1',
+  'aux2',
+  'oxygen'
+]
+
+columns_dta = [#'dt',
+  'breath_no',
+  'compressed_vol',
+  'airway_pressure',
+  'muscle_pressure',
+  'total_vol',
+  'total_flow',
+  'chamber1_pressure',
+  'chamber2_pressure',
+  'chamber1_vol',
+  'chamber2_vol',
+  'chamber1_flow',
+  'chamber2_flow',
+  'tracheal_pressure',
+  'ventilator_vol',
+  'ventilator_flow',
+  'ventilator_pressure',
+]
+
 mapping = {
   'default': [
     'date',
@@ -16,18 +50,17 @@ mapping = {
   'mvm_col_arduino' : [
     'date',
     'time_arduino',
-    'flux_2',
+    'flux',
     'pressure_pv1',
     'airway_pressure',
     'in',
     'service_1',
     'out',
+    'flux_2',
     'flux_3',
-    'flux',
     'volume',
     'service_2'
   ],
-
   'mvm_col_no_time' : [
     'pressure_pv1' ,
     'airway_pressure',
@@ -60,9 +93,9 @@ def get_raw_df(fname, columns, columns_to_deriv, timecol='dt'):
     df[f'deriv_{column}'] = df[column].diff() / df[timecol].diff() * 60. # TODO
   return df
 
-def get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta):
-  df_rwa = get_raw_df(fullpath_rwa, columns=columns_rwa, columns_to_deriv=['total_vol'])
-  df_dta = get_raw_df(fullpath_dta, columns=columns_dta, columns_to_deriv=[])
+def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_columns_dta=columns_dta):
+  df_rwa = get_raw_df(fullpath_rwa, columns=df_columns_rwa, columns_to_deriv=['total_vol'])
+  df_dta = get_raw_df(fullpath_dta, columns=df_columns_dta, columns_to_deriv=[])
   df0 = df_dta.join(df_rwa['dt'])
   df_rwa['oxygen'] = df_rwa['oxygen']  /  df_rwa['airway_pressure']
   df  = df0.join(df_rwa['oxygen'] )

@@ -7,8 +7,9 @@ from matplotlib import colors
 from scipy.interpolate import interp1d
 import matplotlib.patches as patches
 
+from combine_plot_utils import *
 
-def plot_mvm_only_canvases (dfhd, meta, objname,start_times, colors) :
+def plot_mvm_only_canvases (dfhd, meta, objname, output_directory, start_times, colors, figure_format, web) :
 
     ####################################################
     '''general service canavas number 1'''
@@ -30,8 +31,9 @@ def plot_mvm_only_canvases (dfhd, meta, objname,start_times, colors) :
     #dfhd.plot(ax=ax, x='dt', y='derivative',  label='derivative', c='gray')
     #df.plot(ax=ax, x='dt', y='deriv_total_vol', label='deriv_total_vol [l/min]')
 
-    ax.set_title ("Filename: %s"%meta[objname]['test_name'], weight='heavy')
-
     for i,t in enumerate(start_times) :
       ax.text(t, 0.5, "%i"%i, verticalalignment='bottom', horizontalalignment='center', color='black', fontsize=14)
     ax.legend(loc='upper center', ncol=2)
+
+    set_plot_title(ax, meta, objname)
+    save_figure(plt, 'mvmonly', meta, objname, output_directory, figure_format, web)
