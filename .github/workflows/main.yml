@@ -48,3 +48,14 @@ jobs:
 
     - name: Run combine.py on test data
       run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
+
+    - name: Tar output files
+      run: tar -zcv combine_test_output/* > combine_test_output.tgz
+
+    - name: Upload test results
+      uses: actions/upload-artifact@master
+      with:
+        name: combine_test_output
+        path: combine_test_output.tgz
+      # Use always() to always run this step to publish test results when there are test failures
+      #if: ${{ always() }}
