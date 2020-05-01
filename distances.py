@@ -26,8 +26,11 @@ def calculate_distances(df):
   df['v_maxdiff']    = df['Tidal Volume'] - df['max_volume']*10.0
   return df
 
-def show_distances(df):
-  fig1,ax1=plt.subplots(4,1,sharex=True)
+def show_distances(df,display_volume):
+  if display_volume:
+    fig1,ax1=plt.subplots(4,1,sharex=True)
+  else:
+    fig1,ax1=plt.subplots(3,1,sharex=True)
   fig1.set_size_inches(13,10)
   ax1=ax1.flatten()
 
@@ -43,10 +46,13 @@ def show_distances(df):
   df.plot(kind='scatter', ax=ax1[2], x='test_name', y='pk_diff', yerr='rms_peak', c='k', grid=True)
   ax1[2].set_title('Target Pressure - Mean Peak Pressure')
   ax1[2].set_ylabel('Pressure [cmH2O]')
-  df.plot(kind='scatter', ax=ax1[3], x='test_name', y='v_diff', yerr='rms_volume', c='b', grid=True)
-  ax1[3].set_title('Intended Tidal Volume - Mean Tidal Volume')
-  ax1[3].set_ylabel('vol [ml]')
-  ax1[3].set_xlabel('TEST ID')
+  if display_volume:
+    df.plot(kind='scatter', ax=ax1[3], x='test_name', y='v_diff', yerr='rms_volume', c='b', grid=True)
+    ax1[3].set_title('Intended Tidal Volume - Mean Tidal Volume')
+    ax1[3].set_ylabel('vol [ml]')
+    ax1[3].set_xlabel('TEST ID')
+  else:
+    ax1[2].set_xlabel('TEST ID')
 
   fig1.tight_layout()
   testname=df['test_name'][0]
@@ -84,8 +90,12 @@ def show_range(df):
   fig2.savefig(f'range_Series{testseries}.png')
 
 
-def show_maxdeviation(df):
-  fig3,ax3=plt.subplots(4,1,sharex=True)
+def show_maxdeviation(df,display_volume):
+  if display_volume:
+    fig3,ax3=plt.subplots(4,1,sharex=True)
+  else:
+    fig3,ax3=plt.subplots(3,1,sharex=True)
+
   fig3.set_size_inches(13,10)
   ax3=ax3.flatten()
 
@@ -101,10 +111,13 @@ def show_maxdeviation(df):
   df.plot(kind='scatter', ax=ax3[2], x='test_name', y='pk_maxdiff', c='k', grid=True)
   ax3[2].set_title('Target Pressure - Max Peak Pressure')
   ax3[2].set_ylabel('Pressure [cmH2O]')
-  df.plot(kind='scatter', ax=ax3[3], x='test_name', y='v_maxdiff', c='b', grid=True)
-  ax3[3].set_title('Intended Tidal Volume - Max Tidal Volume')
-  ax3[3].set_ylabel('vol [ml]')
-  ax3[3].set_xlabel('TEST ID')
+  if display_volume:
+    df.plot(kind='scatter', ax=ax3[3], x='test_name', y='v_maxdiff', c='b', grid=True)
+    ax3[3].set_title('Intended Tidal Volume - Max Tidal Volume')
+    ax3[3].set_ylabel('vol [ml]')
+    ax3[3].set_xlabel('TEST ID')
+  else:
+    ax3[2].set_xlabel('TEST ID')
 
   fig3.tight_layout()
   testname=df['test_name'][0]
@@ -115,12 +128,16 @@ if __name__=='__main__':
 
   parser = argparse.ArgumentParser(description='Test Quality by AC')
   parser.add_argument("input", help="summary file(s) ", nargs='+')
+  parser.add_argument("-v", "--no_volume", action='store_true', help="indicate that the intented tidal volume is not specified")
 
   args=parser.parse_args()
+
   dataframe=process_files(args.input)
+
   calculate_distances(dataframe)
-  show_distances(dataframe)
+  show_distances(dataframe,not args.no_volume)
   show_range(dataframe)
-  show_maxdeviation(dataframe)
+  show_maxdeviation(dataframe,not args.no_volume)
+
   plt.show()
   
