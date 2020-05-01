@@ -588,7 +588,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
  
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 10, 5) # the threshold is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 15, 5) # the threshold is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
   # second for the simulator
   real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -5) # the threshold is +5 for the total flow in inhalation, -5 in exhalation
 
