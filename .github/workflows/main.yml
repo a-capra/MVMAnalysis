@@ -50,7 +50,9 @@ jobs:
       run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
 
     - name: Run get_tables.py on test output
-      run: python python/get_tables.py combine_test_output/summary*.json --output-dir=combine_test_output
+      run: |
+        cp test_data/summary*.json combine_test_output/
+        python python/get_tables.py combine_test_output/summary*.json --output-dir=combine_test_output
 
     # Tar and upload results
     - name: Tar output files
