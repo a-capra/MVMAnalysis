@@ -68,26 +68,66 @@ def show_range(df):
   testseries=testname[0:2]+'xx'
 
   df.plot(kind='scatter', ax=ax2[0], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
-  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='min_plateau', label='MVM Range', c='b', grid=True)
-  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='max_plateau', c='b', grid=True)
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='min_plateau', label='MVM Range', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='max_plateau', c='b', marker='_', grid=True)
   ax2[0].set_title(f'Plateau* Pressure Range for Series {testseries}')
   ax2[0].set_ylabel('Pressure [cmH2O]')
 
   df.plot(kind='scatter', ax=ax2[1], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
-  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='min_peak', label='MVM Range', c='b', grid=True)
-  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='max_peak', c='b', grid=True)
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='min_peak', label='MVM Range', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='max_peak', c='b', marker='_', grid=True)
   ax2[1].set_title('Peak Pressure Range')
   ax2[1].set_ylabel('Pressure [cmH2O]')
 
   df.plot(kind='scatter', ax=ax2[2], x='test_name', y='simulator_volume', label='SIM Volume', c='r', grid=True)
-  df.plot(kind='scatter', ax=ax2[2], x='test_name', y='min_volume', label='MVM Range', c='b', grid=True)
-  df.plot(kind='scatter', ax=ax2[2], x='test_name', y='max_volume', c='b', grid=True)
+  df.plot(kind='scatter', ax=ax2[2], x='test_name', y='min_volume', label='MVM Range', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[2], x='test_name', y='max_volume', c='b', marker='_', grid=True)
   ax2[2].set_title('Tidal Volume Range')
   ax2[2].set_ylabel('Volume [ml]')
   ax2[2].set_xlabel('TEST ID')
 
   fig2.tight_layout()
   fig2.savefig(f'range_Series{testseries}.png')
+
+def show_range_target(df,display_volume):
+  if display_volume:
+    fig2,ax2=plt.subplots(3,1,sharex=True)
+  else:
+    fig2,ax2=plt.subplots(2,1,sharex=True)
+  fig2.set_size_inches(13,10)
+  ax2=ax2.flatten()
+
+  testname=df['test_name'][0]
+  testseries=testname[0:2]+'xx'
+
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='min_plateau', label='MVM Range', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='max_plateau', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[0], x='test_name', y='Pinspiratia', label='setpoint Pressure', c='g', marker='x', grid=True)
+  ax2[0].set_title(f'Plateau* Pressure Range for Series {testseries}')
+  ax2[0].set_ylabel('Pressure [cmH2O]')
+
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='simulator_plateau', label='SIM Pressure', c='r', grid=True)
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='min_peak', label='MVM Range', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='max_peak', c='b', marker='_', grid=True)
+  df.plot(kind='scatter', ax=ax2[1], x='test_name', y='Pinspiratia', label='setpoint Pressure', c='g', marker='x', grid=True)
+  ax2[1].set_title('Peak Pressure Range')
+  ax2[1].set_ylabel('Pressure [cmH2O]')
+
+  if display_volume:
+    df.plot(kind='scatter', ax=ax2[2], x='test_name', y='simulator_volume', label='SIM Volume', c='r', grid=True)
+    df.plot(kind='scatter', ax=ax2[2], x='test_name', y='min_volume', label='MVM Range', c='b', marker='_', grid=True)
+    df.plot(kind='scatter', ax=ax2[2], x='test_name', y='max_volume', c='b', marker='_', grid=True)
+    df.plot(kind='scatter', ax=ax2[2], x='test_name', y='Tidal Volume', label='Intended Tidal Volume', c='g', marker='x', grid=True)
+    ax2[2].set_title('Tidal Volume Range')
+    ax2[2].set_ylabel('Volume [ml]')
+    ax2[2].set_xlabel('TEST ID')
+  else:
+    ax2[1].set_xlabel('TEST ID')
+
+
+  fig2.tight_layout()
+  fig2.savefig(f'range_sim_setpoint_Series{testseries}.png')
 
 
 def show_maxdeviation(df,display_volume):
@@ -137,6 +177,7 @@ if __name__=='__main__':
   calculate_distances(dataframe)
   show_distances(dataframe,not args.no_volume)
   show_range(dataframe)
+  show_range_target(dataframe,not args.no_volume)
   show_maxdeviation(dataframe,not args.no_volume)
 
   plt.show()
