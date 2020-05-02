@@ -713,6 +713,7 @@ def process_run(args, meta, objname, input_mvm, fullpath_rwa, fullpath_dta, colu
     else:
       sumname=objname
     filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],sumname) # TODO: make sure it is correct, or will overwrite!
+    print('output saved to:',filepath)
     json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
