@@ -121,21 +121,22 @@ def read_meta_from_spreadsheet (df, filename) :
       vol=-1.0
 
     meta[ key ] = {
-      'Compliance': float ( compliance ),
-      'Resistance': float ( resistance ),
-      'Rate respiratio': float ( df["rate"].iloc[idx] ),
-      'I:E': float ( resp_ratio ),
-      'Peep': float ( df["PEEP"].iloc[idx] ),
-      'Date' : df['date'].iloc[idx] ,
-      'Run' : df['run'].iloc[idx],
-      'Pinspiratia': float ( df["plateau"].iloc[idx] ),
-      'SimulatorFileName': df["simulator_filename"].iloc[idx],
-      'Campaign': df["campaign"].iloc[idx],
-      'MVM_filename' : df["MVM_filename"].iloc[idx],
-      'test_name' : df["N"].iloc[idx],
-      'Tidal Volume' : float ( vol ),
-      'leakage' : float(leak),
-      'cycle_index' : cyc_idx,
+      'Compliance'        : float ( compliance ),
+      'Resistance'        : float ( resistance ),
+      'Rate respiratio'   : float ( df["rate"].iloc[idx] ),
+      'I:E'               : float ( resp_ratio ),
+      'Peep'              : float ( df["PEEP"].iloc[idx] ),
+      'O2'                : float(df['O2'].iloc[idx] ),
+      'Date'              : df['date'].iloc[idx] ,
+      'Run'               : df['run'].iloc[idx],
+      'Pinspiratia'       : float ( df["plateau"].iloc[idx] ),
+      'SimulatorFileName' : df["simulator_filename"].iloc[idx],
+      'Campaign'          : df["campaign"].iloc[idx],
+      'MVM_filename'      : df["MVM_filename"].iloc[idx],
+      'test_name'         : df["N"].iloc[idx],
+      'Tidal Volume'      : float ( vol ),
+      'leakage'           : float(leak),
+      'cycle_index'       : cyc_idx,
     }
   return meta
 
