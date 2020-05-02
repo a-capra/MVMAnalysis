@@ -42,13 +42,17 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install numpy scipy matplotlib scikit-learn h5py pandas google-auth-oauthlib google-api-python-client lmfit
 
-    # Run the actual test
+    # Run the actual tests
     - name: Make the output directory
       run: mkdir -p combine_test_output
 
     - name: Run combine.py on test data
       run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
 
+    - name: Run get_tables.py on test output
+      run: python get_tables.py combine_test_output/summary*.json --output-dir=combine_test_output
+
+    # Tar and upload results
     - name: Tar output files
       run: tar -zcv combine_test_output/* > combine_test_output.tgz
 
