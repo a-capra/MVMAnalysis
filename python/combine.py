@@ -406,7 +406,7 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
-def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhalateTrLow, exhalateTr):
+def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhaleTrLow, exhaleTr):
   '''
   Computer I:E and 1/periode for every breath cycle, for summary plot
   We should look for
@@ -422,7 +422,7 @@ def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhalateTrLow, exha
   tFlow =  dftest[quantity]
   time = dftest['dt']
 
-  inhalateTr = np.max(tFlow) * multiplicator 
+  inhaleTr = np.max(tFlow) * multiplicator 
 
   startIn = 0.0
   stopIn = 0.0
@@ -437,17 +437,17 @@ def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhalateTrLow, exha
   mIoverE = []
   mFrequency = []
 
-  inInhalate = False
-  inExhalate = False
+  inInhalation = False
+  inExhalation = False
 
   for i,(f,t) in enumerate(zip(tFlow, time)):
-    if inInhalate == False: # if we are not inhaling, we look for the start
-      if f > inhalateTr:    # Passed the threshold, we are now inhaling
+    if inInhalation == False: # if we are not inhaling, we look for the start
+      if f > inhaleTr:    # Passed the threshold, we are now inhaling
         for j in range (i, 0, -1):
-          if tFlow[j]<inhalateTrLow:
-            if inExhalate == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
+          if tFlow[j]<inhaleTrLow:
+            if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
               stopEx = time[j]
-              inExhalate = False
+              inExhalation = False
               # We can calculate the variables
               dtInhalate = stopIn - startIn
               dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
@@ -457,14 +457,14 @@ def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhalateTrLow, exha
                 print ("Warning: low value of IoverE: ",startIn, stopIn, startEx, stopEx, IoverE, frequency)
               mIoverE.append(IoverE)
               mFrequency.append(frequency)
-            inInhalate = True
+            inInhalation = True
             startIn = time[j]
             break
     else:
-      if f< exhalateTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
-        inInhalate = False
+      if f< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
+        inInhalation = False
         stopIn = t
-        inExhalate = True
+        inExhalation = True
         startEx = t
   return mIoverE, mFrequency
 
@@ -577,12 +577,8 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   measured_volumes    = []
   measured_peaks      = []
   measured_plateaus   = []
-  measured_IoverE     = []
-  measured_Frequency  = []
   real_tidal_volumes  = []
   real_plateaus       = []
-  real_IoverE         = []
-  real_Frequency      = []
  
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
