@@ -406,11 +406,14 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
-def get_IoverEAndFrequency (dftest, quantity, inhalateTr, exhalateTr):
+def get_IoverEAndFrequency (dftest, quantity, multiplicator, inhalateTrLow, exhalateTr):
   '''
   Computer I:E and 1/periode for every breath cycle, for summary plot
   We should look for
   1) First up-going, positive flow record, start of inhalation
+    1.1) Because of some small wiggles in the data (mostly the flux from the MVM), we are using a 2-threshold system
+    1.2) We require that we pass a high trigger  set to be close to the maximum flow
+    1.3) Then we backtrack to see when we passed a low triggger, which will be the start of the inhalation.
   2) First down going, negative flow, end of inhalation, start of exhalation
   3) Flow getting back to zero
 
@@ -418,6 +421,8 @@ def get_IoverEAndFrequency (dftest, quantity, inhalateTr, exhalateTr):
   '''
   tFlow =  dftest[quantity]
   time = dftest['dt']
+
+  inhalateTr = np.max(tFlow) * multiplicator 
 
   startIn = 0.0
   stopIn = 0.0
@@ -438,20 +443,23 @@ def get_IoverEAndFrequency (dftest, quantity, inhalateTr, exhalateTr):
   for i,(f,t) in enumerate(zip(tFlow, time)):
     if inInhalate == False: # if we are not inhaling, we look for the start
       if f > inhalateTr:    # Passed the threshold, we are now inhaling
-        if inExhalate == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
-          stopEx = t
-          inExhalate = False
-          # We can calculate the variables
-          dtInhalate = stopIn - startIn
-          dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
-          frequency = 1./(dtInhalate + dtExhalate)*60. # We want breath/min and the units are in seconds
-          IoverE= dtInhalate/dtExhalate
- #         print (startIn, stopIn, startEx, stopEx, IoverE, frequency)
-          mIoverE.append(IoverE)
-          mFrequency.append(frequency)
-
-        inInhalate = True
-        startIn = t
+        for j in range (i, 0, -1):
+          if tFlow[j]<inhalateTrLow:
+            if inExhalate == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
+              stopEx = time[j]
+              inExhalate = False
+              # We can calculate the variables
+              dtInhalate = stopIn - startIn
+              dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
+              frequency = 1./(dtInhalate + dtExhalate)*60. # We want breath/min and the units are in seconds
+              IoverE= dtInhalate/dtExhalate
+              if IoverE < 0.1:
+                print ("Warning: low value of IoverE: ",startIn, stopIn, startEx, stopEx, IoverE, frequency)
+              mIoverE.append(IoverE)
+              mFrequency.append(frequency)
+            inInhalate = True
+            startIn = time[j]
+            break
     else:
       if f< exhalateTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalate = False
@@ -578,9 +586,16 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
  
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 15, 5) # the threshold is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 0.5 , 5, 5) # the threshold high is half of the maximum flow. The threshold low is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
+  # The first cycle is always bad, removew it
+  del measured_IoverE[0]
+  del measured_Frequency[0]
+
   # second for the simulator
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -5) # the threshold is +5 for the total flow in inhalation, -5 in exhalation
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5 , 5, -5) # the threshold is +5 for the total flow in inhalation, -5 in exhalation
+  # The first cycle is always bad, removew it
+  del real_IoverE[0]
+  del real_Frequency[0]
 
   for i,nc in enumerate(dfhd['ncycle'].unique()) :
 
