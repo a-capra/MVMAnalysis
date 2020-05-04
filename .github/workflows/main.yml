@@ -1,0 +1,69 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    # Run a single command using the runners shell
+    - name: Run a one-line echo test
+      run: echo Starting continuous integration script
+
+    # Setup python version with dependencies
+    # https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.x' # Semantic version range syntax or exact version of a Python version
+        architecture: 'x64' # Optional - x64 or x86, defaults to x64
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install numpy scipy matplotlib scikit-learn h5py pandas google-auth-oauthlib google-api-python-client lmfit
+
+    # Run the actual tests
+    - name: Make the output directory
+      run: mkdir -p combine_test_output
+
+    - name: Run combine.py on test data
+      run: python python/combine.py test_data/result_Elemaster_Run_17_Apr_24_8001_partial.json -w -p -d combine_test_output
+
+    - name: Run get_tables.py on test output
+      run: |
+        cp test_data/summary*.json combine_test_output/
+        python python/get_tables.py combine_test_output/summary*.json --output-dir=combine_test_output
+
+    # Tar and upload results
+    - name: Tar output files
+      run: tar -zcv combine_test_output/* > combine_test_output.tgz
+      # Use always() to always run this step, even when there are test failures
+      if: ${{ always() }}
+
+    - name: Upload test results
+      uses: actions/upload-artifact@master
+      with:
+        name: combine_test_output
+        path: combine_test_output.tgz
+      # Use always() to always run this step, even when there are test failures
+      if: ${{ always() }}
