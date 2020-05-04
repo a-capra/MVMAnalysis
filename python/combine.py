@@ -665,8 +665,12 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       "measured_volumes" : measured_volumes,
       "measured_peaks" : measured_peaks,
       "measured_plateaus" : measured_plateaus,
+      "measured_IoverE" : measured_IoverE,
+      "measured_Frequency" : measured_Frequency,
       "real_tidal_volumes" : real_tidal_volumes,
       "real_plateaus" : real_plateaus,
+      "real_IoverE" : real_IoverE,
+      "real_Frequency" : real_Frequency,
       "stats_total_vol" : stats_total_vol,
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
@@ -710,8 +714,12 @@ def plot_run(data, conf, args):
   measured_volumes = data["measured_volumes"]
   measured_peaks = data["measured_peaks"]
   measured_plateaus = data["measured_plateaus"]
+  measured_IoverE = data["measured_IoverE"]
+  measured_Frequency = data["measured_Frequency"]
   real_tidal_volumes = data["real_tidal_volumes"]
   real_plateaus = data["real_plateaus"]
+  real_IoverE = data["real_IoverE"]
+  real_Frequency = data["real_Frequency"]
   stats_total_vol = data["stats_total_vol"]
   stats_total_flow = data["stats_total_flow"]
   stats_airway_pressure = data["stats_airway_pressure"]
