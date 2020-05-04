@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from mvmconstants import *
 from combine_plot_utils import *
 
-def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, measured_IoverE, measured_Frequency, real_tidal_volumes, real_IoverE, real_Frequency) :
+def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, measured_IoverE, measured_Frequency, real_tidal_volumes, real_IoverE, real_Frequency) :
 
   for i in range (len(meta)) :
 
@@ -54,7 +54,12 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
 
     ymin, ymax = ax2.get_ylim()
     ax2.set_ylim(ymin*1.4, ymax*1.5)
-    ax2.legend(loc='upper center', ncol=2)
+    ax2legend = ax2.legend(loc='upper center', ncol=2)
+    ## hack to set larger marker size in legend only, one line per data series
+    legmarkersize = 10
+    for iplot in range(6):
+      ax2legend.legendHandles[iplot]._legmarker.set_markersize(legmarkersize)
+
     title1="R = %i [cmH2O/l/s]         C = %2.1f [ml/cmH2O]        PEEP = %s [cmH2O]"%(RT,CM,PE )
     title2="Inspiration Pressure = %s [cmH2O]       Frequency = %s [breath/min]"%(PI,RR)
 
@@ -72,7 +77,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     ax2.add_patch(rect)
 
     set_plot_title(ax2, meta, objname)
-    save_figure(fig2, 'avg', meta, objname, output_directory, web)
+    save_figure(fig2, 'avg', meta, objname, output_directory, figure_format, web)
 
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
@@ -183,7 +188,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[5].add_patch(aa)
 
     set_plot_suptitle(figs, meta, objname)
-    save_figure(figs, 'summary', meta, objname, output_directory, web)
+    save_figure(figs, 'summary', meta, objname, output_directory, figure_format, web)
 
     ## Debug output
     #print("measured_peeps:", measured_peeps)
@@ -207,7 +212,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
       print("FAILURE: Volume outside maximum errors wrt simulator")
 
 
-def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
+def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, stats_total_vol, stats_total_flow, stats_airway_pressure ) :
 
   ## For the moment only one test per file is supported here
   if len(meta) != 1 :
@@ -283,4 +288,4 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
 
     figoverlay.suptitle ("Test n %s Consistency of %s Cycles"%(meta[objname]['test_name'],n_cycles), weight='heavy', fontsize=12)
     #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
-    save_figure(figoverlay, 'overlay', meta, objname, output_directory, web)
+    save_figure(figoverlay, 'overlay', meta, objname, output_directory, figure_format, web)
