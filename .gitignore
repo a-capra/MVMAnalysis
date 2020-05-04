@@ -2,3 +2,5 @@
 python/.DS_Store
 python/__pycache__
 token.pickle
+*.png
+.vscode
