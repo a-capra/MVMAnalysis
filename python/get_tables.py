@@ -59,13 +59,15 @@ def get_table(df):
     what = [
       # ISO test details
       ('','TEST','ID', f'{row["test_name"]}'),
+      #('','run','n', f'{row["Run"]}'),
+      #('','','date', f'{row["Date"]}'),
       ('','$V_{tidal}$','[ml]', f'${float(row["Tidal Volume"]):.0f}$'),
       ('','$C$','[ml/cmH2O]', f'${float(row["Compliance"]):.0f}$'),
       ('','$R$','[cmH2O/l/s]', f'${float(row["Resistance"]):.0f}$'),
-      ('','rate','[breaths/min]', f'${float(row["Rate respiratio"]):.0f}$'),
+      ('','rate','[bpm]', f'${float(row["Rate respiratio"]):.0f}$'),
       ('','I:E', '',f'${float(row["I:E"]):.2f}$'),
       ('','$P_{insp}$','[cmH2O]', f'${float(row["Pinspiratia"]):.0f}$'),
-      ('','$O_{2}$','',f'${float(row["O2"]):.0f}$'), # TODO add oxygen to json
+      ('','$O_{2}$','\%',f'${float(row["O2"]):.0f}$'),
       ('','BAP','[cmH2O]', f'${float(row["Peep"]):.0f}$'),
       # SIM measurements
       ('simulator','$V_{tidal}$','[ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
