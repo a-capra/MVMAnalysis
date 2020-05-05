@@ -163,7 +163,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     simulator_eoveri_low = 0.
     simulator_eoveri_wid = IE * 2.
     _range = ( simulator_eoveri_low , simulator_eoveri_wid )
-#    _range = ( 0.0, 5.0)
     axs[4].hist ( measured_IoverE  , bins=100, range=_range, label='MVM')
     axs[4].hist ( real_IoverE , range=_range, bins= 100 , label='SIM', alpha=0.7)
     axs[4].tick_params(axis='both', which='major', labelsize=8)
