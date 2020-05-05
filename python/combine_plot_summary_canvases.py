@@ -173,7 +173,6 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[4].add_patch(aa)
 
     ## MVM frequency compared to simulator values
-#    MVM_maximum_bias_error_volume_cl = MVM.maximum_bias_error_volume * 0.1   # ml to cl
     simulator_RR_low = RR - 5
     simulator_RR_wid = RR + 5
     _range = ( simulator_RR_low, simulator_RR_wid )
