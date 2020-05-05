@@ -27,7 +27,7 @@ def form_date (eight_digits_date):
   if eight_digits_date[0:3] != '202':
     ## if not 202YMMDD, try DDMM202Y
     if eight_digits_date[4:7] == '202':
-      isodate_string = f'{eight_digits_date[4:8]}-{eight_digits_date[2:4]}-{eight_digits_date[6:8]}'
+      isodate_string = f'{eight_digits_date[4:8]}-{eight_digits_date[2:4]}-{eight_digits_date[0:2]}'
     ## Otherwise, give up
     else:
       return None
