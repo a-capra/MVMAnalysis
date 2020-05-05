@@ -9,7 +9,7 @@ import matplotlib.patches as patches
 
 from combine_plot_utils import *
 
-def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, web, respiration_rate, inspiration_duration) :
+def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, respiration_rate, inspiration_duration) :
 
   ####################################################
   '''general service canavas number 1'''
@@ -53,7 +53,7 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   ax.legend(loc='upper center', ncol=2)
 
   set_plot_title(ax, meta, objname)
-  save_figure(plt, 'service', meta, objname, output_directory, web)
+  save_figure(plt, 'service', meta, objname, output_directory, figure_format, web)
 
 
   ####################################################
@@ -95,4 +95,4 @@ def plot_service_canvases (df, dfhd, meta, objname, output_directory, start_time
   axbis1.set_xlabel("Measured resistance [cmH2O/l/s]")
 
   set_plot_suptitle(figbis, meta, objname)
-  save_figure(figbis, 'service2', meta, objname, output_directory, web)
+  save_figure(figbis, 'service2', meta, objname, output_directory, figure_format, web)
