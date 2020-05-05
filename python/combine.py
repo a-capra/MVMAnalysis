@@ -769,22 +769,32 @@ def plot_run(data, conf, args):
     measured_peaks      = measured_peaks[3:-3]
     measured_volumes    = measured_volumes[3:-3]
 
-    mean_peep    = np.mean(measured_peeps)
-    mean_plateau = np.mean(measured_plateaus)
-    mean_peak    = np.mean(measured_peaks)
-    mean_volume  = np.mean(measured_volumes)
-    rms_peep     = np.std(measured_peeps)
-    rms_plateau  = np.std(measured_plateaus)
-    rms_peak     = np.std(measured_peaks)
-    rms_volume   = np.std(measured_volumes)
-    max_peep     = np.max(measured_peeps)
-    max_plateau  = np.max(measured_plateaus)
-    max_peak     = np.max(measured_peaks)
-    max_volume   = np.max(measured_volumes)
-    min_peep     = np.min(measured_peeps)
-    min_plateau  = np.min(measured_plateaus)
-    min_peak     = np.min(measured_peaks)
-    min_volume   = np.min(measured_volumes)
+    mean_peep      = np.mean(measured_peeps)
+    mean_plateau   = np.mean(measured_plateaus)
+    mean_peak      = np.mean(measured_peaks)
+    mean_volume    = np.mean(measured_volumes)
+    mean_iovere    = np.mean(measured_IoverE)
+    mean_frequency = np.mean(measured_Frequency)
+    rms_peep       = np.std(measured_peeps)
+    rms_plateau    = np.std(measured_plateaus)
+    rms_peak       = np.std(measured_peaks)
+    rms_volume     = np.std(measured_volumes)
+    rms_iovere     = np.std(measured_IoverE)
+    rms_frequency  = np.std(measured_Frequency)
+    max_peep       = np.max(measured_peeps)
+    max_plateau    = np.max(measured_plateaus)
+    max_peak       = np.max(measured_peaks)
+    max_volume     = np.max(measured_volumes)
+    max_iovere     = np.max(measured_IoverE)
+    max_frequency  = np.max(measured_Frequency)
+    min_peep       = np.min(measured_peeps)
+    min_plateau    = np.min(measured_plateaus)
+    min_peak       = np.min(measured_peaks)
+    min_volume     = np.min(measured_volumes)
+    min_iovere     = np.min(measured_IoverE)
+    min_frequency  = np.min(measured_Frequency)
+
+    
 
     #simulator values
     simulator_plateaus = np.array(real_plateaus)
@@ -820,6 +830,14 @@ def plot_run(data, conf, args):
     meta[objname]["rms_volume"]        =  rms_volume
     meta[objname]["max_volume"]        =  max_volume
     meta[objname]["min_volume"]        =  min_volume
+    meta[objname]["mean_iovere"]       =  mean_iovere
+    meta[objname]["rms_iovere"]        =  rms_iovere
+    meta[objname]["max_iovere"]        =  max_iovere
+    meta[objname]["min_iovere"]        =  min_iovere
+    meta[objname]["mean_frequency"]    =  mean_frequency
+    meta[objname]["rms_frequency"]     =  rms_frequency
+    meta[objname]["max_frequency"]     =  max_frequency
+    meta[objname]["min_frequency"]     =  min_frequency
     meta[objname]["simulator_volume"]  =  simulator_volume
     meta[objname]["simulator_plateau"] =  simulator_plateau
     meta[objname]["simulator_iovere"]  =  simulator_iovere
