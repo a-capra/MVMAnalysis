@@ -406,7 +406,7 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
-def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inhaleTrLow, exhaleTr):
+def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inhaleTrLow, exhaleTr, inverted=False):
   '''
   Computer I:E and 1/periode for every breath cycle, for summary plot
   We should look for
@@ -438,12 +438,15 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inhaleTrLow, exhaleTr):
   inInhalation = False
   inExhalation = False
 
+  correction=1.0  # Some signals like "out" need to be inverted to be used with this treshold search
+  if inverted:
+    correction = -1.0
+
   for i,(f,t) in enumerate(zip(tFlow, time)):
     if inInhalation == False: # if we are not inhaling, we look for the start
-      if f > inhaleTr:    # Passed the threshold, we are now inhaling
-        print (i, f)
+      if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         for j in range (i, 0, -1):
-          if tFlow[j]<inhaleTrLow:
+          if tFlow[j]*correction<inhaleTrLow:
             if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
               stopEx = time[j]
               inExhalation = False
@@ -459,7 +462,7 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inhaleTrLow, exhaleTr):
             startIn = time[j]
             break
     else:
-      if f< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
+      if f*correction< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalation = False
         stopIn = t
         inExhalation = True
@@ -581,7 +584,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
  
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'flux', 20. , 5, 5) # the threshold high is half of the maximum flow. The threshold low is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5. , -15, -15, True) # the threshold high is half of the maximum flow. The threshold low is +5 for the flux in inhalation, 5 in exhalation (no negative flow)
   # The first cycle is always bad, removew it
   if (len(measured_IoverE)):
     del measured_IoverE[0]
