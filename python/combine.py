@@ -494,6 +494,10 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   if not ignore_sim:
     df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"])
+    # Error checking in case rwa and dta data do not jive - Chris Jillings - 2020-05-17
+    if df.shape[0] == 0 :
+      ignore_sim = True
+      args.ignore_sim = True
   else:
     print ("I am ignoring the simulator")
 

@@ -96,10 +96,24 @@ def get_raw_df(fname, columns, columns_to_deriv, timecol='dt'):
 def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_columns_dta=columns_dta):
   df_rwa = get_raw_df(fullpath_rwa, columns=df_columns_rwa, columns_to_deriv=['total_vol'])
   df_dta = get_raw_df(fullpath_dta, columns=df_columns_dta, columns_to_deriv=[])
-  df0 = df_dta.join(df_rwa['dt'])
-  df_rwa['oxygen'] = df_rwa['oxygen']  /  df_rwa['airway_pressure']
-  df  = df0.join(df_rwa['oxygen'] )
-  df['dt'] = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt'] , len(df) ) # correct for duplicate times
+  ''' There have been examples when the dta file asha  different number of lines than the rwa file.
+  This has led to bad results: ie results that superficially look like the analysis is working but are wrong. 
+  Impose check on the length of the data frames.
+  Chris Jillings 2020-05-17 '''
+  length_rwa = df_rwa.shape[0]
+  length_dta = df_dta.shape[0]
+  if length_rwa != length_dta :
+    print(" ============================ ")
+    print("Error: rwa and dta files have a different number of lines.")
+    print(fullpath_rwa, " is not compatible with ", fullpath_dta)
+    print(" ============================ ")
+    df = pd.DataFrame()
+  else :
+    df0 = df_dta.join(df_rwa['dt'])
+    df_rwa['oxygen'] = df_rwa['oxygen']  /  df_rwa['airway_pressure']
+    df  = df0.join(df_rwa['oxygen'] )
+    df['dt'] = np.linspace( df.iloc[0,:]['dt'] ,  df.iloc[-1,:]['dt'] , len(df) ) # correct for duplicate times
+
   return df
 
 def get_mvm_df(fname, sep=' -> ', configuration='default'):
