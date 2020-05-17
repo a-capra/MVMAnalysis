@@ -446,18 +446,17 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
     if inInhalation == False: # if we are not inhaling, we look for the start
       if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
-          stopEx = t # time[j]
+          stopEx = t
           inExhalation = False
           # We can calculate the variables
           dtInhalate = stopIn - startIn
           dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
           frequency = 1./(dtInhalate + dtExhalate)*60. # We want breath/min and the units are in seconds
           IoverE= dtInhalate/dtExhalate
-#              print (quantity, " : ",startIn, stopIn, startEx, stopEx, IoverE, frequency)
           mIoverE.append(IoverE)
           mFrequency.append(frequency)
         inInhalation = True
-        startIn = t# time[j]
+        startIn = t
     else:
       if f*correction< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalation = False
