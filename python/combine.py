@@ -684,7 +684,6 @@ def plot_run(data, conf, args):
 
     ## For the moment only one test per file is supported here
     ## correct for outliers ?  no, we need to see them
-    ## actually the lines below should select the central 30 cycles
     measured_peeps      = measured_peeps[3:-3]
     measured_plateaus   = measured_plateaus[3:-3]
     measured_peaks      = measured_peaks[3:-3]
