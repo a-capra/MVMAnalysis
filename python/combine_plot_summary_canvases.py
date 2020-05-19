@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from mvmconstants import *
 from combine_plot_utils import *
 
-def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, real_tidal_volumes) :
+def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_times, colors, figure_format, web, measured_peeps, measured_plateaus, real_plateaus, measured_peaks, measured_volumes, measured_IoverE, measured_Frequency, real_tidal_volumes, real_IoverE, real_Frequency) :
 
   for i in range (len(meta)) :
 
@@ -25,6 +25,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     RR = meta[local_objname]["Rate respiratio"]
     RT = meta[local_objname]["Resistance"]
     CM = meta[local_objname]["Compliance"]
+    IE = meta[local_objname]["I:E"]
 
     nom_peep = float(meta[local_objname]["Peep"])
 
@@ -100,6 +101,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     min_volume   =   meta[objname]["min_volume"]
     simulator_volume  = meta[objname]["simulator_volume"]
     simulator_plateau = meta[objname]["simulator_plateau"]
+    simulator_iovere  = meta[objname]["simulator_iovere"]
+    simulator_frequency = meta[objname]["simulator_frequency"]
 
 
     ####################################################
@@ -122,12 +125,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     nominal_plateau_low = nominal_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * nominal_plateau
     nominal_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * nominal_plateau)
     _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
-    __range = (0.,40.)
-    try:
-      axs[1].hist ( measured_plateaus, bins=100, range=_range   )
-    except ValueError as ve:
-      print(ve)
-      axs[1].hist ( measured_plateaus, bins=100, range=__range   )
+    axs[1].hist ( measured_plateaus, bins=100, range=_range   )
     aa = patches.Rectangle( (nominal_plateau_low, axs[0].get_ylim()[0]  ) , nominal_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[1].add_patch(aa)
     axs[1].set_title("plateau [cmH2O], nominal: %s [cmH2O]"%nominal_plateau, weight='heavy', fontsize=10)
@@ -137,13 +135,8 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     simulator_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * simulator_plateau)
     #print (measured_plateaus, mean_plateau, simulator_plateau )
     _range = ( min([ mean_plateau,simulator_plateau] )*0.7 , max( [mean_plateau,simulator_plateau] ) *1.4    )
-    try:
-      axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
-      axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
-    except ValueError as ve:
-      print(ve)
-      axs[2].hist (  measured_plateaus, bins=100, range=__range, label='MVM')
-      axs[2].hist (  real_plateaus , bins=100, range=__range,  label='SIM', alpha=0.7)
+    axs[2].hist (   measured_plateaus, bins=100, range=_range, label='MVM')
+    axs[2].hist (  real_plateaus , bins=100, range=_range,  label='SIM', alpha=0.7)
     aa = patches.Rectangle( (simulator_plateau_low, axs[0].get_ylim()[0]  ) , simulator_plateau_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[2].set_title("plateau [cmH2O], <SIM>: %2.1f [cmH2O]"%(simulator_plateau), weight='heavy', fontsize=10 )
     axs[2].legend(loc='upper left')
@@ -154,19 +147,10 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     simulator_volume_low = simulator_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * simulator_volume
     simulator_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * simulator_volume)
     _range = ( min([ mean_volume,simulator_volume] )*0.7 , max( [mean_volume,simulator_volume] ) *1.4    )
-    try:
-      axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
-      axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
-    except ValueError as ve:
-      print(ve)
-      axs[3].hist ( measured_volumes  , bins=100, range=__range, label='MVM')
-      axs[3].hist ( real_tidal_volumes , range=__range, bins= 100 , label='SIM', alpha=0.7)
+    axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
+    axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
     aa = patches.Rectangle( (simulator_volume_low, axs[0].get_ylim()[0]  ) , simulator_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    try:
-      axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
-    except ValueError:
-      axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal \"Unknown\""%(simulator_volume), weight='heavy', fontsize=10)
-
+    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
     axs[3].legend(loc='upper left')
     axs[3].add_patch(aa)
 
@@ -229,73 +213,46 @@ def plot_overlay_canvases (dftmp, dfhd, meta, objname, output_directory, start_t
     axoverlay[5].set_xlabel('Time since start of cycle (s)',fontsize=14)
     axoverlay[5].set_xlim(0,5)
     axoverlay[5].set_ylim(-0.2,0.2)
-    try:
-      stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
-      stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
-    except KeyError:
-      pass
-
-    try:
-      stats_total_vol['min_minus_median']=  (stats_total_vol['min'] - stats_total_vol['median'])/stats_total_vol['median']
-      stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
-      #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
-    except KeyError:
-      pass  
-
+    stats_total_vol['max_minus_median']=  (stats_total_vol['max'] - stats_total_vol['median'])/stats_total_vol['median']
+    stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='max_minus_median', color = colors['total_vol'], linewidth=1,fontsize=10)
+    stats_total_vol['min_minus_median']=  (stats_total_vol['min'] - stats_total_vol['median'])/stats_total_vol['median']
+    stats_total_vol.plot(ax=axoverlay[5], kind='line', x='dtc', y='min_minus_median', color = colors['total_vol'], linewidth=1)
+    #axoverlay[5].legend(loc='upper right', title_fontsize=10, fontsize=10, title='Frac diff from median')
     axoverlay[5].get_legend().remove()
     axoverlay[5].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
     axoverlay[5].text(4.95,0.0, "deviation", ha='right', fontsize=8)
     axoverlay[5].text(4.95,-0.1, "from median", ha='right', fontsize=8)
     axoverlay[5].set_xlabel('Time from start of cycle [s]', fontsize=10)
+
     axoverlay[0].set_ylabel('Total Flow',fontsize=10)
     axoverlay[0].set_xlim(0,5)
     dftmp.plot(ax=axoverlay[0], kind='scatter', x='dtc', y='total_flow', color = colors['total_flow'],fontsize=10,marker='+',s=4.0)
     axoverlay[1].set_xlim(0,5)
     axoverlay[1].set_ylim(-0.2,0.2)
-
-    try:
-      stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
-      stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
-    except KeyError:
-      pass
-
+    stats_total_flow['max_minus_median']=  (stats_total_flow['max'] - stats_total_flow['median'])/stats_total_flow['median']
+    stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='max_minus_median', color = colors['total_flow'], linewidth=1,fontsize=10)
+    stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
+    stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
     axoverlay[1].get_legend().remove()
     axoverlay[1].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
     axoverlay[1].text(4.95,0.0, "deviation", ha='right', fontsize=8)
     axoverlay[1].text(4.95,-0.1, "from median", ha='right', fontsize=8)
 
-    try:
-      stats_total_flow['min_minus_median']=  (stats_total_flow['min'] - stats_total_flow['median'])/stats_total_flow['median']
-      stats_total_flow.plot(ax=axoverlay[1], kind='line', x='dtc', y='min_minus_median', color = colors['total_flow'], linewidth=1)
-    except KeyError:
-      pass
 
-    axoverlay[1].get_legend().remove()
-    axoverlay[1].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
-    axoverlay[1].text(4.95,0.0, "deviation", ha='right', fontsize=8)
-    axoverlay[1].text(4.95,-0.1, "from median", ha='right', fontsize=8)    
     axoverlay[2].set_ylabel('Pressure',fontsize=10)
     axoverlay[2].set_xlim(0,5)
-    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10)
+    dftmp.plot(ax=axoverlay[2], kind='scatter', x='dtc', y='airway_pressure', color = colors['pressure'],fontsize=10,marker='+',s=4.0)
     axoverlay[3].set_xlim(0,5)
     axoverlay[3].set_ylim(-0.2,0.2)
-    try:
-      stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
-      stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
-    except KeyError:
-      pass
-
-    try:
-      stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
-      stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
-
-    except KeyError:
-      pass
-
+    stats_airway_pressure['max_minus_median']=  (stats_airway_pressure['max'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
+    stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='max_minus_median', color = colors['pressure'], linewidth=1,fontsize=10)
+    stats_airway_pressure['min_minus_median']=  (stats_airway_pressure['min'] - stats_airway_pressure['median'])/stats_airway_pressure['median']
+    stats_airway_pressure.plot(ax=axoverlay[3], kind='line', x='dtc', y='min_minus_median', color = colors['pressure'], linewidth=1)
     axoverlay[3].get_legend().remove()
     axoverlay[3].text(4.95,0.1, "Max/min frac", ha='right', fontsize=8)
     axoverlay[3].text(4.95,0.0, "deviation", ha='right', fontsize=8)
-    axoverlay[3].text(4.95,-0.1, "from median", ha='right', fontsize=8)    
-    figoverlay.suptitle ("Test n %s Consistency of Cycles"%meta[objname]['test_name'], weight='heavy', fontsize=14)
+    axoverlay[3].text(4.95,-0.1, "from median", ha='right', fontsize=8)
+
+    figoverlay.suptitle ("Test n %s Consistency of %s Cycles"%(meta[objname]['test_name'],n_cycles), weight='heavy', fontsize=12)
     #set_plot_suptitle(figoverlay, meta, objname)  #FIXME need to show "Consistency of Cycles" as well
     save_figure(figoverlay, 'overlay', meta, objname, output_directory, figure_format, web)
