@@ -67,7 +67,7 @@ def set_plot_title (ax, meta, objname):
   ax.set_title(form_title(meta, objname), weight='heavy')
 
 def set_plot_suptitle (fig, meta, objname):
-  fig.suptitle(form_title(meta, objname), weight='heavy')
+  fig.suptitle(form_title(meta, objname), weight='heavy', fontsize=15)
 
 
 def save_figure (mypyplot, plottype, meta, objname, output_directory, figure_format, web):
