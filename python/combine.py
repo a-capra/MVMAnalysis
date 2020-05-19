@@ -359,7 +359,7 @@ def measure_clinical_values(df, start_times):
     #measured inspiration
     df.loc[ ( df.dt >  s ) & ( df.dt < next_inspiration_t ), 'cycle_tidal_volume']     = df[  ( df.dt >  s ) & ( df.dt < end_of_inspiration_t) ]['flux_x_dt'].sum() / 60. * 100
     df.loc[this_inspiration, 'cycle_peak_pressure']    = df[ this_inspiration ]['airway_pressure'].max()
-    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
+    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration & ( df.dt > v - 51e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
     #not necessarily measured during inspiration
     df.loc[this_inspiration, 'cycle_PEEP']             = df[ ( df.dt > next_inspiration_t - 51e-3 ) & ( df.dt < next_inspiration_t) ] ['airway_pressure'].mean()
     #print ("cycle_peak_pressure: " , df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean() )
