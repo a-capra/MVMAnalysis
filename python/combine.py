@@ -491,13 +491,12 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   meta = conf["meta"]
 
   # retrieve simulator data
-
   if not ignore_sim:
     df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"])
-    # Error checking in case rwa and dta data do not jive - Chris Jillings - 2020-05-17
+    # Error checking in case rwa and dta data do not jive
     if df.shape[0] == 0 :
-      ignore_sim = True
-      args.ignore_sim = True
+      print ("Simulator data is empty for this test. Abort process_run.")
+      return {}
   else:
     print ("I am ignoring the simulator")
 
@@ -581,7 +580,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   measured_plateaus   = []
   real_tidal_volumes  = []
   real_plateaus       = []
- 
+
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
   measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5., -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
@@ -720,7 +719,11 @@ def plot_run(data, conf, args):
     return
 
   # keep the following in sync with the dict returned by process_run
-  df = data["sim"]
+  try:
+    df = data["sim"]
+  except KeyError:
+    print ("Simulator data frame not available in plot_run for this test, exit")
+    return
   dftmp = data["sim_trunc"]
   dfhd = data["mvm"]
   start_times = data["start_times"]
@@ -800,8 +803,6 @@ def plot_run(data, conf, args):
     min_iovere     = np.min(measured_IoverE)
     min_frequency  = np.min(measured_Frequency)
 
-    
-
     #simulator values
     simulator_plateaus = np.array(real_plateaus)
     simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
@@ -818,7 +819,6 @@ def plot_run(data, conf, args):
     simulator_frequencys = np.array(real_Frequency)
     simulator_frequencys = simulator_frequencys[~np.isnan(simulator_frequencys)]
     simulator_frequency = np.mean(simulator_frequencys)
-
 
     meta[objname]["mean_peep"]         =  mean_peep
     meta[objname]["rms_peep"]          =  rms_peep
