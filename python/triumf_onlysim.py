@@ -89,6 +89,7 @@ def add_chunk_info(df):
   for i,r in cycle.iterrows():
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
+
 def stats_for_repeated_cycles(adf, variable='total_flow') :
     '''
     This function assumed that the simulator DataFrame has been pre-processed
@@ -115,14 +116,13 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
         if ( (dtcmax-dtcmin)>1e-8 ) :
-            print("Something realy bad happened preparing stats for repeated breaths.")
-            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
-            print("Error!")
+            log.error("""
+              Something realy bad happened preparing stats for repeated breaths.
+              There is not a one-to-one onto mapping of the integer indices and the time indices.""")
             print(dtcmin, dtcmax)
         stats_array[i-di_series.min()] = [i, dtcmin, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
     answer = DataFrame(stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
     return answer
-
 
 
 def add_clinical_values (df, max_R=250, max_C=100) :
@@ -140,6 +140,7 @@ def add_clinical_values (df, max_R=250, max_C=100) :
   df['delta_volin']  =  ( df['chamber1_vol']  + df['chamber2_vol']) . diff()
   df['compliance']   =  df['delta_volin']/df['deltapin']
   df.loc[abs(df.compliance)>max_C,"compliance"] = 0
+
 
 def add_run_info(df, dist=25):
   ''' Add run info based on max pressure '''
@@ -159,6 +160,7 @@ def add_run_info(df, dist=25):
       cc += 1
 
   df['run'] = df['run']*10
+
 
 def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, mhracsv=None, pressure_offset=0, output_directory='plots_tmp', cjjsaving=False):
   # retrieve simulator data
@@ -308,7 +310,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       print ("For test [ %s ]  I am selecting cycle %i"%(meta[local_objname]["test_name"], my_selected_cycle))
       ## check whether enough start times were detected
       if len(start_times) < my_selected_cycle + cycles_to_show:
-        print (f"Not enough start times available for {cycles_to_show} cycles to show, continue")
+        log.warning(f"Not enough start times available for {cycles_to_show} cycles to show, continue")
         continue
       print ("starting at %f"%(start_times[ my_selected_cycle ]))
 
@@ -420,8 +422,6 @@ if __name__ == '__main__':
   import argparse
   import matplotlib
   import style
-
-
 
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input file (.txt)")

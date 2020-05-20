@@ -134,17 +134,17 @@ if __name__ == "__main__":
     test_names = [args.test_names]
     for tn, rc, ss in zip (test_names[0], run_config, df_spreadsheet):
       if not ss["N"].isin([tn]).any():
-        print(f"ERROR: Failed to find {tn} in {rc['db_range_name']}!")
+        log.error(f"Failed to find {tn} in {rc['db_range_name']}!")
         sys.exit(1)
   else:
     # Check for tests only present in one of the spreadsheets
     df_spreadsheet_0_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
     if not df_spreadsheet_0_only.empty:
-      print(f"WARNING: The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
+      log.warning(f"The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
       print(df_spreadsheet_0_only)
     df_spreadsheet_1_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
     if not df_spreadsheet_1_only.empty:
-      print(f"WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
+      log.warning(f"The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
     # In this mode we're comparing equal tests, so just duplicate the names
     test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"].unique()]
@@ -157,18 +157,18 @@ if __name__ == "__main__":
       if rc["single_campaign"]:
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
         if cur_test.empty:
-          print(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
+          log.error(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
           success = False
           break
       else:
         cur_test = ss[ss["N"] == tn]
       if len(cur_test) > 1:
-        print(f"WARNING: More than one test {tn} found in {rc['db_range_name']}. Using first one...")
+        log.warning(f"More than one test {tn} found in {rc['db_range_name']}. Using first one...")
 
       # Read meta data from spreadsheets
       filename = cur_test.iloc[0]["MVM_filename"]
       if not filename:
-        print(f"WARNING: Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
+        log.warning(f"Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
         success = False
         break
       rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
