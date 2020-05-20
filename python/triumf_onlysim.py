@@ -89,14 +89,15 @@ def add_chunk_info(df):
   for i,r in cycle.iterrows():
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
+
 def stats_for_repeated_cycles(adf, variable='total_flow') :
-    ''' 
+    '''
     This function assumed that the simulator DataFrame has been pre-processed
-    to include integer indexing and that the start times for each cycle have been 
-    calculated. This loops through the given DataFrame and 
-    1: Checks that there really is a one-to-one correspondence between dtc and 
+    to include integer indexing and that the start times for each cycle have been
+    calculated. This loops through the given DataFrame and
+    1: Checks that there really is a one-to-one correspondence between dtc and
     the integer indexing
-    2: Finds the series for the variable in question for a given integer index 
+    2: Finds the series for the variable in question for a given integer index
     since start of cycle
     3: calculates some basic stats that can be used in plotting
     4: Returns a DataFrame for plotting.
@@ -115,16 +116,15 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
         dtcmin = adf[adf.diindex==i]['dtc'].min()
         dtcmax = adf[adf.diindex==i]['dtc'].max()
         if ( (dtcmax-dtcmin)>1e-8 ) :
-            print("Something realy bad happened preparing stats for repeated breaths.")
-            print("There is not a one-to-one onto mapping of the integer indices and the time indices.")
-            print("Error!")
+            log.error("""
+              Something realy bad happened preparing stats for repeated breaths.
+              There is not a one-to-one onto mapping of the integer indices and the time indices.""")
             print(dtcmin, dtcmax)
         stats_array[i-di_series.min()] = [i, dtcmin, this_series.mean(), this_series.median(), this_series.min(), this_series.max(), this_series.std()]
     answer = DataFrame(stats_array, columns=['diiindex','dtc','mean', 'median', 'min','max', 'std'] )
     return answer
 
 
-    
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -140,6 +140,7 @@ def add_clinical_values (df, max_R=250, max_C=100) :
   df['delta_volin']  =  ( df['chamber1_vol']  + df['chamber2_vol']) . diff()
   df['compliance']   =  df['delta_volin']/df['deltapin']
   df.loc[abs(df.compliance)>max_C,"compliance"] = 0
+
 
 def add_run_info(df, dist=25):
   ''' Add run info based on max pressure '''
@@ -160,6 +161,7 @@ def add_run_info(df, dist=25):
 
   df['run'] = df['run']*10
 
+
 def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_dta, manual_offset=0., save=False, mhracsv=None, pressure_offset=0, output_directory='plots_tmp', cjjsaving=False):
   # retrieve simulator data
   df = get_simulator_df(fullpath_rwa, fullpath_dta, columns_rwa, columns_dta)
@@ -178,8 +180,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
   this_shape = df.shape
   df['iindex'] = np.arange(this_shape[0])
   df['siindex'] = np.arange(this_shape[0])
-  
-  
+
+
   # add info
   add_cycle_info(sim=df, start_times=start_times, reaction_times=reaction_times)
   df['dtc'] = df['dt'] - df['start']
@@ -308,7 +310,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       print ("For test [ %s ]  I am selecting cycle %i"%(meta[local_objname]["test_name"], my_selected_cycle))
       ## check whether enough start times were detected
       if len(start_times) < my_selected_cycle + cycles_to_show:
-        print (f"Not enough start times available for {cycles_to_show} cycles to show, continue")
+        log.warning(f"Not enough start times available for {cycles_to_show} cycles to show, continue")
         continue
       print ("starting at %f"%(start_times[ my_selected_cycle ]))
 
@@ -379,7 +381,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       if cjjsaving:
         dftmp.to_hdf("cjj1.h5", key='simulator')
         cjjsaving = False
-        
+
       dftmp.plot(ax=ax2, x='dtc', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] ,          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'],          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'], marker='o', markersize=0.3, linewidth=0)
@@ -428,8 +430,6 @@ if __name__ == '__main__':
   import matplotlib
   import style
 
-  
-  
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input file (.txt)")
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")

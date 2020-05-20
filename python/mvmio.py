@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging as log
 import json
 
 columns_rwa = ['dt',
@@ -105,11 +106,12 @@ def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_
   length_rwa = df_rwa.shape[0]
   length_dta = df_dta.shape[0]
   if length_rwa != length_dta :
-    print(" ============================ ")
-    print(f"Error: rwa and dta files have a different number of lines, respectively {length_rwa} vs {length_dta}")
-    print(f"File at path '{fullpath_rwa}' is not compatible with '{fullpath_dta}'")
-    print("Returning empty simulator data frame")
-    print(" ============================ ")
+    log.error(f"""
+      ============================
+      Error: rwa and dta files have a different number of lines, respectively {length_rwa} vs {length_dta}
+      File at path '{fullpath_rwa}' is not compatible with '{fullpath_dta}'
+      Returning empty simulator data frame
+      ============================""")
     df = pd.DataFrame()
   else :
     df0 = df_dta.join(df_rwa['dt'])

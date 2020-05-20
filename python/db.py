@@ -23,7 +23,7 @@ def gsheet2df(gsheet):
   values = gsheet[2:]  # Everything else is data.
 
   if not values:
-    print('No data found.')
+    log.error('No data found in gsheet2df')
   else:
     all_data = []
     for col_id, col_name in enumerate(header):

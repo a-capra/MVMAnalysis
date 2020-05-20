@@ -495,7 +495,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
     df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"])
     # Error checking in case rwa and dta data do not jive
     if df.shape[0] == 0 :
-      print ("Simulator data is empty for this test. Abort process_run.")
+      log.error("Simulator data is empty for this test. Abort process_run.")
       return {}
   else:
     print ("I am ignoring the simulator")
@@ -722,7 +722,7 @@ def plot_run(data, conf, args):
   try:
     df = data["sim"]
   except KeyError:
-    print ("Simulator data frame not available in plot_run for this test, exit")
+    log.error("Simulator data frame not available in plot_run for this test, exit")
     return
   dftmp = data["sim_trunc"]
   dfhd = data["mvm"]
@@ -955,7 +955,7 @@ if __name__ == '__main__':
 
     filenames = df_spreadsheet['MVM_filename'].unique()
     if not filenames.size > 0:
-      print("No valid file name found in selected metadata spreadsheet range")
+      log.error("No valid file name found in selected metadata spreadsheet range")
 
     for filename in filenames:
       # continue if there is no filename
@@ -972,6 +972,7 @@ if __name__ == '__main__':
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
 
       # detect whether input file is txt or json
+      print()
       if fname.endswith(".txt"):
         # here json argument should be False
         if args.json:
@@ -985,14 +986,14 @@ if __name__ == '__main__':
       else:
         # if the file name does not end in .txt or .json, try adding an extension based on argument json
         if args.json:
-          print ("args.json is True, adding extra .json to fname")
+          print ("args.json is True, adding extra .json to file name")
           fname = f'{fname}.json'
         else:
-          print ("args.json is False, adding extra .txt to fname")
+          print ("args.json is False, adding extra .txt to file name")
           fname = f'{fname}.txt'
 
       # print file name, then check whether it should be skipped
-      print(f'\nFile name {fname}')
+      print(f'File name {fname}')
       if fname.split('/')[-1] in args.skip_files:
         print('    ... skipped')
         continue
