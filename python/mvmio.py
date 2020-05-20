@@ -107,11 +107,9 @@ def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_
   length_dta = df_dta.shape[0]
   if length_rwa != length_dta :
     log.error(f"""
-      ============================
       Error: rwa and dta files have a different number of lines, respectively {length_rwa} vs {length_dta}
       File at path '{fullpath_rwa}' is not compatible with '{fullpath_dta}'
-      Returning empty simulator data frame
-      ============================""")
+      Returning empty simulator data frame""")
     df = pd.DataFrame()
   else :
     df0 = df_dta.join(df_rwa['dt'])
