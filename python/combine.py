@@ -22,7 +22,7 @@ from combine_plot_mvm_only_canvases import *
 
 def add_timestamp(df, timecol='dt'):
   ''' Add timestamp column assuming constant sampling in time '''
-  df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
+  df['timestamp'] = df['dt'] #np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
   ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a
   problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
   df['dtcheck'] = df['timestamp']-df['dt']
@@ -318,6 +318,8 @@ def measure_clinical_values(df, start_times):
   ''' Compute tidal volume and other clinical quantities for MVM data '''
   # TODO: "tolerances", i.e. pre-t0 and post-t1, are currently hardcoded
   deltaT = get_deltat(df)
+  #substitute the fixed deltaT with sample-dependent dt after removal of linspace
+  df['flux_x_dt']  = df['flux'] * df['dt'].diff()
 
   # determine inspiration end times
   inspiration_end_times   = df[df['out_status'] == 'opening']['dt'].unique()
@@ -355,11 +357,11 @@ def measure_clinical_values(df, start_times):
 
     df.loc[this_inspiration, 'is_inspiration'] = 1
     #measured inspiration
-    df.loc[ ( df.dt >  s ) & ( df.dt < next_inspiration_t+2e-3 ), 'cycle_tidal_volume']     = df[  ( df.dt >  s ) & ( df.dt < end_of_inspiration_t+2e-3 ) ]['flux'].sum() * deltaT/60. * 100
+    df.loc[ ( df.dt >  s ) & ( df.dt < next_inspiration_t ), 'cycle_tidal_volume']     = df[  ( df.dt >  s ) & ( df.dt < end_of_inspiration_t) ]['flux_x_dt'].sum() / 60. * 100
     df.loc[this_inspiration, 'cycle_peak_pressure']    = df[ this_inspiration ]['airway_pressure'].max()
-    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
+    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration & ( df.dt > v - 51e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
     #not necessarily measured during inspiration
-    df.loc[this_inspiration, 'cycle_PEEP']             = df[ ( df.dt > next_inspiration_t - 51e-3 ) & ( df.dt < next_inspiration_t+2e-3 ) ] ['airway_pressure'].mean()
+    df.loc[this_inspiration, 'cycle_PEEP']             = df[ ( df.dt > next_inspiration_t - 51e-3 ) & ( df.dt < next_inspiration_t) ] ['airway_pressure'].mean()
     #print ("cycle_peak_pressure: " , df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean() )
 
   respiration_rate     = 60/np.mean(np.gradient (start_times))
@@ -369,11 +371,11 @@ def measure_clinical_values(df, start_times):
 
   for c in df['start'].unique():
     cycle_data = df[df['start']==c]
-    cum = cycle_data['flux'].cumsum()
+    cum = cycle_data['flux_x_dt'].cumsum()
     df.loc[df.start == c, 'tidal_volume'] = cum
 
   # correct flow sum into volume (aka flow integral)
-  df['tidal_volume']   *= deltaT/60.*100
+  df['tidal_volume']   *= 1./60.*100
 
   # set inspiration-only variables to zero outside the inspiratory phase
   df['tidal_volume'] *= df['is_inspiration']
@@ -560,6 +562,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  dfhd['dtc'] = dfhd['dt'] - dfhd['start']
   df['dtc'] = df['dt'] - df['start']
   df['diindex'] = df['iindex'] - df['siindex']
 
@@ -663,7 +666,9 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   ##################################
   # Make data frames for statistics on overlayed cycles
   ##################################
-  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-2] )  ])]
+  my_selected_cycle = meta[objname]['cycle_index']
+  cycles_to_show = 30
+  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-2] )  ])]
   stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
@@ -691,7 +696,6 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
       }
-
 
 
 def plot_run(data, conf, args):
@@ -777,6 +781,8 @@ def plot_run(data, conf, args):
     measured_plateaus   = measured_plateaus[3:-3]
     measured_peaks      = measured_peaks[3:-3]
     measured_volumes    = measured_volumes[3:-3]
+    real_plateaus       = real_plateaus [3:-3]
+    real_tidal_volumes  = real_tidal_volumes[3:-3]
 
     mean_peep      = np.mean(measured_peeps)
     mean_plateau   = np.mean(measured_plateaus)

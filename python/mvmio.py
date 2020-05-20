@@ -51,14 +51,14 @@ mapping = {
   'mvm_col_arduino' : [
     'date',
     'time_arduino',
-    'flux_2',
+    'flux',
     'pressure_pv1',
     'airway_pressure',
     'in',
     'service_1',
     'out',
+    'flux_2',
     'flux_3',
-    'flux',
     'volume',
     'service_2'
   ],

@@ -317,10 +317,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       fig11, ax11 = plt.subplots()
 
       ## make a subset dataframe for simulator
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
-      ## the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
-
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ].copy()
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
       dftmp.plot(ax=ax11, x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
@@ -368,13 +365,9 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ####################################################
 
       fig2, ax2 = plt.subplots()
-      ## make a subset dataframe for simulator
-      #dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])]
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ len(start_times)-1 ])]
-      ## the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ len(start_times)-1 ])  ]
 
-
+      ## make a subset dataframe for simulator, this time over all cycles from my_selected_cycle
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ len(start_times)-1 ])].copy()
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
       #HTJI
