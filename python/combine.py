@@ -992,10 +992,10 @@ if __name__ == '__main__':
       else:
         # if the file name does not end in .txt or .json, try adding an extension based on argument json
         if args.json:
-          print ("args.json is True, adding extra .json to file name")
+          print("args.json is True, adding extra .json to file name")
           fname = f'{fname}.json'
         else:
-          print ("args.json is False, adding extra .txt to file name")
+          print("args.json is False, adding extra .txt to file name")
           fname = f'{fname}.txt'
 
       # print file name, then check whether it should be skipped
