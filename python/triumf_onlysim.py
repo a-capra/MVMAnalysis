@@ -90,13 +90,13 @@ def add_chunk_info(df):
     df.loc[df.start == i, 'max_pressure'] = r.total_flow
 
 def stats_for_repeated_cycles(adf, variable='total_flow') :
-    ''' 
+    '''
     This function assumed that the simulator DataFrame has been pre-processed
-    to include integer indexing and that the start times for each cycle have been 
-    calculated. This loops through the given DataFrame and 
-    1: Checks that there really is a one-to-one correspondence between dtc and 
+    to include integer indexing and that the start times for each cycle have been
+    calculated. This loops through the given DataFrame and
+    1: Checks that there really is a one-to-one correspondence between dtc and
     the integer indexing
-    2: Finds the series for the variable in question for a given integer index 
+    2: Finds the series for the variable in question for a given integer index
     since start of cycle
     3: calculates some basic stats that can be used in plotting
     4: Returns a DataFrame for plotting.
@@ -124,7 +124,7 @@ def stats_for_repeated_cycles(adf, variable='total_flow') :
     return answer
 
 
-    
+
 def add_clinical_values (df, max_R=250, max_C=100) :
   deltaT = get_deltat(df, timestampcol='dt')
   """Add for reference the measurement of "TRUE" clinical values as measured using the simulator"""
@@ -178,8 +178,8 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
   this_shape = df.shape
   df['iindex'] = np.arange(this_shape[0])
   df['siindex'] = np.arange(this_shape[0])
-  
-  
+
+
   # add info
   add_cycle_info(sim=df, start_times=start_times, reaction_times=reaction_times)
   df['dtc'] = df['dt'] - df['start']
@@ -315,10 +315,7 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       fig11, ax11 = plt.subplots()
 
       ## make a subset dataframe for simulator
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
-      ## the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ]
-
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show ])  ].copy()
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
       dftmp.plot(ax=ax11, x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4)
@@ -366,20 +363,16 @@ def process_run(meta, objname, fullpath_rwa, fullpath_dta, columns_rwa, columns_
       ####################################################
 
       fig2, ax2 = plt.subplots()
-      ## make a subset dataframe for simulator
-      #dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-1] )  ])]
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ len(start_times)-1 ])]
-      ## the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ len(start_times)-1 ])  ]
 
-
+      ## make a subset dataframe for simulator, this time over all cycles from my_selected_cycle
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ len(start_times)-1 ])].copy()
       dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
       #HTJI
       if cjjsaving:
         dftmp.to_hdf("cjj1.h5", key='simulator')
         cjjsaving = False
-        
+
       dftmp.plot(ax=ax2, x='dtc', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] ,          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'],          marker='o', markersize=0.3, linewidth=0)
       dftmp.plot(ax=ax2, x='dtc', y='airway_pressure',   label='SIM airway pressure [cmH2O]', c=colors['sim_airway_pressure'], marker='o', markersize=0.3, linewidth=0)
@@ -428,8 +421,8 @@ if __name__ == '__main__':
   import matplotlib
   import style
 
-  
-  
+
+
   parser = argparse.ArgumentParser(description='repack data taken in continuous mode')
   parser.add_argument("input", help="name of the MVM input file (.txt)")
   parser.add_argument("-d", "--output-directory", type=str, help="name of the output directory for plots", default="plots_iso")

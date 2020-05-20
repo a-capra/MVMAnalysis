@@ -559,6 +559,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  dfhd['dtc'] = dfhd['dt'] - dfhd['start']
   df['dtc'] = df['dt'] - df['start']
   df['diindex'] = df['iindex'] - df['siindex']
 
@@ -662,7 +663,9 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   ##################################
   # Make data frames for statistics on overlayed cycles
   ##################################
-  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-2] )  ])]
+  my_selected_cycle = meta[objname]['cycle_index']
+  cycles_to_show = 30
+  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-2] )  ])]
   stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
@@ -690,7 +693,6 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       "stats_total_flow" : stats_total_flow,
       "stats_airway_pressure" : stats_airway_pressure
       }
-
 
 
 def plot_run(data, conf, args):
