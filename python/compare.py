@@ -1,9 +1,10 @@
 import numpy as np
-import db
-import combine as cb
-import mvmio as io
 import matplotlib.pyplot as plt
 import style
+
+from db import *
+import combine as cb
+import mvmio as io
 import combine_plot_utils as cbpu
 
 
@@ -86,8 +87,8 @@ if __name__ == "__main__":
   parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
   parser.add_argument("--cnaf-1", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the first dataset")
   parser.add_argument("--cnaf-2", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the second dataset")
-  parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
-  parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
+  parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default=default_db_google_id)
+  parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default=default_db_google_id)
   parser.add_argument("--mvm-sep-1", help="Separator between datetime and the rest in the first MVM file", default="->")
   parser.add_argument("--mvm-sep-2", help="Separator between datetime and the rest in the second MVM file", default="->")
   parser.add_argument("--mvm-col-1", help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
@@ -95,11 +96,20 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if args.cnaf_1:
-    args.db_google_id_1 = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+    args.db_google_id_1 = cnaf_db_google_id
     print ("Using the CNAF metadata spreadsheet for the first dataset")
+  elif args.db_google_id_1 == default_db_google_id:
+    print ("Using the default metadata spreadsheet for the first dataset")
+  else:
+    print (f"Using the metadata spreadsheet {args.db_google_id_1} for the first dataset")
+
   if args.cnaf_2:
-    args.db_google_id_2 = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+    args.db_google_id_2 = cnaf_db_google_id
     print ("Using the CNAF metadata spreadsheet for the second dataset")
+  elif args.db_google_id_2 == default_db_google_id:
+    print ("Using the default metadata spreadsheet for the second dataset")
+  else:
+    print (f"Using the metadata spreadsheet {args.db_google_id_2} for the second dataset")
 
   run_config = [
       {
@@ -137,7 +147,7 @@ if __name__ == "__main__":
     print(f"Meta data {idx}: {rc['db_range_name']} Data location {idx}: {rc['data_location']}")
 
   # read metadata spreadsheet
-  df_spreadsheet = [db.read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
+  df_spreadsheet = [read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
 
   if args.test_names:
     test_names = [args.test_names]
@@ -180,12 +190,12 @@ if __name__ == "__main__":
         log.warning(f"Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
         success = False
         break
-      rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
+      rc["meta"] = read_meta_from_spreadsheet(cur_test, filename)
 
       # We've already checked and warned about duplicate tests above, so we just use the first element here
       rc["objname"] = f"{filename}_0"
       meta = rc["meta"][rc["objname"]]
-      db.validate_meta(meta)
+      validate_meta(meta)
       meta["SiteName"] = rc["sitename"]
 
       # Build MVM paths and skip user requested files
