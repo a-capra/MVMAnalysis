@@ -101,7 +101,7 @@ if __name__ == "__main__":
   elif args.db_google_id_1 == default_db_google_id:
     print ("Using the default metadata spreadsheet for the first dataset")
   else:
-    print (f"Using the metadata spreadsheet {args.db_google_id_1} for the first dataset")
+    print (f"Using metadata spreadsheet ID {args.db_google_id_1} for the first dataset")
 
   if args.cnaf_2:
     args.db_google_id_2 = cnaf_db_google_id
@@ -109,7 +109,7 @@ if __name__ == "__main__":
   elif args.db_google_id_2 == default_db_google_id:
     print ("Using the default metadata spreadsheet for the second dataset")
   else:
-    print (f"Using the metadata spreadsheet {args.db_google_id_2} for the second dataset")
+    print (f"Using metadata spreadsheet ID {args.db_google_id_2} for the second dataset")
 
   run_config = [
       {

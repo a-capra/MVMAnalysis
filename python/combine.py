@@ -913,7 +913,7 @@ if __name__ == '__main__':
   elif args.db_google_id == default_db_google_id:
     print ("Using the default metadata spreadsheet")
   else:
-    print (f"Using the metadata spreadsheet {args.db_google_id}")
+    print (f"Using metadata spreadsheet ID {args.db_google_id}")
 
   conf = {
       "json" : args.json,
