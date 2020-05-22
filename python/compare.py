@@ -84,6 +84,8 @@ if __name__ == "__main__":
   parser.add_argument("--offset-2", type=float, help="Time offset between second vent and sim datasets.", default=0.)
   parser.add_argument("--pressure-offset-1", type=float, help="Pressure offset for first MVM dataset.", default=0.)
   parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
+  parser.add_argument("--cnaf-1", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the first dataset")
+  parser.add_argument("--cnaf-2", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the second dataset")
   parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--mvm-sep-1", help="Separator between datetime and the rest in the first MVM file", default="->")
@@ -91,6 +93,13 @@ if __name__ == "__main__":
   parser.add_argument("--mvm-col-1", help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   parser.add_argument("--mvm-col-2", help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
+
+  if args.cnaf_1:
+    args.db_google_id_1 = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+    print ("Using the CNAF metadata spreadsheet for the first dataset")
+  if args.cnaf_2:
+    args.db_google_id_2 = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+    print ("Using the CNAF metadata spreadsheet for the second dataset")
 
   run_config = [
       {

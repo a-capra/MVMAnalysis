@@ -900,11 +900,17 @@ if __name__ == '__main__':
   parser.add_argument("-a", "--automatic_sync", action='store_true', help="displays auto-sync diagnostics plot")
   parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--figure-format", type=str, help="format for output figures", default='png')
+  parser.add_argument("--cnaf", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet")
   parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
   parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
+
+  if args.cnaf:
+    args.db_google_id = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+    print ("Using the CNAF metadata spreadsheet")
+
   conf = {
       "json" : args.json,
       "offset" : args.offset,
