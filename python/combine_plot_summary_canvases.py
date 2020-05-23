@@ -163,9 +163,9 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[3].add_patch(aa)
 
     ## MVM E:I compared compared to simulator values
-    simulator_eoveri_low = 0.
-    simulator_eoveri_wid = IE * 2.
-    _range = ( simulator_eoveri_low , simulator_eoveri_wid )
+    simulator_iovere_low = 0.
+    simulator_iovere_wid = IE * 2.
+    _range = ( simulator_iovere_low , simulator_iovere_wid )
     axs[4].hist ( measured_IoverE  , bins=100, range=_range, label='MVM')
     axs[4].hist ( real_IoverE , range=_range, bins= 100 , label='SIM', alpha=0.7)
     axs[4].tick_params(axis='both', which='major', labelsize=8)

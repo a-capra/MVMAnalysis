@@ -101,11 +101,15 @@ def process_files(files, output_dir, save_h5=False):
   ## x-axis and y-axis must use the same unit
   variables = [
     ('BAP', 'PEEP', '[$cmH_{2}O$]', 'Peep', 'mean_peep', 'rms_peep', 'max_peep', 'min_peep'),
-    ('$P_{plateau}$ from simulator', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-    ('set $P_{insp}$', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-#   ('set $P_{insp}$', 'measured $P_{peak}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
-    ('set $V_{tidal}$', 'measured $V_{tidal}$', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
-    ('$V_{tidal}$ from simulator', 'measured $V_{tidal}$', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('$P_{plateau}$ from lung simulator', '$P_{plateau}$ from MVM', '[$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+    ('set $P_{insp}$', '$P_{plateau}$ from MVM', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+#   ('set $P_{insp}$', '$P_{peak}$ from MVM', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
+    ('target $V_{tidal}$', '$V_{tidal}$ from MVM', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('$V_{tidal}$ from lung simulator', '$V_{tidal}$ from MVM', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    # ('I:E from lung simulator', 'I:E from MVM'
+    # ('set I:E', 'I:E from MVM'
+    # ('breath rate from lung simulator', 'breath rate from MVM'
+    # ('set breath rate', 'breath rate from MVM'
   ]
 
   ## Retrieve maximum errors, for use in loop
