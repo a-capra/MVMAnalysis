@@ -16,6 +16,8 @@ class Ventilator:
   maximum_linearity_error_pinsp = 0.04   # B/100 for Pinsp
   maximum_bias_error_volume = 4          # A in ml
   maximum_linearity_error_volume = 0.15  # B/100 for tidal volume
+  maximum_bias_error_iovere = 0.1          # A in ml
+  maximum_linearity_error_iovere = 0.01  # B/100 for tidal volume
 
   ## There probably exist other ventilator constants of interest
 

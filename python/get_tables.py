@@ -108,7 +108,7 @@ def process_files(files, output_dir, save_h5=False):
 #   ('set $P_{insp}$', '$P_{peak}$ from MVM', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
     ('target $V_{tidal}$', '$V_{tidal}$ from MVM', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
     ('$V_{tidal}$ from lung simulator', '$V_{tidal}$ from MVM', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
-    ('I:E from lung simulator', 'I:E from MVM', '[to be removed]', 'simulator_iovere', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
+    ('I:E from lung simulator', 'I:E from MVM', '', 'simulator_iovere', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
     # ('set I:E', 'I:E from MVM'
     # ('breath rate from lung simulator', 'breath rate from MVM'
     # ('set breath rate', 'breath rate from MVM'
@@ -119,13 +119,13 @@ def process_files(files, output_dir, save_h5=False):
     'mean_peep' : MVM.maximum_bias_error_peep,
     'mean_plateau' : MVM.maximum_bias_error_pinsp,
     'mean_volume_ml' : MVM.maximum_bias_error_volume,
-    'mean_iovere' : MVM.maximum_bias_error_volume
+    'mean_iovere' : MVM.maximum_bias_error_iovere
   }
   maximum_linearity_error = {
     'mean_peep' : MVM.maximum_linearity_error_peep,
     'mean_plateau' : MVM.maximum_linearity_error_pinsp,
     'mean_volume_ml' : MVM.maximum_linearity_error_volume,
-    'mean_iovere' : MVM.maximum_linearity_error_volume
+    'mean_iovere' : MVM.maximum_linearity_error_iovere
   }
 
   line = lmfit.models.LinearModel()
