@@ -18,6 +18,8 @@ class Ventilator:
   maximum_linearity_error_volume = 0.15  # B/100 for tidal volume
   maximum_bias_error_iovere = 0.1          # A in ml
   maximum_linearity_error_iovere = 0.01  # B/100 for tidal volume
+  maximum_bias_error_frequency = 0.1          # A in ml
+  maximum_linearity_error_frequency = 0.01  # B/100 for tidal volume
 
   ## There probably exist other ventilator constants of interest
 

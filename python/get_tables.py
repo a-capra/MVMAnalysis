@@ -27,12 +27,14 @@ def get_table(df):
       ('simulator $V_{tidal}$ [ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
       ('simulator $P_{plateau}$ [cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
       ('simulator I:E', f'${float(row["simulator_iovere"]):.0f}$'),
+      ('simulator Frequenct', f'${float(row["simulator_frequency"]):.0f}$'),
       # MVM measurements
       ('measured $V_{tidal}$ [ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
       ('measured $P_{plateau}$ [cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.0f}$'),
       ('measured $P_{peak}$ [cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.0f}$'),
       ('measured PEEP [cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.0f}$'),
       ('measured I:E', f'${float(row["mean_iovere"]):.0f}$'),
+      ('measured Frequency', f'${float(row["mean_frequency"]):.0f}$'),
     ]
 
     if i == 0:
@@ -109,9 +111,9 @@ def process_files(files, output_dir, save_h5=False):
     ('target $V_{tidal}$', '$V_{tidal}$ from MVM', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
     ('$V_{tidal}$ from lung simulator', '$V_{tidal}$ from MVM', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
     ('I:E from lung simulator', 'I:E from MVM', '', 'simulator_iovere', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
-    # ('set I:E', 'I:E from MVM'
-    # ('breath rate from lung simulator', 'breath rate from MVM'
-    # ('set breath rate', 'breath rate from MVM'
+    ('set I:E', 'I:E from MVM','', 'I:E', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
+    ('breath rate from lung simulator', 'breath rate from MVM', '[breath/min]', 'simulator_frequency', 'mean_frequency', 'rms_frequency', 'max_frequency', 'min_frequency'),
+    ('set breath rate', 'breath rate from MVM', 'breath rate from MVM', 'Rate respiratio', 'mean_frequency', 'rms_frequency','max_frequency', 'min_frequency'),
   ]
 
   ## Retrieve maximum errors, for use in loop
@@ -119,13 +121,15 @@ def process_files(files, output_dir, save_h5=False):
     'mean_peep' : MVM.maximum_bias_error_peep,
     'mean_plateau' : MVM.maximum_bias_error_pinsp,
     'mean_volume_ml' : MVM.maximum_bias_error_volume,
-    'mean_iovere' : MVM.maximum_bias_error_iovere
+    'mean_iovere' : MVM.maximum_bias_error_iovere,
+    'mean_frequency' : MVM.maximum_bias_error_frequency
   }
   maximum_linearity_error = {
     'mean_peep' : MVM.maximum_linearity_error_peep,
     'mean_plateau' : MVM.maximum_linearity_error_pinsp,
     'mean_volume_ml' : MVM.maximum_linearity_error_volume,
-    'mean_iovere' : MVM.maximum_linearity_error_iovere
+    'mean_iovere' : MVM.maximum_linearity_error_iovere,
+    'mean_frequency' : MVM.maximum_linearity_error_frequency
   }
 
   line = lmfit.models.LinearModel()
