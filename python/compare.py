@@ -1,9 +1,10 @@
 import numpy as np
-import db
-import combine as cb
-import mvmio as io
 import matplotlib.pyplot as plt
 import style
+
+from db import *
+import combine as cb
+import mvmio as io
 import combine_plot_utils as cbpu
 
 
@@ -84,13 +85,31 @@ if __name__ == "__main__":
   parser.add_argument("--offset-2", type=float, help="Time offset between second vent and sim datasets.", default=0.)
   parser.add_argument("--pressure-offset-1", type=float, help="Pressure offset for first MVM dataset.", default=0.)
   parser.add_argument("--pressure-offset-2", type=float, help="Pressure offset for second MVM dataset.", default=0.)
-  parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
-  parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
+  parser.add_argument("--cnaf-1", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the first dataset")
+  parser.add_argument("--cnaf-2", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet for the second dataset")
+  parser.add_argument("--db-google-id-1", help="First datset metadata spreadsheet ID.", default=default_db_google_id)
+  parser.add_argument("--db-google-id-2", help="Second datset metadata spreadsheet ID.", default=default_db_google_id)
   parser.add_argument("--mvm-sep-1", help="Separator between datetime and the rest in the first MVM file", default="->")
   parser.add_argument("--mvm-sep-2", help="Separator between datetime and the rest in the second MVM file", default="->")
   parser.add_argument("--mvm-col-1", help="Columns configuration for first MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   parser.add_argument("--mvm-col-2", help="Columns configuration for second MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
+
+  if args.cnaf_1:
+    args.db_google_id_1 = cnaf_db_google_id
+    print ("Using the CNAF metadata spreadsheet for the first dataset")
+  elif args.db_google_id_1 == default_db_google_id:
+    print ("Using the default metadata spreadsheet for the first dataset")
+  else:
+    print (f"Using metadata spreadsheet ID {args.db_google_id_1} for the first dataset")
+
+  if args.cnaf_2:
+    args.db_google_id_2 = cnaf_db_google_id
+    print ("Using the CNAF metadata spreadsheet for the second dataset")
+  elif args.db_google_id_2 == default_db_google_id:
+    print ("Using the default metadata spreadsheet for the second dataset")
+  else:
+    print (f"Using metadata spreadsheet ID {args.db_google_id_2} for the second dataset")
 
   run_config = [
       {
@@ -128,23 +147,23 @@ if __name__ == "__main__":
     print(f"Meta data {idx}: {rc['db_range_name']} Data location {idx}: {rc['data_location']}")
 
   # read metadata spreadsheet
-  df_spreadsheet = [db.read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
+  df_spreadsheet = [read_online_spreadsheet(rc["db_google_id"], rc["db_range_name"]) for rc in run_config]
 
   if args.test_names:
     test_names = [args.test_names]
     for tn, rc, ss in zip (test_names[0], run_config, df_spreadsheet):
       if not ss["N"].isin([tn]).any():
-        print(f"ERROR: Failed to find {tn} in {rc['db_range_name']}!")
+        log.error(f"Failed to find {tn} in {rc['db_range_name']}!")
         sys.exit(1)
   else:
     # Check for tests only present in one of the spreadsheets
     df_spreadsheet_0_only = df_spreadsheet[0][~df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]
     if not df_spreadsheet_0_only.empty:
-      print(f"WARNING: The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
+      log.warning(f"The following tests are only present in {run_config[0]['db_range_name']}. Skipping...")
       print(df_spreadsheet_0_only)
     df_spreadsheet_1_only = df_spreadsheet[1][~df_spreadsheet[1]["N"].isin(df_spreadsheet[0]["N"])]
     if not df_spreadsheet_1_only.empty:
-      print(f"WARNING: The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
+      log.warning(f"The following tests are only present in {run_config[1]['db_range_name']}. Skipping...")
       print(df_spreadsheet_1_only)
     # In this mode we're comparing equal tests, so just duplicate the names
     test_names = [[tn, tn] for tn in df_spreadsheet[0][df_spreadsheet[0]["N"].isin(df_spreadsheet[1]["N"])]["N"].unique()]
@@ -157,26 +176,26 @@ if __name__ == "__main__":
       if rc["single_campaign"]:
         cur_test = ss[(ss["N"] == tn) & (ss["campaign"] == rc["single_campaign"])]
         if cur_test.empty:
-          print(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
+          log.error(f"Test {tn} not found in {rc['db_range_name']} {rc['single_campaign']}. Skipping...")
           success = False
           break
       else:
         cur_test = ss[ss["N"] == tn]
       if len(cur_test) > 1:
-        print(f"WARNING: More than one test {tn} found in {rc['db_range_name']}. Using first one...")
+        log.warning(f"More than one test {tn} found in {rc['db_range_name']}. Using first one...")
 
       # Read meta data from spreadsheets
       filename = cur_test.iloc[0]["MVM_filename"]
       if not filename:
-        print(f"WARNING: Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
+        log.warning(f"Test {tn} in {rc['db_range_name']} has emtpy filename. Skipping...")
         success = False
         break
-      rc["meta"] = db.read_meta_from_spreadsheet(cur_test, filename)
+      rc["meta"] = read_meta_from_spreadsheet(cur_test, filename)
 
       # We've already checked and warned about duplicate tests above, so we just use the first element here
       rc["objname"] = f"{filename}_0"
       meta = rc["meta"][rc["objname"]]
-      db.validate_meta(meta)
+      validate_meta(meta)
       meta["SiteName"] = rc["sitename"]
 
       # Build MVM paths and skip user requested files

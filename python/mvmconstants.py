@@ -1,4 +1,7 @@
 
+default_db_google_id = "1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM"
+cnaf_db_google_id = "1AQXgqCKNAuCCDGffi9QU_v_9tOP97qYQNyxx9L6pWRA"
+
 class Ventilator:
   '''
   Constants about ventilators: specifications, etc.
