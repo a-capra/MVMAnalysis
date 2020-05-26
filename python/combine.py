@@ -22,7 +22,7 @@ from combine_plot_mvm_only_canvases import *
 
 def add_timestamp(df, timecol='dt'):
   ''' Add timestamp column assuming constant sampling in time '''
-  df['timestamp'] = np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
+  df['timestamp'] = df['dt'] #np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
   ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a
   problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
   df['dtcheck'] = df['timestamp']-df['dt']
@@ -319,6 +319,8 @@ def measure_clinical_values(df, start_times):
   ''' Compute tidal volume and other clinical quantities for MVM data '''
   # TODO: "tolerances", i.e. pre-t0 and post-t1, are currently hardcoded
   deltaT = get_deltat(df)
+  #substitute the fixed deltaT with sample-dependent dt after removal of linspace
+  df['flux_x_dt']  = df['flux'] * df['dt'].diff()
 
   # determine inspiration end times
   inspiration_end_times   = df[df['out_status'] == 'opening']['dt'].unique()
@@ -356,11 +358,11 @@ def measure_clinical_values(df, start_times):
 
     df.loc[this_inspiration, 'is_inspiration'] = 1
     #measured inspiration
-    df.loc[ ( df.dt >  s ) & ( df.dt < next_inspiration_t+2e-3 ), 'cycle_tidal_volume']     = df[  ( df.dt >  s ) & ( df.dt < end_of_inspiration_t+2e-3 ) ]['flux'].sum() * deltaT/60. * 100
+    df.loc[ ( df.dt >  s ) & ( df.dt < next_inspiration_t ), 'cycle_tidal_volume']     = df[  ( df.dt >  s ) & ( df.dt < end_of_inspiration_t) ]['flux_x_dt'].sum() / 60. * 100
     df.loc[this_inspiration, 'cycle_peak_pressure']    = df[ this_inspiration ]['airway_pressure'].max()
-    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
+    df.loc[this_inspiration, 'cycle_plateau_pressure'] = df[ this_inspiration & ( df.dt > v - 51e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean()
     #not necessarily measured during inspiration
-    df.loc[this_inspiration, 'cycle_PEEP']             = df[ ( df.dt > next_inspiration_t - 51e-3 ) & ( df.dt < next_inspiration_t+2e-3 ) ] ['airway_pressure'].mean()
+    df.loc[this_inspiration, 'cycle_PEEP']             = df[ ( df.dt > next_inspiration_t - 51e-3 ) & ( df.dt < next_inspiration_t) ] ['airway_pressure'].mean()
     #print ("cycle_peak_pressure: " , df[ this_inspiration &( df.dt > v - 20e-3 ) & ( df.dt < v-10e-3 ) ]['airway_pressure'].mean() )
 
   respiration_rate     = 60/np.mean(np.gradient (start_times))
@@ -370,11 +372,11 @@ def measure_clinical_values(df, start_times):
 
   for c in df['start'].unique():
     cycle_data = df[df['start']==c]
-    cum = cycle_data['flux'].cumsum()
+    cum = cycle_data['flux_x_dt'].cumsum()
     df.loc[df.start == c, 'tidal_volume'] = cum
 
   # correct flow sum into volume (aka flow integral)
-  df['tidal_volume']   *= deltaT/60.*100
+  df['tidal_volume']   *= 1./60.*100
 
   # set inspiration-only variables to zero outside the inspiratory phase
   df['tidal_volume'] *= df['is_inspiration']
@@ -492,9 +494,12 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   meta = conf["meta"]
 
   # retrieve simulator data
-
   if not ignore_sim:
     df = get_simulator_df(conf["fullpath_rwa"], conf["fullpath_dta"])
+    # Error checking in case rwa and dta data do not jive
+    if df.shape[0] == 0 :
+      log.error("Simulator data is empty for this test. Abort process_run.")
+      return {}
   else:
     print ("I am ignoring the simulator")
 
@@ -562,6 +567,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # add info
   add_cycle_info(sim=df, mvm=dfhd, start_times=start_times, reaction_times=reaction_times)
+  dfhd['dtc'] = dfhd['dt'] - dfhd['start']
   df['dtc'] = df['dt'] - df['start']
   df['diindex'] = df['iindex'] - df['siindex']
 
@@ -582,7 +588,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   measured_plateaus   = []
   real_tidal_volumes  = []
   real_plateaus       = []
- 
+
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
   measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5., -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
@@ -665,7 +671,9 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   ##################################
   # Make data frames for statistics on overlayed cycles
   ##################################
-  dftmp = df[ (df['start'] >= start_times[ 4 ] ) & ( df['start'] < start_times[ min ([35,len(start_times)-2] )  ])]
+  my_selected_cycle = meta[objname]['cycle_index']
+  cycles_to_show = 30
+  dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-2] )  ])]
   stats_total_vol = stats_for_repeated_cycles(dftmp, 'total_vol')
   stats_total_flow = stats_for_repeated_cycles(dftmp, 'total_flow')
   stats_airway_pressure = stats_for_repeated_cycles(dftmp, 'airway_pressure')
@@ -695,7 +703,6 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
       }
 
 
-
 def plot_run(data, conf, args):
   colors = {  "muscle_pressure": "#009933"  , #green
     "sim_airway_pressure": "#cc3300" ,# red
@@ -721,7 +728,11 @@ def plot_run(data, conf, args):
     return
 
   # keep the following in sync with the dict returned by process_run
-  df = data["sim"]
+  try:
+    df = data["sim"]
+  except KeyError:
+    log.error("Simulator data frame not available in plot_run for this test, exit")
+    return
   dftmp = data["sim_trunc"]
   dfhd = data["mvm"]
   start_times = data["start_times"]
@@ -776,6 +787,8 @@ def plot_run(data, conf, args):
     measured_plateaus   = measured_plateaus[3:-3]
     measured_peaks      = measured_peaks[3:-3]
     measured_volumes    = measured_volumes[3:-3]
+    real_plateaus       = real_plateaus [3:-3]
+    real_tidal_volumes  = real_tidal_volumes[3:-3]
 
     mean_peep      = np.mean(measured_peeps)
     mean_plateau   = np.mean(measured_plateaus)
@@ -802,8 +815,6 @@ def plot_run(data, conf, args):
     min_iovere     = np.min(measured_IoverE)
     min_frequency  = np.min(measured_Frequency)
 
-    
-
     #simulator values
     simulator_plateaus = np.array(real_plateaus)
     simulator_plateaus = simulator_plateaus[~np.isnan(simulator_plateaus)]
@@ -820,7 +831,6 @@ def plot_run(data, conf, args):
     simulator_frequencys = np.array(real_Frequency)
     simulator_frequencys = simulator_frequencys[~np.isnan(simulator_frequencys)]
     simulator_frequency = np.mean(simulator_frequencys)
-
 
     meta[objname]["mean_peep"]         =  mean_peep
     meta[objname]["rms_peep"]          =  rms_peep
@@ -896,11 +906,21 @@ if __name__ == '__main__':
   parser.add_argument("-a", "--automatic_sync", action='store_true', help="displays auto-sync diagnostics plot")
   parser.add_argument("--pressure-offset", type=float, help="pressure offset", default='0.')
   parser.add_argument("--figure-format", type=str, help="format for output figures", default='png')
-  parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default="1aQjGTREc9e7ScwrTQEqHD2gmRy9LhDiVatWznZJdlqM")
+  parser.add_argument("--cnaf", action='store_true', help="overrides db-google-id to use the CNAF spreadsheet")
+  parser.add_argument("--db-google-id", type=str, help="name of the Google spreadsheet ID for metadata", default=default_db_google_id)
   parser.add_argument("--db-range-name", type=str, help="name of the Google spreadsheet range for metadata", default="20200412 ISO!A2:AZ")
   parser.add_argument("--mvm-sep", type=str, help="separator between datetime and the rest in the MVM filename", default="->")
   parser.add_argument("--mvm-col", type=str, help="columns configuration for MVM acquisition, see mvmio.py", default="mvm_col_arduino")
   args = parser.parse_args()
+
+  if args.cnaf:
+    args.db_google_id = cnaf_db_google_id
+    print ("Using the CNAF metadata spreadsheet")
+  elif args.db_google_id == default_db_google_id:
+    print ("Using the default metadata spreadsheet")
+  else:
+    print (f"Using metadata spreadsheet ID {args.db_google_id}")
+
   conf = {
       "json" : args.json,
       "offset" : args.offset,
@@ -957,7 +977,7 @@ if __name__ == '__main__':
 
     filenames = df_spreadsheet['MVM_filename'].unique()
     if not filenames.size > 0:
-      print("No valid file name found in selected metadata spreadsheet range")
+      log.error("No valid file name found in selected metadata spreadsheet range")
 
     for filename in filenames:
       # continue if there is no filename
@@ -974,6 +994,7 @@ if __name__ == '__main__':
       fname = f'{input}/{meta[objname]["Campaign"]}/{meta[objname]["MVM_filename"]}'
 
       # detect whether input file is txt or json
+      print()
       if fname.endswith(".txt"):
         # here json argument should be False
         if args.json:
@@ -987,14 +1008,14 @@ if __name__ == '__main__':
       else:
         # if the file name does not end in .txt or .json, try adding an extension based on argument json
         if args.json:
-          print ("args.json is True, adding extra .json to fname")
+          print("args.json is True, adding extra .json to file name")
           fname = f'{fname}.json'
         else:
-          print ("args.json is False, adding extra .txt to fname")
+          print("args.json is False, adding extra .txt to file name")
           fname = f'{fname}.txt'
 
       # print file name, then check whether it should be skipped
-      print(f'\nFile name {fname}')
+      print(f'File name {fname}')
       if fname.split('/')[-1] in args.skip_files:
         print('    ... skipped')
         continue

@@ -22,21 +22,18 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
     RR = meta[local_objname]["Rate respiratio"]
     RT = meta[local_objname]["Resistance"]
     CM = meta[local_objname]["Compliance"]
-
     print ("Looking for R=%s, C=%s, RR=%s, PEEP=%s, PINSP=%s"%(RT,CM,RR,PE,PI) )
 
     my_selected_cycle = meta[local_objname]["cycle_index"]
-
     print ("\nFor test [ %s ]  I am selecting cycle %i, starting at %f \n"%(meta[local_objname]["test_name"], my_selected_cycle , start_times[ my_selected_cycle ]))
 
     fig11,ax11 = plt.subplots()
 
+    #make a subset dataframe for simulator
     print (start_times)
     cycles_to_show = 6
-    #make a subset dataframe for simulator
-    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
-    #the (redundant) line below avoids the annoying warning
-    dftmp = dftmp[ (dftmp['start'] >= start_times[ my_selected_cycle ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + cycles_to_show])  ]
+    dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ my_selected_cycle + cycles_to_show])  ].copy()
+    dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
     #make a subset dataframe for ventilator
     try:
@@ -45,8 +42,6 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
       dfvent = dfhd[ (dfhd['dt']>first_time_bin) & (dfhd['dt']<last_time_bin) ]
     except IndexError:
       dfvent = dfhd
-
-    dftmp.loc[:, 'total_vol'] = dftmp['total_vol'] - dftmp['total_vol'].min()
 
     dftmp.plot(ax=ax11, x='dt', y='total_vol',         label='SIM tidal volume       [cl]', c=colors['total_vol'] , alpha=0.4, linestyle="--")
     dftmp.plot(ax=ax11, x='dt', y='total_flow',        label='SIM flux            [l/min]', c=colors['total_flow'])
@@ -120,9 +115,7 @@ def plot_arXiv_canvases (df, dfhd, meta, objname, output_directory, start_times,
 
       #make a subset dataframe for simulator
       print (    start_times[ my_selected_cycle + ii*10 ] , start_times[ my_selected_cycle + ii*10 +11 ] )
-      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle + ii*10 ] ) & ( df['start'] < start_times[ my_selected_cycle + 11 + ii*10 ])  ]
-      #the (redundant) line below avoids the annoying warning
-      dftmp = dftmp[ ( dftmp['start'] >= start_times[ my_selected_cycle + ii*10  ] ) & ( dftmp['start'] < start_times[ my_selected_cycle + 11 + ii*10 ])  ]
+      dftmp = df[ (df['start'] >= start_times[ my_selected_cycle + ii*10 ] ) & ( df['start'] < start_times[ my_selected_cycle + 11 + ii*10 ])  ].copy()
       print (len (dftmp) , dftmp, dftmp['dt'].iloc[len(dftmp)-1] )
       #make a subset dataframe for ventilator
       first_time_bin  = dftmp['dt'].iloc[0]
