@@ -111,9 +111,9 @@ def process_files(files, output_dir, save_h5=False):
     ('target $V_{tidal}$', '$V_{tidal}$ from MVM', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
     ('$V_{tidal}$ from lung simulator', '$V_{tidal}$ from MVM', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
     ('I:E from lung simulator', 'I:E from MVM', '', 'simulator_iovere', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
-    ('set I:E', 'I:E from MVM','', 'I:E', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
-    ('breath rate from lung simulator', 'breath rate from MVM', '[breath/min]', 'simulator_frequency', 'mean_frequency', 'rms_frequency', 'max_frequency', 'min_frequency'),
-    ('set breath rate', 'breath rate from MVM', 'breath rate from MVM', 'Rate respiratio', 'mean_frequency', 'rms_frequency','max_frequency', 'min_frequency'),
+    ('set I:E', 'I:E from MVM', '', 'I:E', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
+    ('breath rate from lung simulator', 'breath rate from MVM', '[breaths/min]', 'simulator_frequency', 'mean_frequency', 'rms_frequency', 'max_frequency', 'min_frequency'),
+    ('set breath rate', 'breath rate from MVM', '[breaths/min]', 'Rate respiratio', 'mean_frequency', 'rms_frequency','max_frequency', 'min_frequency'),
   ]
 
   ## Retrieve maximum errors, for use in loop
