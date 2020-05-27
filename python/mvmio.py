@@ -204,17 +204,17 @@ def get_mvm_df_json(fname) :
   df['date'] = df['time']
 
   df['dt'] = ( pd.to_datetime(df['date'], unit='s') - pd.to_datetime(df['date'][0], unit='s') )/np.timedelta64(1,'s')
-  #temporary: convert arduino variable names into the analysis names
-  df['time_arduino']    =   df[column_names[1]]
-  df['flux']            =   df[column_names[2]]
-  df['pressure_pv1']    =   df[column_names[3]]
-  df['airway_pressure'] =   df[column_names[4]]
-  df['in']              =   df[column_names[5]]
-  df['service_1']       =   df[column_names[6]]
-  df['out']             =   df[column_names[7]]
-  df['flux_2']          =   df[column_names[8]]
-  df['flux_3']          =   df[column_names[9]]
-  df['volume']          =   df[column_names[10]]
-  df['service_2']       =   df[column_names[11]]
+  #temporary: convert arduino variable names (inline comments here) into the analysis names
+  df['time_arduino']    =   df[column_names[1]]   # ts
+  df['flux']            =   df[column_names[2]]   # flux_inhale
+  df['pressure_pv1']    =   df[column_names[3]]   # p_valve
+  df['airway_pressure'] =   df[column_names[4]]   # p_patient
+  df['in']              =   df[column_names[5]]   # pv1_ctrl
+  df['service_1']       =   df[column_names[6]]   # p_slow
+  df['out']             =   df[column_names[7]]   # pv2_ctrl
+  df['flux_2']          =   df[column_names[8]]   # f_vent_raw
+  df['flux_3']          =   df[column_names[9]]   # f_total
+  df['volume']          =   df[column_names[10]]  # v_total
+  df['service_2']       =   df[column_names[11]]  # p_patient_dv2
 
   return df
