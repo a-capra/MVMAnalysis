@@ -592,7 +592,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # second for the simulator
   #real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', -0.5, -5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -1) # test different threshold values; inhalation threshold should be positive?
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -5) # test different threshold values; inhalation threshold should be positive?
   # The first cycle is always bad, remove it
   if (len(real_IoverE)):
     del real_IoverE[0]
