@@ -423,7 +423,7 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
 
   I am not sure if it's better to work on the flow itself or its derivative. Let's try with the flow, we will used the derivative if it does not work.
   '''
-  tFlow =  dftest[quantity]
+  tFlow = dftest[quantity]
   time = dftest['dt']
 
   inInhalation = False  # else we are inExhalation
@@ -439,7 +439,10 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
   if inverted:
     correction = -1.0
 
-  for i,(f,t) in enumerate(zip(tFlow, time)):
+  for (f,t) in zip(tFlow, time):
+    if not t:
+      break
+
     if not inInhalation:             # if we are not inhaling, we look for the start of inhalation
       if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         stopEx = t
