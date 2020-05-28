@@ -27,7 +27,7 @@ def get_table(df):
       ('simulator $V_{tidal}$ [ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
       ('simulator $P_{plateau}$ [cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
       ('simulator I:E', f'${float(row["simulator_iovere"]):.0f}$'),
-      ('simulator Frequenct', f'${float(row["simulator_frequency"]):.0f}$'),
+      ('simulator Frequency', f'${float(row["simulator_frequency"]):.0f}$'),
       # MVM measurements
       ('measured $V_{tidal}$ [ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
       ('measured $P_{plateau}$ [cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.0f}$'),
