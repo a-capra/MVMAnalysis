@@ -410,60 +410,63 @@ def measure_clinical_values(df, start_times):
 
 def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False):
   '''
-  Compute I:E and 1/period for every breath cycle, for summary plot
-  Full period is by construction the sum of inhalation and exhalation phases
-
+  Computer I:E and 1/periode for every breath cycle, for summary plot
   We should look for
   1) First up-going, positive flow record, start of inhalation
     1.1) Because of some small wiggles in the data (mostly the flux from the MVM), we are using a 2-threshold system
-    1.2) We require that we pass a high trigger set to be close to the maximum flow
-    1.3) Then we backtrack to see when we passed a low trigger, which will be the start of the inhalation.
+    1.2) We require that we pass a high trigger  set to be close to the maximum flow
+    1.3) Then we backtrack to see when we passed a low triggger, which will be the start of the inhalation.
   2) First down going, negative flow, end of inhalation, start of exhalation
   3) Flow getting back to zero
 
-  I am not sure if it's better to work on the flow itself or its derivative. Let's try with the flow, we will used the derivative if it does not work.
+  I am not sure if that is better to work on the flow itself or its derivative. Let's try with the flow, we will used the derivative if it does not work.
   '''
   tFlow =  dftest[quantity]
   time = dftest['dt']
 
-  inInhalation = False  # else we are inExhalation
   startIn = 0.0
   stopIn = 0.0
   startEx = 0.0
   stopEx = 0.0
 
+  dtInhalate = 0.0
+  dtExhalate = 0.0
+  frequency = 0.0
+  IoverE = 0.0
+
   mIoverE = []
   mFrequency = []
 
-  correction = 1.0  # Some signals like "out" need to be inverted to be used with this treshold search
+  inInhalation = False
+  inExhalation = False
+
+  correction=1.0  # Some signals like "out" need to be inverted to be used with this treshold search
   if inverted:
     correction = -1.0
 
   for i,(f,t) in enumerate(zip(tFlow, time)):
-    if not inInhalation:             # if we are not inhaling, we look for the start of inhalation
+    if inInhalation == False: # if we are not inhaling, we look for the start
       if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
-        stopEx = t
-
-        # This marks the end of the previous breath: we calculate the per-breath variables
-        dtInhale = stopIn - startIn
-        dtExhale = stopEx - startEx  # It cannot be zero as stopEx will always come 1 iteration later.
-        frequency = 1./(dtInhale + dtExhale)*60.  # We want breath/min and the units are in seconds
-        IoverE = dtInhale/dtExhale
-        mIoverE.append(IoverE)
-        mFrequency.append(frequency)
-
-        # Start new breath
+        if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
+          stopEx = t
+          inExhalation = False
+          # We can calculate the variables
+          dtInhalate = stopIn - startIn
+          dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
+          frequency = 1./(dtInhalate + dtExhalate)*60. # We want breath/min and the units are in seconds
+          IoverE= dtInhalate/dtExhalate
+          mIoverE.append(IoverE)
+          mFrequency.append(frequency)
         inInhalation = True
         startIn = t
-
-    else:                            # if we are inhalilng, we look for the start of exhalation
-      if f*correction < exhaleTr:    # Passed the threshold, we are now exhaling
+    else:
+      if f*correction< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalation = False
         stopIn = t
+        inExhalation = True
         startEx = t
 
   return mIoverE, mFrequency
-
 
 def add_run_info(df, dist=25):
   ''' Add run info based on max pressure '''
@@ -581,19 +584,18 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
   real_tidal_volumes  = []
   real_plateaus       = []
 
-  # compute the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
+  # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5, -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
-  # The first cycle is always bad, remove it
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5., -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
+  # The first cycle is always bad, removew it
   if (len(measured_IoverE)):
     del measured_IoverE[0]
   if (len(measured_Frequency)):
     del measured_Frequency[0]
 
   # second for the simulator
-  #real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', -0.5, -5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 5, -5) # test different threshold values; inhalation threshold should be positive?
-  # The first cycle is always bad, remove it
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', -0.5, -5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
+  # The first cycle is always bad, removew it
   if (len(real_IoverE)):
     del real_IoverE[0]
   if (len(real_Frequency)):
