@@ -444,9 +444,30 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
   if inverted:
     correction = -1.0
 
-  for i,(f,t) in enumerate(zip(tFlow, time)):
+  L=5
+  G=10
+  plateauThr = 0.25
+  Correction=1/L
+  deriv = tFlow.copy()
+
+  for i in range(len(tFlow)):
+    if i<len(tFlow)-L and i>L+G:
+      firstpart = 0.0
+      secondpart = 0.0 
+      for j in range(0,L):
+        firstpart = firstpart + tFlow[i+j]
+        secondpart = secondpart + tFlow[i+j-L-G]
+      deriv[i] = (firstpart - secondpart)*Correction
+
+  Tstart = 0
+  for i,(f,t) in enumerate(zip(deriv, time)):
     if inInhalation == False: # if we are not inhaling, we look for the start
-      if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
+      if f*correction > -1.0 * plateauThr and f*correction < plateauThr:
+        Tend = t
+        deltaT = Tend-Tstart
+      else:
+        Tstart = t
+      if deltaT > 0.5 and f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
           stopEx = t
           inExhalation = False
@@ -594,7 +615,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
     del measured_Frequency[0]
 
   # second for the simulator
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', -0.5, -5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5, -30) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
   # The first cycle is always bad, removew it
   if (len(real_IoverE)):
     del real_IoverE[0]
