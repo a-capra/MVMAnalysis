@@ -26,11 +26,15 @@ def get_table(df):
       # SIM measurements
       ('simulator $V_{tidal}$ [ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
       ('simulator $P_{plateau}$ [cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
+      ('simulator I:E', f'${float(row["simulator_iovere"]):.0f}$'),
+      ('simulator Frequency', f'${float(row["simulator_frequency"]):.0f}$'),
       # MVM measurements
       ('measured $V_{tidal}$ [ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
       ('measured $P_{plateau}$ [cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.0f}$'),
       ('measured $P_{peak}$ [cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.0f}$'),
       ('measured PEEP [cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.0f}$'),
+      ('measured I:E', f'${float(row["mean_iovere"]):.0f}$'),
+      ('measured Frequency', f'${float(row["mean_frequency"]):.0f}$'),
     ]
 
     if i == 0:
@@ -100,28 +104,36 @@ def process_files(files, output_dir, save_h5=False):
   ## Variables to plot.  See start of for loop below for convention
   ## x-axis and y-axis must use the same unit
   variables = [
-    ('BAP', 'PEEP', '[$cmH_{2}O$]', 'Peep', 'mean_peep', 'rms_peep', 'max_peep', 'min_peep'),
-    ('$P_{plateau}$ from simulator', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-    ('set $P_{insp}$', 'measured $P_{plateau}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
-#   ('set $P_{insp}$', 'measured $P_{peak}$', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
-    ('set $V_{tidal}$', 'measured $V_{tidal}$', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
-    ('$V_{tidal}$ from simulator', 'measured $V_{tidal}$', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('PEEP', 'BAP', 'PEEP', '[$cmH_{2}O$]', 'Peep', 'mean_peep', 'rms_peep', 'max_peep', 'min_peep'),
+    ('simulator_plateau', '$P_{plateau}$ from lung simulator', '$P_{plateau}$ from MVM', '[$cmH_{2}O$]', 'simulator_plateau', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+    ('Plateau', 'set $P_{insp}$', '$P_{plateau}$ from MVM', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_plateau', 'rms_plateau', 'max_plateau', 'min_plateau'),
+#   ('Peak', 'set $P_{insp}$', '$P_{peak}$ from MVM', '[$cmH_{2}O$]', 'Pinspiratia', 'mean_peak', 'rms_peak', 'max_peak', 'min_peak'),
+    ('TidalVolume', 'target $V_{tidal}$', '$V_{tidal}$ from MVM', '[ml]', 'Tidal Volume', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('simulator_volume', '$V_{tidal}$ from lung simulator', '$V_{tidal}$ from MVM', '[ml]', 'simulator_volume_ml', 'mean_volume_ml', 'rms_volume_ml', 'max_volume_ml', 'min_volume_ml'),
+    ('simulator_iovere', 'I:E from lung simulator', 'I:E from MVM', '', 'simulator_iovere', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
+    ('IoverE', 'set I:E', 'I:E from MVM', '', 'I:E', 'mean_iovere', 'rms_iovere', 'max_iovere', 'min_iovere'),
+    ('simulator_frequency', 'breath rate from lung simulator', 'breath rate from MVM', '[breaths/min]', 'simulator_frequency', 'mean_frequency', 'rms_frequency', 'max_frequency', 'min_frequency'),
+    ('BreathRate', 'set breath rate', 'breath rate from MVM', '[breaths/min]', 'Rate respiratio', 'mean_frequency', 'rms_frequency','max_frequency', 'min_frequency'),
   ]
 
   ## Retrieve maximum errors, for use in loop
   maximum_bias_error = {
     'mean_peep' : MVM.maximum_bias_error_peep,
     'mean_plateau' : MVM.maximum_bias_error_pinsp,
-    'mean_volume_ml' : MVM.maximum_bias_error_volume
+    'mean_volume_ml' : MVM.maximum_bias_error_volume,
+    'mean_iovere' : MVM.maximum_bias_error_iovere,
+    'mean_frequency' : MVM.maximum_bias_error_frequency
   }
   maximum_linearity_error = {
     'mean_peep' : MVM.maximum_linearity_error_peep,
     'mean_plateau' : MVM.maximum_linearity_error_pinsp,
-    'mean_volume_ml' : MVM.maximum_linearity_error_volume
+    'mean_volume_ml' : MVM.maximum_linearity_error_volume,
+    'mean_iovere' : MVM.maximum_linearity_error_iovere,
+    'mean_frequency' : MVM.maximum_linearity_error_frequency
   }
 
   line = lmfit.models.LinearModel()
-  for xname, yname, unit, setval, mean, rms, max, min in variables:
+  for figname, xname, yname, unit, setval, mean, rms, max, min in variables:
     print(f'\nMaking compliance summary plot for {yname} vs {xname}')
     fig, ax = plt.subplots(1, 1)
     fig.canvas.set_window_title(f'x={setval}, y={mean}, yerr=Full range of measured values')
@@ -160,7 +172,7 @@ def process_files(files, output_dir, save_h5=False):
     ax.set_ylabel(f'{yname} {unit}')
     ax.set_xlim(0, df_to_fit[setval].max()*1.2)
     ax.set_ylim(0, df_to_fit[mean].max()*1.2)
-    fig.savefig(f'{output_dir}/isoplot_{setval}.pdf')
+    fig.savefig(f'{output_dir}/isoplot_{figname}.pdf')
     #fig.show()
   plt.show()
 
