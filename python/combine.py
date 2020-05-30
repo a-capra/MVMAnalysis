@@ -408,7 +408,7 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
-def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False):
+def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inverted=False):
   '''
   Computer I:E and 1/periode for every breath cycle, for summary plot
   We should look for
@@ -460,7 +460,7 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
       deriv[i] = (firstpart - secondpart)*Norm
     else:
       deriv[i]=0
-  exhaleTr = deriv.min()/2.
+  exhaleTr = deriv.min()/3.
   
 
   Tstart = 0.0
@@ -613,7 +613,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', 25., -25, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', 25., True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
   # The first cycle is always bad, removew it
   if (len(measured_IoverE)):
     del measured_IoverE[0]
@@ -621,7 +621,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
     del measured_Frequency[0]
 
   # second for the simulator
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5, -15) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
   # The first cycle is always bad, removew it
   if (len(real_IoverE)):
     del real_IoverE[0]
