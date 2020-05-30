@@ -447,7 +447,7 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
   L=5
   G=10
   plateauThr = 0.25
-  Correction=1/L
+  Norm=1/L
   deriv = tFlow.copy()
 
   for i in range(len(tFlow)):
@@ -457,9 +457,14 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
       for j in range(0,L):
         firstpart = firstpart + tFlow[i+j]
         secondpart = secondpart + tFlow[i+j-L-G]
-      deriv[i] = (firstpart - secondpart)*Correction
+      deriv[i] = (firstpart - secondpart)*Norm
+    else:
+      deriv[i]=0
+  exhaleTr = deriv.min()/2.
+  
 
-  Tstart = 0
+  Tstart = 0.0
+  deltaT = 0.0
   for i,(f,t) in enumerate(zip(deriv, time)):
     if inInhalation == False: # if we are not inhaling, we look for the start
       if f*correction > -1.0 * plateauThr and f*correction < plateauThr:
@@ -469,8 +474,8 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
         Tstart = t
       if deltaT > 0.5 and f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
-          stopEx = t
           inExhalation = False
+          stopEx = t
           # We can calculate the variables
           dtInhalate = stopIn - startIn
           dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
@@ -481,11 +486,12 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
         inInhalation = True
         startIn = t
     else:
-      if f*correction< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
+      if f*correction < exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalation = False
         stopIn = t
         inExhalation = True
         startEx = t
+        deltaT = 0.0
 
   return mIoverE, mFrequency
 
@@ -607,7 +613,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5., -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', 25., -25, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
   # The first cycle is always bad, removew it
   if (len(measured_IoverE)):
     del measured_IoverE[0]
@@ -615,7 +621,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
     del measured_Frequency[0]
 
   # second for the simulator
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5, -30) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5, -15) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
   # The first cycle is always bad, removew it
   if (len(real_IoverE)):
     del real_IoverE[0]
