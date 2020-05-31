@@ -443,8 +443,8 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inverted=False):
   # Defining the parameters of the trapezoid filter
   L=5  #Number of samples for averaging
   G=10 #Gap between two parts of derivative
-  plateauThr = 0.25 # Threshold defining the no-flow period before the inhalation
-  waitExh = 0.5 # Minimum time with almost no flow before we wait for inhalation to start
+  plateauThr = 0.3 # Threshold defining the no-flow period before the inhalation
+  waitExh = 0.2 # Minimum time with almost no flow before we wait for inhalation to start
   Norm=1/L
   deriv = tFlow.copy()
 
