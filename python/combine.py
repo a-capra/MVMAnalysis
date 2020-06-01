@@ -22,10 +22,10 @@ from combine_plot_mvm_only_canvases import *
 
 def add_timestamp(df, timecol='dt'):
   ''' Add timestamp column assuming constant sampling in time '''
-  df['timestamp'] = df['dt'] #np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
+  df['timestamp'] = df[timecol] #np.linspace( df.iloc[0,:][timecol] ,  df.iloc[-1,:][timecol] , len(df) )
   ''' Based on discussions at 2020-04-26 analysis call, check to see of there really is a
   problem with the time stamps and to see how big the shift is. CJJ - 2020-04-26'''
-  df['dtcheck'] = df['timestamp']-df['dt']
+  df['dtcheck'] = df['timestamp']-df[timecol]
   max_time_off = df['dtcheck'].max()
   min_time_off = df['dtcheck'].min()
   print("The maximum shifts in timestamp are... ", max_time_off, min_time_off)
@@ -874,7 +874,8 @@ def plot_run(data, conf, args):
     ####################################################
     '''dump summary data in json file, for get_tables'''
     ####################################################
-    filepath = "%s/summary_%s_%s.json" % (args.output_directory, meta[objname]['Campaign'],objname.replace('.txt', '')) # TODO: make sure it is correct, or will overwrite!
+    nname=os.path.splitext(objname)[0]
+    filepath = "%s/summary_%s_%s.json" % (args.output_directory,meta[objname]['Campaign'],nname) # TODO: make sure it is correct, or will overwrite!
     json.dump( meta[objname], open(filepath , 'w' ) )
 
     ####################################################
