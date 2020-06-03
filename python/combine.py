@@ -408,18 +408,14 @@ def measure_clinical_values(df, start_times):
 
   return respiration_rate, inspiration_duration
 
-def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False):
+def get_IoverEAndFrequency (dftest, quantity, inhaleTr, inverted=False):
   '''
   Computer I:E and 1/periode for every breath cycle, for summary plot
-  We should look for
-  1) First up-going, positive flow record, start of inhalation
-    1.1) Because of some small wiggles in the data (mostly the flux from the MVM), we are using a 2-threshold system
-    1.2) We require that we pass a high trigger  set to be close to the maximum flow
-    1.3) Then we backtrack to see when we passed a low triggger, which will be the start of the inhalation.
-  2) First down going, negative flow, end of inhalation, start of exhalation
-  3) Flow getting back to zero
-
-  I am not sure if that is better to work on the flow itself or its derivative. Let's try with the flow, we will used the derivative if it does not work.
+  We are using a Trapezoid filter, which is a generic version of a derivative
+  with a smoothing term.
+  We then use inhaleTr to define the inhalation start, after waiting for waitExh (s) during which the 
+  flow needs to be close to constant (tail of the exponential). . The exhalation is defined by a sharp
+  peak downward, with a threshold 1/3 of the derivative minimum for the whole run. 
   '''
   tFlow =  dftest[quantity]
   time = dftest['dt']
@@ -443,13 +439,44 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
   correction=1.0  # Some signals like "out" need to be inverted to be used with this treshold search
   if inverted:
     correction = -1.0
+  
+  # Defining the parameters of the trapezoid filter
+  L=5  #Number of samples for averaging
+  G=10 #Gap between two parts of derivative
+  plateauThr = 0.3 # Threshold defining the no-flow period before the inhalation
+  waitExh = 0.2 # Minimum time with almost no flow before we wait for inhalation to start
+  Norm=1/L
+  deriv = tFlow.copy()
 
-  for i,(f,t) in enumerate(zip(tFlow, time)):
+  #Creating the trapezoid filter
+  for i in range(len(tFlow)):
+    if i<len(tFlow)-L and i>L+G:
+      firstpart = 0.0
+      secondpart = 0.0 
+      for j in range(0,L):
+        firstpart = firstpart + tFlow[i+j]
+        secondpart = secondpart + tFlow[i+j-L-G]
+      deriv[i] = (firstpart - secondpart)*Norm
+    else:
+      deriv[i]=0
+  # Uncomment to added to the dataframe for debugging purpose
+  # dftest['flow_deriv'] = deriv
+  
+  exhaleTr = deriv.min()/3.
+
+  Tstart = 0.0
+  deltaT = 0.0
+  for i,(f,t) in enumerate(zip(deriv, time)):
     if inInhalation == False: # if we are not inhaling, we look for the start
-      if f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
+      if abs(f) < plateauThr: # Looking for the no-flow period
+        Tend = t
+        deltaT = Tend-Tstart
+      else:
+        Tstart = t
+      if deltaT > waitExh and f*correction > inhaleTr:    # Passed the threshold, we are now inhaling
         if inExhalation == True: # if we were exhaling previously, that's the end of it, as well as the end of the breath
-          stopEx = t
           inExhalation = False
+          stopEx = t
           # We can calculate the variables
           dtInhalate = stopIn - startIn
           dtExhalate = stopEx - startEx # It cannot be zero as stopEx will always come 1 iteration later.
@@ -460,11 +487,12 @@ def get_IoverEAndFrequency (dftest, quantity, inhaleTr, exhaleTr, inverted=False
         inInhalation = True
         startIn = t
     else:
-      if f*correction< exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
+      if f*correction < exhaleTr:  # Passed the threshold, we are now exhaling. Is it possible that we were not inhaling before?.
         inInhalation = False
         stopIn = t
         inExhalation = True
         startEx = t
+        deltaT = 0.0
 
   return mIoverE, mFrequency
 
@@ -586,7 +614,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
 
   # computer the duration of the inhalation over the duration of the exhalation for every breath, as well as the frequency of everybreath (1/period)
   # first for the MVM
-  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', -5., -5, True) # "out" needs to be read in inverted logic. The threshold low is -5 for inhalation, -5 for exhalation (going the other way)
+  measured_IoverE, measured_Frequency = get_IoverEAndFrequency(dfhd, 'out', 25., True) # "out" needs to be read in inverted logic. The threshold low is -25 for inhalation, exhalation threshold calculated by the function
   # The first cycle is always bad, removew it
   if (len(measured_IoverE)):
     del measured_IoverE[0]
@@ -594,7 +622,7 @@ def process_run(conf, ignore_sim=False, auto_sync_debug=False):
     del measured_Frequency[0]
 
   # second for the simulator
-  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', -0.5, -5) # the threshold is -0.5 for the total flow in inhalation (catching the small step), -5 in exhalation (quick inversion of flow)
+  real_IoverE, real_Frequency = get_IoverEAndFrequency(df, 'total_flow', 0.5) # the threshold is 0.5 for the total flow in inhalation (catching the small step), exhalation threshold calculated by the function
   # The first cycle is always bad, removew it
   if (len(real_IoverE)):
     del real_IoverE[0]
