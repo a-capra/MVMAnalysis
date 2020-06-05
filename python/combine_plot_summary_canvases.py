@@ -26,11 +26,14 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     RT = meta[local_objname]["Resistance"]
     CM = meta[local_objname]["Compliance"]
     IE = meta[local_objname]["I:E"]
-
-    nom_peep = float(meta[local_objname]["Peep"])
+    nominal_peep = float(PE)
+    nominal_plateau = float(PI)
+    nominal_frequency = float(RR)
+    nominal_iovere = float(IE)
     my_selected_cycle = meta[local_objname]["cycle_index"]
 
     fig2, ax2 = plt.subplots()
+
     #make a subset dataframe for simulator
     cycles_to_show = 30
     dftmp = df[ (df['start'] >= start_times[ my_selected_cycle ] ) & ( df['start'] < start_times[ min ([my_selected_cycle + cycles_to_show, len(start_times)-1] )  ])].copy()
@@ -71,36 +74,43 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     ymin, ymax = ax2.get_ylim()
     ax2.text((xmax-xmin)/2.+xmin, 0.08*(ymax-ymin) + ymin,   title2, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
     ax2.text((xmax-xmin)/2.+xmin, 0.026*(ymax-ymin) + ymin,  title1, verticalalignment='bottom', horizontalalignment='center', color='#7697c4')
-    nom_pressure = float(meta[local_objname]["Pinspiratia"])
-    rect = patches.Rectangle((xmin,nom_pressure-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
+    rect = patches.Rectangle((xmin,nominal_plateau-2),xmax-xmin,4,edgecolor='None',facecolor='green', alpha=0.2)
     ax2.add_patch(rect)
 
-    rect = patches.Rectangle((xmin,nom_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
+    rect = patches.Rectangle((xmin,nominal_peep-0.1),xmax-xmin,0.5,edgecolor='None',facecolor='grey', alpha=0.3)
     ax2.add_patch(rect)
 
     set_plot_title(ax2, meta, objname)
     save_figure(fig2, 'avg', meta, objname, output_directory, figure_format, web)
 
-    nom_peep = float(meta[local_objname]["Peep"])    
+    # FIXME: objname or local_objname?
     mean_peep    =   meta[objname]["mean_peep"]
     mean_plateau =   meta[objname]["mean_plateau"]
     mean_peak    =   meta[objname]["mean_peak"]
     mean_volume  =   meta[objname]["mean_volume"]
+    mean_iovere  =   meta[objname]["mean_iovere"]
+    mean_frequency = meta[objname]["mean_frequency"]
     rms_peep     =   meta[objname]["rms_peep"]
     rms_plateau  =   meta[objname]["rms_plateau"]
     rms_peak     =   meta[objname]["rms_peak"]
     rms_volume   =   meta[objname]["rms_volume"]
+    rms_iovere   =   meta[objname]["rms_iovere"]
+    rms_frequency  = meta[objname]["rms_frequency"]
     max_peep     =   meta[objname]["max_peep"]
     max_plateau  =   meta[objname]["max_plateau"]
     max_peak     =   meta[objname]["max_peak"]
     max_volume   =   meta[objname]["max_volume"]
+    max_iovere   =   meta[objname]["max_iovere"]
+    max_frequency  = meta[objname]["max_frequency"]
     min_peep     =   meta[objname]["min_peep"]
     min_plateau  =   meta[objname]["min_plateau"]
     min_peak     =   meta[objname]["min_peak"]
     min_volume   =   meta[objname]["min_volume"]
-    simulator_volume  = meta[objname]["simulator_volume"]
-    simulator_plateau = meta[objname]["simulator_plateau"]
-    simulator_iovere  = meta[objname]["simulator_iovere"]
+    min_iovere   =   meta[objname]["min_iovere"]
+    min_frequency  = meta[objname]["min_frequency"]
+    simulator_volume    = meta[objname]["simulator_volume"]
+    simulator_plateau   = meta[objname]["simulator_plateau"]
+    simulator_iovere    = meta[objname]["simulator_iovere"]
     simulator_frequency = meta[objname]["simulator_frequency"]
 
 
@@ -113,20 +123,20 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs = axes.flatten()
 
     ## MVM PEEP compared with set value
-    nom_peep_low = nom_peep - MVM.maximum_bias_error_peep - MVM.maximum_linearity_error_peep * nom_peep
-    nom_peep_wid = 2 * (MVM.maximum_bias_error_peep + MVM.maximum_linearity_error_peep * nom_peep)
-    axs[0].hist ( measured_peeps  , bins=50,  range=(  min([ mean_peep,nom_peep] )*0.6 , max( [mean_peep,nom_peep] ) *1.4  )   )
+    nominal_peep_low = nominal_peep - MVM.maximum_bias_error_peep - MVM.maximum_linearity_error_peep * nominal_peep
+    nominal_peep_wid = 2 * (MVM.maximum_bias_error_peep + MVM.maximum_linearity_error_peep * nominal_peep)
+    _range = (  min([ mean_peep,nominal_peep] )*0.7 , max( [mean_peep,nominal_peep] ) *1.4  )
+    axs[0].hist ( measured_peeps  , bins=50,  range=_range   )
     axs[0].tick_params(axis='both', which='major', labelsize=8)
     axs[0].tick_params(axis='both', which='minor', labelsize=8)
-    aa = patches.Rectangle( (nom_peep_low, axs[0].get_ylim()[0]  ) , nom_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
+    aa = patches.Rectangle( (nominal_peep_low, axs[0].get_ylim()[0]  ) , nominal_peep_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[0].add_patch(aa)
-    axs[0].set_title("PEEP [cmH2O], nominal: %2.1f [cmH2O]"%nom_peep, weight='heavy', fontsize=10)
+    axs[0].set_title("PEEP [cmH2O], nominal: %2.1f [cmH2O]"%nominal_peep, weight='heavy', fontsize=10)
 
     ## MVM Pinsp compared with set value
-    nominal_plateau = float(meta[objname]["Pinspiratia"])
     nominal_plateau_low = nominal_plateau - MVM.maximum_bias_error_pinsp - MVM.maximum_linearity_error_pinsp * nominal_plateau
     nominal_plateau_wid = 2 * (MVM.maximum_bias_error_pinsp + MVM.maximum_linearity_error_pinsp * nominal_plateau)
-    _range = (   min([ mean_plateau,nominal_plateau] )*0.8 , max( [mean_plateau,nominal_plateau] ) *1.3  )
+    _range = (   min([ mean_plateau,nominal_plateau] )*0.7 , max( [mean_plateau,nominal_plateau] ) *1.4  )
     axs[1].hist ( measured_plateaus, bins=100, range=_range   )
     axs[1].tick_params(axis='both', which='major', labelsize=8)
     axs[1].tick_params(axis='both', which='minor', labelsize=8)
@@ -149,7 +159,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     axs[2].add_patch(aa)
 
     ## MVM tidal volumes compared with set value
-    nominal_volume = float(meta[objname]["Tidal Volume"]) * 0.1              # ml to cl
+    nominal_volume = float(meta[local_objname]["Tidal Volume"]) * 0.1        # ml to cl
     MVM_maximum_bias_error_volume_cl = MVM.maximum_bias_error_volume * 0.1   # ml to cl
     nominal_volume_low = nominal_volume - MVM_maximum_bias_error_volume_cl - MVM.maximum_linearity_error_volume * nominal_volume
     nominal_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * nominal_volume)
@@ -159,38 +169,40 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     simulator_volume_wid = 2 * (MVM_maximum_bias_error_volume_cl + MVM.maximum_linearity_error_volume * simulator_volume)
     _range = ( min([ mean_volume,simulator_volume] )*0.7 , max( [mean_volume,simulator_volume] ) *1.4    )
     axs[3].hist ( measured_volumes  , bins=100, range=_range, label='MVM')
-    axs[3].hist ( real_tidal_volumes , range=_range, bins= 100 , label='SIM', alpha=0.7)
+    axs[3].hist ( real_tidal_volumes , bins=100, range=_range, label='SIM', alpha=0.7)
     axs[3].tick_params(axis='both', which='major', labelsize=8)
     axs[3].tick_params(axis='both', which='minor', labelsize=8)
     aa = patches.Rectangle( (simulator_volume_low, axs[0].get_ylim()[0]  ) , simulator_volume_wid , axs[0].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
-    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, float( meta[objname]['Tidal Volume'])/10), weight='heavy', fontsize=10)
+    axs[3].set_title("Tidal Volume [cl], <SIM>: %2.1f [cl], nominal %2.1f [cl]"%(simulator_volume, nominal_volume), weight='heavy', fontsize=10)
     axs[3].legend(loc='upper left', fontsize=10)
     axs[3].add_patch(aa)
 
-    ## MVM E:I compared compared to simulator values
-    simulator_eoveri_low = 0.
-    simulator_eoveri_wid = IE * 2.
-    _range = ( simulator_eoveri_low , simulator_eoveri_wid )
+    ## MVM I:E compared compared to simulator values
+    ## with green rectangle drawn wrt set values
+    nominal_iovere_low = nominal_iovere - MVM.maximum_bias_error_iovere - MVM.maximum_linearity_error_iovere * nominal_iovere
+    nominal_iovere_wid = 2 * (MVM.maximum_bias_error_iovere + MVM.maximum_linearity_error_iovere * nominal_iovere)
+    _range = ( min([ mean_iovere,simulator_iovere] )*0.7 , max( [mean_iovere,simulator_iovere] ) *1.4    )
     axs[4].hist ( measured_IoverE  , bins=100, range=_range, label='MVM')
-    axs[4].hist ( real_IoverE , range=_range, bins= 100 , label='SIM', alpha=0.7)
+    axs[4].hist ( real_IoverE , bins=100, range=_range, label='SIM', alpha=0.7)
     axs[4].tick_params(axis='both', which='major', labelsize=8)
     axs[4].tick_params(axis='both', which='minor', labelsize=8)
+    aa = patches.Rectangle( (nominal_iovere_low, axs[4].get_ylim()[0] ), nominal_iovere_wid , axs[4].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
+    axs[4].set_title("I:E, <SIM>: %2.2f, nominal %2.2f "%(simulator_iovere, nominal_iovere), weight='heavy', fontsize=10)
     axs[4].legend(loc='upper left', fontsize=10)
-    axs[4].set_title("I:E , <SIM>: %2.2f, nominal %2.2f "%(simulator_iovere, float(IE)), weight='heavy', fontsize=10)
-    aa = patches.Rectangle( (IE*0.9, axs[4].get_ylim()[0] ), IE*0.2 , axs[4].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[4].add_patch(aa)
 
-    ## MVM frequency compared to simulator values
-    simulator_RR_low = RR - 5
-    simulator_RR_wid = RR + 5
-    _range = ( simulator_RR_low, simulator_RR_wid )
+    ## MVM breath frequency compared to simulator values
+    ## with green rectangle drawn wrt set values
+    nominal_frequency_low = nominal_frequency - MVM.maximum_bias_error_frequency - MVM.maximum_linearity_error_frequency * nominal_frequency
+    nominal_frequency_wid = 2 * (MVM.maximum_bias_error_frequency + MVM.maximum_linearity_error_frequency * nominal_frequency)
+    _range = ( min([ mean_frequency,simulator_frequency] )*0.7 , max( [mean_frequency,simulator_frequency] ) *1.4    )
     axs[5].hist ( measured_Frequency  , bins=100, range=_range, label='MVM')
-    axs[5].hist ( real_Frequency , range=_range, bins= 100 , label='SIM', alpha=0.7)
+    axs[5].hist ( real_Frequency , bins=100, range=_range, label='SIM', alpha=0.7)
     axs[5].tick_params(axis='both', which='major', labelsize=8)
     axs[5].tick_params(axis='both', which='minor', labelsize=8)
-    axs[5].set_title("Frequency [breaths/min], <SIM>: %2.1f [breaths/min], nominal %2.1f [breaths/min]"%(simulator_frequency, float( RR )), weight='heavy', fontsize=10)
+    aa = patches.Rectangle( (nominal_frequency_low, axs[5].get_ylim()[0]  ) , nominal_frequency_wid , axs[5].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
+    axs[5].set_title("Frequency [breaths/min], <SIM>: %2.1f [breaths/min], nominal %2.1f [breaths/min]"%(simulator_frequency, nominal_frequency), weight='heavy', fontsize=10)
     axs[5].legend(loc='upper left', fontsize=10)
-    aa = patches.Rectangle( (RR*0.9, axs[5].get_ylim()[0]  ) , RR*0.2 , axs[5].get_ylim()[1] , edgecolor='red' , facecolor='green' , alpha=0.2)
     axs[5].add_patch(aa)
 
     set_plot_suptitle(figs, meta, objname)
@@ -204,7 +216,7 @@ def plot_summary_canvases (df, dfhd, meta, objname, output_directory, start_time
     #print("real_tidal_volumes:", real_tidal_volumes)
 
     ## Print test results, based on comparisons with maximum errors
-    if min_peep > nom_peep_low and max_peep < nom_peep_low + nom_peep_wid:
+    if min_peep > nominal_peep_low and max_peep < nominal_peep_low + nominal_peep_wid:
       print("SUCCESS: PEEP all values within maximum errors wrt set value")
     else:
       print("FAILURE: PEEP outside maximum errors wrt set value")

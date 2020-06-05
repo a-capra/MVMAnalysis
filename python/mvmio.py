@@ -156,7 +156,6 @@ def get_simulator_df(fullpath_rwa, fullpath_dta, df_columns_rwa=columns_rwa, df_
 
   return df
 
-
 def get_mvm_df(fname, sep=' -> ', configuration='default'):
   #data from the ventilator
   data = []
