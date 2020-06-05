@@ -72,21 +72,15 @@ def get_table(df):
       # SIM measurements
       ('simulator','$V_{tidal}$','[ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
       ('simulator',' $P_{plateau}$','[cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
-      ('simulator $V_{tidal}$ [ml]', f'${float(row["simulator_volume_ml"]):.0f}$'),
-      ('simulator $P_{plateau}$ [cmH2O]', f'${float(row["simulator_plateau"]):.0f}$'),
-      ('simulator I:E', f'${float(row["simulator_iovere"]):.0f}$'),
-      ('simulator Frequency', f'${float(row["simulator_frequency"]):.0f}$'),
+      ('simulator', 'I:E', '',f'${float(row["simulator_iovere"]):.0f}$'),
+      ('simulator', 'Frequency','', f'${float(row["simulator_frequency"]):.0f}$'),
       # MVM measurements
       ('measured','$V_{tidal}$','[ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
       ('measured','$P_{plateau}$','[cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.1f}$'),
       ('measured','$P_{peak}$','[cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.1f}$'),
       ('measured','PEEP','[cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.2f}$'),
-      ('measured $V_{tidal}$ [ml]', f'${float(row["mean_volume_ml"]):.0f} \pm {float(row["rms_volume_ml"]):.0f}$'),
-      ('measured $P_{plateau}$ [cmH2O]', f'${float(row["mean_plateau"]):.0f} \pm {float(row["rms_plateau"]):.0f}$'),
-      ('measured $P_{peak}$ [cmH2O]', f'${float(row["mean_peak"]):.0f} \pm {float(row["rms_peak"]):.0f}$'),
-      ('measured PEEP [cmH2O]', f'${float(row["mean_peep"]):.0f} \pm {float(row["rms_peep"]):.0f}$'),
-      ('measured I:E', f'${float(row["mean_iovere"]):.0f}$'),
-      ('measured Frequency', f'${float(row["mean_frequency"]):.0f}$'),
+      ('measured','I:E', '',f'${float(row["mean_iovere"]):.0f}$'),
+      ('measured','Frequency', '',f'${float(row["mean_frequency"]):.0f}$'),
     ]
 
     if i == 0:
@@ -102,7 +96,7 @@ def get_table(df):
         \begin{document}
         %\maketitle
         \begin{sidewaystable}
-        \small
+        \tiny
         \begin{tabular}{''')
       cstring='|'
       cstring += 'c'*(len(what))
@@ -226,6 +220,11 @@ def process_files(files, output_dir, save_h5=False):
     df_to_fit = df
     if setval == 'simulator_volume_ml':
       df_to_fit = df_to_fit[df_to_fit[setval] > 50] # 201.12.1.104 from ISO
+
+    # fitting algorithms cannot handle NaN values in input or output data
+    df_to_fit[mean].fillna(0,inplace=True)
+    df_to_fit[setval].fillna(0,inplace=True)
+    df_to_fit[rms].fillna(1,inplace=True)
 
     # linear fit
     params = line.guess(df_to_fit[mean], x=df_to_fit[setval])
